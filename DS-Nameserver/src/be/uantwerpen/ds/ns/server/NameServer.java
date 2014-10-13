@@ -7,7 +7,8 @@ import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import be.uantwerpen.ds.ns.INameServer;
 
@@ -16,53 +17,61 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private HashMap<Integer, InetAddress> serverMap;
+	private TreeMap<Integer, InetAddress> nodeMap;
 
 	protected NameServer() throws RemoteException {
 		super();
-		serverMap = new HashMap<Integer, InetAddress>();
+		nodeMap = new TreeMap<Integer, InetAddress>();
 		//TODO lijst uit XML bestand inladen
 	}
 
-	
 	/**
-	 * Adds a server to the name server's map
+	 * Adds a node to the name server's map
 	 *
-	 * @param	name	The name of the server
-	 * @param	address	The address at which the server can be found
-	 * @return      void
+	 * @param	name	The name of the node
+	 * @param	address	The address at which the node can be found
+	 * @return	void
 	 */
-	public void registerServer(String name, InetAddress address) throws RemoteException {
-		serverMap.put(getShortHash(name), address);
-		saveMap();
-	}
-
-	/**
-	 * Return the address of the server the given name
-	 *
-	 * @param	name	The name of the server
-	 * @return	The address of the server      
-	 */
-	public InetAddress lookupServer(String name) throws RemoteException {
-		return serverMap.get(getShortHash(name));
-	}
-
-	/**
-	 * Removes a server from the name server's map
-	 *
-	 * @param	name	The name of the server
-	 * @return      void
-	 */
-	public void unregisterServer(String name) {
+	public void registerNode(String name, InetAddress address) throws RemoteException {
 		int hash = getShortHash(name);
-		if (serverMap.containsKey(hash)) {
-			serverMap.remove(hash);
+		if (!nodeMap.containsKey(hash)) {
+			nodeMap.put(hash, address);
+		}
+		else {
+			//TODO
 		}
 		saveMap();
 	}
 
 	/**
-	 * Saves the current map the the harddisk
+	 * Retrieve the address of the node the given name
+	 *
+	 * @param	name	The name of the node
+	 * @return	InetAddress	The address of the node      
+	 */
+	public InetAddress lookupNode(String name) throws RemoteException {
+		return nodeMap.get(getShortHash(name));
+	}
+
+	/**
+	 * Removes a node from the name server's map
+	 *
+	 * @param	name	The name of the node
+	 * @return  void
+	 */
+	public void unregisterNode(String name) {
+		int hash = getShortHash(name);
+		if (nodeMap.containsKey(hash)) {
+			nodeMap.remove(hash);
+		}
+		else {
+			//TODO
+		}
+		saveMap();
+	}
+
+	/**
+	 * Saves the current map of nodes the the hard disk
 	 *
 	 * @return      void
 	 */
@@ -70,7 +79,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 		try {
 			FileOutputStream fao = new FileOutputStream(new File("./names.xml"));
 			XMLEncoder xml = new XMLEncoder(fao);
-			xml.writeObject(serverMap);
+			xml.writeObject(nodeMap);
 			xml.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -78,7 +87,36 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 		}
 
 	}
+	
+	/**
+	 * Retrieve the address of the node that stores the file with the given name
+	 *
+	 * @return	InetAddress		The address at which the file can be found
+	 */
+	public InetAddress getFilelocation(String filename) throws RemoteException {
+		int hash = getShortHash(filename);
+		InetAddress location = null;
+		
+		//If the hash of the file is lower than the hash of the first node, the file can be found on the last node
+		if (hash < nodeMap.firstKey() ) {
+			location = nodeMap.lastEntry().getValue();
+		}
+		//Else iterate over the map until a node hash lower than the file hash is found
+		else {
+			for (Map.Entry<Integer, InetAddress> entry : nodeMap.entrySet()) {
+				if (entry.getKey() < hash) {
+					location = entry.getValue();
+				}
+			}
+		}
+		return location;
+	}
 
+	/**
+	 * Generates a short hash based on the input object
+	 *
+	 * @return	int		number between 0 and 32768
+	 */
 	private static int getShortHash(Object s) {
 		return Math.abs(s.hashCode()) % (int) Math.pow(2, 15);
 	}
@@ -87,18 +125,18 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 		NameServer ns = new NameServer();
 		
 		//Test toevoegen
-		ns.registerServer("Test1", InetAddress.getByName("localhost"));
+		ns.registerNode("Test1", InetAddress.getByName("localhost"));
 		
 		//Test ophalen
-		InetAddress ip1 = ns.lookupServer("Test1");
+		InetAddress ip1 = ns.lookupNode("Test1");
 		if (ip1 == null) {
 			System.out.println("Ip1 not found");
 			System.out.println("Test failed");
 		}
 		
 		//Test verwijderen
-		ns.unregisterServer("Test1");
-		InetAddress ip2 = ns.lookupServer("Test1");
+		ns.unregisterNode("Test1");
+		InetAddress ip2 = ns.lookupNode("Test1");
 		if (ip2 != null) {
 			System.out.println("Ip2  found");
 			System.out.println("Test failed");

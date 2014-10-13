@@ -13,16 +13,16 @@ public class Client {
 			
 			INameServer ns = (INameServer) Naming.lookup("//localhost/NameServer");
 			try {
-				ns.registerServer("google", InetAddress.getByName("www.google.com"));
+				ns.registerNode("google", InetAddress.getByName("www.google.com"));
 				System.out.println("google registered");
-				ns.registerServer("localhost", InetAddress.getLocalHost());
+				ns.registerNode("localhost", InetAddress.getLocalHost());
 				System.out.println("localhost registered");
 			} catch (UnknownHostException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println(ns.lookupServer("google"));
-			System.out.println(ns.lookupServer("localhost"));
+			System.out.println(ns.lookupNode("google"));
+			System.out.println(ns.lookupNode("localhost"));
 		} catch (MalformedURLException | RemoteException | NotBoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
