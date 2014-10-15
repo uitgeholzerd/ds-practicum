@@ -1,11 +1,11 @@
 package be.uantwerpen.ds.ns;
 
-import java.net.InetAddress;
-import java.rmi.*;
+import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 public interface INameServer extends Remote {
-	public boolean registerNode(String name, InetAddress address) throws RemoteException;
-	public InetAddress lookupNode(String name) throws RemoteException;
-	public InetAddress getFilelocation(String filename) throws RemoteException;
+	public boolean registerNode(String name, String address) throws RemoteException;
+	public String lookupNode(String name) throws RemoteException;
+	public String getFilelocation(String filename) throws RemoteException;
 
 }
