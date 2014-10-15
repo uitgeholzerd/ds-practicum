@@ -10,12 +10,15 @@ public class MulticastGroup extends Thread {
     private DatagramPacket inPacket = null;
     private byte[] inBuf = new byte[256];
     private List<PacketListener> listeners = new ArrayList<PacketListener>();
+    private InetAddress address;
+    private int port;
 
     public MulticastGroup(String group, int port){
     	 try {
     	      //Prepare to join multicast group
+    		  this.port = port;
     	      socket = new MulticastSocket(port);
-    	      InetAddress address = InetAddress.getByName(group);
+    	      address = InetAddress.getByName(group);
     	      socket.joinGroup(address);
     	 } catch (IOException e){
     		 e.printStackTrace();
@@ -42,7 +45,7 @@ public class MulticastGroup extends Thread {
     public void sendMessage(String message) throws IOException{
     	//prepare packet & send to existing socket
     	//TODO: this might not work on the same socket used for listening
-    	DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length);
+    	DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, address, port);
     	socket.send(outPacket);
     }
     public void addPacketListener(PacketListener pl){
