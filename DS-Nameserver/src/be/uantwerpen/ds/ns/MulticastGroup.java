@@ -1,0 +1,51 @@
+package be.uantwerpen.ds.ns;
+
+import java.io.IOException;
+import java.net.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class MulticastGroup extends Thread {
+	private MulticastSocket socket = null;
+    private DatagramPacket inPacket = null;
+    private byte[] inBuf = new byte[256];
+    private List<PacketListener> listeners = new ArrayList<PacketListener>();
+
+    public MulticastGroup(String group, int port){
+    	 try {
+    	      //Prepare to join multicast group
+    	      socket = new MulticastSocket(port);
+    	      InetAddress address = InetAddress.getByName(group);
+    	      socket.joinGroup(address);
+    	 } catch (IOException e){
+    		 e.printStackTrace();
+    	 }
+    	 
+    }
+    public void run(){
+    	//keep listening for packets
+    	while (true) {
+            inPacket = new DatagramPacket(inBuf, inBuf.length);
+            try {
+				socket.receive(inPacket);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            //when packet received, alert listeners
+            String msg = new String(inBuf, 0, inPacket.getLength());
+            for (PacketListener pl : listeners){
+            	pl.packetReceived(inPacket.getAddress(), msg);
+            }
+          }
+    }
+    public void sendMessage(String message) throws IOException{
+    	//prepare packet & send to existing socket
+    	//TODO: this might not work on the same socket used for listening
+    	DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length);
+    	socket.send(outPacket);
+    }
+    public void addPacketListener(PacketListener pl){
+    	listeners.add(pl);
+    }
+}

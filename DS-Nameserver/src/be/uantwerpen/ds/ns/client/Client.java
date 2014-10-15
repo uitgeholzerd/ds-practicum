@@ -6,18 +6,21 @@ import java.rmi.*;
 import java.util.TreeMap;
 
 import be.uantwerpen.ds.ns.INameServer;
+import be.uantwerpen.ds.ns.MulticastGroup;
+import be.uantwerpen.ds.ns.PacketListener;
 
-public class Client {
+public class Client implements PacketListener {
 	
 	private TreeMap<Integer, InetAddress> fileMap;
+	private MulticastGroup group;
 	
 	public Client() {
 		fileMap = new TreeMap<Integer, InetAddress>();
+		group = new MulticastGroup("225.6.7.8", 5678);
 	}
 
 	public static void main(String[] args) {
-		try {
-			
+		try {		
 			INameServer ns = (INameServer) Naming.lookup("//localhost/NameServer");
 			try {
 				ns.registerNode("google", InetAddress.getByName("www.google.com"));
@@ -35,6 +38,12 @@ public class Client {
 			e.printStackTrace();
 		}
 		
+	}
+
+	@Override
+	public void packetReceived(InetAddress sender, String message) {
+		// TODO Auto-generated method stub
+		System.out.println("Received multicast from " + sender + ": " + message);
 	}
 	
 
