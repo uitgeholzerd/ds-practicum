@@ -3,10 +3,17 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.rmi.*;
+import java.util.TreeMap;
 
 import be.uantwerpen.ds.ns.INameServer;
 
 public class Client {
+	
+	private TreeMap<Integer, InetAddress> fileMap;
+	
+	public Client() {
+		fileMap = new TreeMap<Integer, InetAddress>();
+	}
 
 	public static void main(String[] args) {
 		try {

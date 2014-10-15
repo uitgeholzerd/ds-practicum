@@ -30,24 +30,25 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 *
 	 * @param	name	The name of the node
 	 * @param	address	The address at which the node can be found
-	 * @return	void
+	 * @return	boolean	Returns true if the node is added, false if the name already exists and the node is not added
 	 */
-	public void registerNode(String name, InetAddress address) throws RemoteException {
+	public boolean registerNode(String name, InetAddress address) throws RemoteException {
 		int hash = getShortHash(name);
 		if (!nodeMap.containsKey(hash)) {
 			nodeMap.put(hash, address);
+			return true;
 		}
 		else {
-			//TODO
+			return false;
 		}
-		saveMap();
+		//saveMap();
 	}
 
 	/**
 	 * Retrieve the address of the node the given name
 	 *
 	 * @param	name	The name of the node
-	 * @return	InetAddress	The address of the node      
+	 * @return	InetAddress	The address of the node, returns null if the node was not found      
 	 */
 	public InetAddress lookupNode(String name) throws RemoteException {
 		return nodeMap.get(getShortHash(name));
@@ -59,15 +60,16 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 * @param	name	The name of the node
 	 * @return  void
 	 */
-	public void unregisterNode(String name) {
+	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
 		if (nodeMap.containsKey(hash)) {
 			nodeMap.remove(hash);
+			return true;
 		}
 		else {
-			//TODO
+			return false;
 		}
-		saveMap();
+		//saveMap();
 	}
 
 	/**
@@ -75,6 +77,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 *
 	 * @return      void
 	 */
+	//TODO werkt niet
 	private void saveMap() {
 		try {
 			FileOutputStream fao = new FileOutputStream(new File("./names.xml"));
@@ -121,8 +124,9 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 		return Math.abs(s.hashCode()) % (int) Math.pow(2, 15);
 	}
 	
-	public static void main(String argv[]) throws Exception {
+	public static void main(String[] args) throws Exception {
 		NameServer ns = new NameServer();
+		boolean failed = false;
 		
 		//Test toevoegen
 		ns.registerNode("Test1", InetAddress.getByName("localhost"));
@@ -131,7 +135,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 		InetAddress ip1 = ns.lookupNode("Test1");
 		if (ip1 == null) {
 			System.out.println("Ip1 not found");
-			System.out.println("Test failed");
+			failed = true;
 		}
 		
 		//Test verwijderen
@@ -139,7 +143,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 		InetAddress ip2 = ns.lookupNode("Test1");
 		if (ip2 != null) {
 			System.out.println("Ip2  found");
-			System.out.println("Test failed");
+			failed = true;
+		}
+		
+		if (failed) {
+			System.out.println("One or more tests failed");
+		}
+		else {
+			System.out.println("Test completed successfully");
 		}
 		
 	}
