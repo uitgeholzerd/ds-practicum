@@ -6,7 +6,11 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.rmi.AlreadyBoundException;
+import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collections;
 import java.util.Map;
@@ -21,6 +25,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 */
 	private static final long serialVersionUID = -1957228712436209754L;
 	private static final String fileLocation = "./names.xml";
+	private static final String bindLocation =  "//localhost/NameServer";
 
 	private SortedMap<Integer, String> nodeMap;
 
@@ -38,6 +43,24 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 			if (decoder != null) {
 				decoder.close();
 			}
+		}
+		rmiBind();
+	}
+	
+	/**
+	 * Binds the current NameServer object to the bindlocation
+	 * 
+	 */
+	private void rmiBind() {
+        try { 
+			LocateRegistry.createRegistry(1099);
+			Naming.bind(bindLocation, this);
+	        System.out.println("NameServer is ready at:" + bindLocation);
+            System.out.println("java RMI registry created.");
+        } catch (MalformedURLException | AlreadyBoundException e) {
+            System.err.println("java RMI registry already exists.");
+        } catch (RemoteException e) {
+        	 System.err.println("RemoteException: " +e.getMessage());
 		}
 	}
 
