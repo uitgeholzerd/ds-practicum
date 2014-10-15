@@ -1,4 +1,5 @@
 package be.uantwerpen.ds.ns.client;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -18,9 +19,20 @@ public class Client implements PacketListener {
 	public Client() {
 		fileMap = new TreeMap<Integer, InetAddress>();
 		group = new MulticastGroup("225.6.7.8", 5678);
+		group.addPacketListener(this);
+		group.start();
+		try {
+			group.sendMessage("Hello group!");
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 	}
 
 	public static void main(String[] args) {
+
+		Client c = new Client();
 		try {		
 			INameServer ns = (INameServer) Naming.lookup("//localhost/NameServer");
 				ns.registerNode("google", "www.google.com");
@@ -42,7 +54,6 @@ public class Client implements PacketListener {
 		// TODO Auto-generated method stub
 		System.out.println("Received multicast from " + sender + ": " + message);
 	}
-	
 
 
 }
