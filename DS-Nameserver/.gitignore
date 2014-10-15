@@ -13,6 +13,4 @@ target/
 *.pydevproject
 .metadata
 bin/**
-.classpath
 .settings/
-.loadpath
