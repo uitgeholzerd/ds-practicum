@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
@@ -18,16 +19,22 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import be.uantwerpen.ds.ns.INameServer;
+import be.uantwerpen.ds.ns.MulticastGroup;
+import be.uantwerpen.ds.ns.PacketListener;
 
-public class NameServer extends UnicastRemoteObject implements INameServer {
+public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener{
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -1957228712436209754L;
 	private static final String fileLocation = "./names.xml";
 	private static final String bindLocation =  "//localhost/NameServer";
+	private static final String multicastAddress = "225.6.7.8";
+	private static final int multicastPort = 5678;
 
 	private SortedMap<Integer, String> nodeMap;
+	private MulticastGroup group;
 
 	@SuppressWarnings("unchecked")
 	protected NameServer() throws RemoteException {
@@ -45,6 +52,10 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 			}
 		}
 		rmiBind();
+		
+		group = new MulticastGroup(multicastAddress, multicastPort);
+		group.addPacketListener(this);
+		new Thread(group).start();
 	}
 	
 	/**
@@ -166,6 +177,19 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 */
 	private static int getShortHash(Object s) {
 		return Math.abs(s.hashCode()) % (int) Math.pow(2, 15);
+	}
+	
+	@Override
+	public void packetReceived(InetAddress sender, String message) {
+		// TODO Auto-generated method stub
+		System.out.println("Received multicast from " + sender + ": " + message);
+		if (message.equalsIgnoreCase("knock knock"))
+			try {
+				group.sendMessage("Who's there?");
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 
 	public static void main(String[] args) throws Exception {

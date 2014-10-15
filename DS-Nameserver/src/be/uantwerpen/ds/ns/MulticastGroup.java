@@ -5,7 +5,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MulticastGroup extends Thread {
+public class MulticastGroup implements Runnable{
 	private MulticastSocket socket = null;
     private DatagramPacket inPacket = null;
     private byte[] inBuf = new byte[256];
