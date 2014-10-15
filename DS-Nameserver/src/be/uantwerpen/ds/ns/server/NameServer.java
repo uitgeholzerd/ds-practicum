@@ -18,23 +18,31 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.INameServer;
 import be.uantwerpen.ds.ns.MulticastGroup;
 import be.uantwerpen.ds.ns.PacketListener;
+import be.uantwerpen.ds.ns.Protocol;
 
 public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener{
 
+	
 	/**
 	 * 
 	 */
+	// TODO: should we put these in a shared class so settings are shared?
 	private static final long serialVersionUID = -1957228712436209754L;
 	private static final String fileLocation = "./names.xml";
 	private static final String bindLocation =  "//localhost/NameServer";
 	private static final String multicastAddress = "225.6.7.8";
 	private static final int multicastPort = 5678;
-
+	private static final int rmiPort = 1099;
+	private static final int udpServerPort = 2345;
+	private static final int udpClientPort = 3456;
+	
 	private SortedMap<Integer, String> nodeMap;
 	private MulticastGroup group;
+	private DatagramHandler udp;
 
 	@SuppressWarnings("unchecked")
 	protected NameServer() throws RemoteException {
@@ -53,9 +61,15 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		rmiBind();
 		
+		//join multicast group and receive messages
 		group = new MulticastGroup(multicastAddress, multicastPort);
 		group.addPacketListener(this);
 		new Thread(group).start();
+		
+		//set up UDP socket and receive messages
+		udp = new DatagramHandler(udpServerPort);
+		udp.addPacketListener(this);
+		new Thread(udp).start();
 	}
 	
 	/**
@@ -64,7 +78,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 */
 	private void rmiBind() {
         try { 
-			LocateRegistry.createRegistry(1099);
+			LocateRegistry.createRegistry(rmiPort);
 			Naming.bind(bindLocation, this);
 	        System.out.println("NameServer is ready at:" + bindLocation);
             System.out.println("java RMI registry created.");
@@ -110,8 +124,9 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * 
 	 * @param name	The name of the node
 	 * @return boolean	True if the node was removed, false if the node didn't exist
+	 * @throws RemoteException 
 	 */
-	public boolean unregisterNode(String name) {
+	public boolean unregisterNode(String name) throws RemoteException {
 		int hash = getShortHash(name);
 		boolean success;
 
@@ -175,21 +190,36 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * 
 	 * @return int	Number between 0 and 32768
 	 */
-	private static int getShortHash(Object s) {
-		return Math.abs(s.hashCode()) % (int) Math.pow(2, 15);
+	// TODO: maybe this should be in a shared class instead of using RMI
+	public int getShortHash(Object o) throws RemoteException {
+		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 	}
 	
 	@Override
 	public void packetReceived(InetAddress sender, String message) {
 		// TODO Auto-generated method stub
-		System.out.println("Received multicast from " + sender + ": " + message);
-		if (message.equalsIgnoreCase("knock knock"))
+		System.out.println("Received message from " + sender + ": " + message);
+		String[] command = message.split(" ");
+		if (command[0].equals(Protocol.REGISTER.getCommand())) {
+			// new node wants to register
+			// get name/ip from message
+			String name = command[1].split("/")[0];
+			String ip = command[1].split("/")[1];
 			try {
-				group.sendMessage("Who's there?");
+				registerNode(name, ip);
+				//respond with new nodemap size
+				//TODO should be old size but that doesn't make sense? could just subtract 1...
+				udp.sendMessage(sender, udpClientPort, String.format(Protocol.REG_ACK.toString(), nodeMap.size()));
+			} catch (RemoteException e) {
+				// TODO This shouldn't happen as it's called locally?
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		} else if (command[0].equals(Protocol.REGISTER.getCommand())) {
+			
+		}
+
 	}
 
 	public static void main(String[] args) throws Exception {
