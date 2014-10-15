@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -17,11 +18,11 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private TreeMap<Integer, InetAddress> nodeMap;
+	private Map<Integer, InetAddress> nodeMap;
 
 	protected NameServer() throws RemoteException {
 		super();
-		nodeMap = new TreeMap<Integer, InetAddress>();
+		nodeMap = Collections.synchronizedMap(new TreeMap<Integer, InetAddress>());
 		//TODO lijst uit XML bestand inladen
 	}
 
