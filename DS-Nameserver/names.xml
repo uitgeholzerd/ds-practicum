@@ -6,6 +6,10 @@
    <string>1.2.3.4</string>
   </void>
   <void method="put">
+   <int>4124</int>
+   <string>10.0.4.103</string>
+  </void>
+  <void method="put">
    <int>5205</int>
    <string>4.5.6.6</string>
   </void>

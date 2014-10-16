@@ -5,7 +5,7 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MulticastGroup extends Thread {
+public class MulticastGroup implements Runnable{
 	private MulticastSocket socket = null;
     private DatagramPacket inPacket = null;
     private byte[] inBuf = new byte[256];
@@ -19,6 +19,9 @@ public class MulticastGroup extends Thread {
     		  this.port = port;
     	      socket = new MulticastSocket(port);
     	      address = InetAddress.getByName(group);
+    	      //check if valid multicast address
+    	      assert(address.isMulticastAddress());
+    	      //join group
     	      socket.joinGroup(address);
     	 } catch (IOException e){
     		 e.printStackTrace();
@@ -43,13 +46,22 @@ public class MulticastGroup extends Thread {
             }
           }
     }
+	/**
+	 * Sends a message to the multicast group
+	 * 
+	 * @param message The message to send
+	 * @throws IOException
+	 */
     public void sendMessage(String message) throws IOException{
     	//prepare packet & send to existing socket
     	//TODO: this might not work on the same socket used for listening
     	DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, address, port);
     	socket.send(outPacket);
     }
-    
+    /**
+     * Adds a listener that will be notified if any packets are received from the multicast group
+     * @param pl The listener object
+     */
     public void addPacketListener(PacketListener pl){
     	listeners.add(pl);
     }
