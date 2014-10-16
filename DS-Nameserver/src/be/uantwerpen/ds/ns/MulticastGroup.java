@@ -25,6 +25,7 @@ public class MulticastGroup extends Thread {
     	 }
     	 
     }
+    
     public void run(){
     	//keep listening for packets
     	while (true) {
@@ -48,6 +49,7 @@ public class MulticastGroup extends Thread {
     	DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, address, port);
     	socket.send(outPacket);
     }
+    
     public void addPacketListener(PacketListener pl){
     	listeners.add(pl);
     }

@@ -27,9 +27,7 @@ public class Client implements PacketListener {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
 	}
-	
 
 	public static void main(String[] args) {
 

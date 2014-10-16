@@ -234,10 +234,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer {
 			System.out.println("File lookup failed");
 			failed = true;
 		}
-		
 		//TODO test voor gelijktijd opvragen
 		
-
 		System.out.println();
 		if (failed) {
 			System.out.println("One or more tests failed");
