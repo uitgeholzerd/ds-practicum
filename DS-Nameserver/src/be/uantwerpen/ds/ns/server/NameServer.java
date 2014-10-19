@@ -199,6 +199,13 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 	}
 
+	/**
+	 * This method is triggered when a package is sent to this servver (uni- or multicast)
+	 * Depending on the command contained in the message, the server will perform different actions
+	 * 
+	 * @param address	IP of the sender
+	 * @param port		Data containing the command and a message
+	 */
 	public void packetReceived(InetAddress sender, String data) {
 		System.out.println("Received message from " + sender + ": " + data);
 		String[] message = data.split(" ");
@@ -206,27 +213,27 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		
 		switch (command) {
 		case DISCOVER:
-			// Register the node
-			String nodeName = message[1].split("/")[1];
-			String nodeIp = message[1].split("/")[2];
-			boolean succces = registerNode(nodeName, nodeIp);
-			//TODO iets doen met succes flag?
-			// Send the node the required information
+			// Register the node and send it the required information
+			String nodeName = message[1].split("/")[0];
+			String nodeIp = message[2].split("/")[0];
+			registerNode(nodeName, nodeIp);
+			
 			try {
 				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, udpClientPort, Protocol.DISCOVER_ACK + " " + bindLocation + " " + nodeMap.size());
+				udp.sendMessage(sender, udpClientPort, Protocol.DISCOVER_ACK, bindLocation + " " + nodeMap.size());
 			}
 			 catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			break;
+			
 		case LEAVE:
 			//TODO
 			break;
 
-
 		default:
+			System.err.println("Command not found");
 			break;
 		}
 

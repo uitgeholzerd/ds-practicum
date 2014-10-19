@@ -59,8 +59,9 @@ public class DatagramHandler implements Runnable{
 	 * @param message The message to send
 	 * @throws IOException
 	 */
-	public void sendMessage(InetAddress to, int port,  String message) throws IOException{
-		DatagramPacket outPacket = new DatagramPacket (message.getBytes(), message.length(),to, port);
+	public void sendMessage(InetAddress address, int port, Protocol command, String data) throws IOException {
+		String message = command + " " + data;
+		DatagramPacket outPacket = new DatagramPacket (message.getBytes(), message.length(), address, port);
 		socket.send(outPacket);
 	}
     /**
