@@ -16,6 +16,8 @@ import java.util.List;
 public class DatagramHandler implements Runnable{
 	
 	private DatagramSocket socket;
+	DatagramPacket inPacket;
+	byte[] buffer;
 	private List<PacketListener> listeners = new ArrayList<PacketListener>();
 	
 	/**
@@ -31,10 +33,10 @@ public class DatagramHandler implements Runnable{
 	}
 	@Override
 	public void run() {
-		byte[] buffer = new byte[1000];
+		buffer = new byte[1024];
 		// keep listening for UDP datagrams
 		while (true) {
-			DatagramPacket inPacket = new DatagramPacket (buffer, buffer.length);
+			inPacket = new DatagramPacket (buffer, buffer.length);
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {

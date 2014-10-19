@@ -45,7 +45,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private DatagramHandler udp;
 
 	@SuppressWarnings("unchecked")
-	protected NameServer() throws RemoteException {
+	public NameServer() throws RemoteException {
 		super();
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>()) ;
 		XMLDecoder decoder = null;
@@ -80,8 +80,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
         try { 
 			LocateRegistry.createRegistry(rmiPort);
 			Naming.bind(bindLocation, this);
-	        System.out.println("NameServer is ready at:" + bindLocation);
-            System.out.println("java RMI registry created.");
         } catch (MalformedURLException | AlreadyBoundException e) {
             System.err.println("java RMI registry already exists.");
         } catch (RemoteException e) {
@@ -96,7 +94,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param	address	The address at which the node can be found
 	 * @return	boolean	True if the node was added, false if the name already exists and the node was not added
 	 */
-	public boolean registerNode(String name, String address) throws RemoteException {
+	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
 		boolean success;
 		if (!nodeMap.containsKey(hash)) {
@@ -113,10 +111,16 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * Retrieve the address of the node the given name
 	 * 
 	 * @param	name	The name of the node
-	 * @return	InetAddress The address of the node, returns null if the node was not found
+	 * @return	InetAddress The address of the node, returns an empty string if the node was not found
 	 */
-	public String lookupNode(String name) throws RemoteException {
-		return nodeMap.get(getShortHash(name));
+	public String lookupNode(String name) {
+		int hash = getShortHash(name);
+		if (!nodeMap.containsKey(hash)) {
+			return nodeMap.get(getShortHash(name));
+		}
+		else {
+			return "";
+		}
 	}
 
 	/**
@@ -126,7 +130,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @return boolean	True if the node was removed, false if the node didn't exist
 	 * @throws RemoteException 
 	 */
-	public boolean unregisterNode(String name) throws RemoteException {
+	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
 		boolean success;
 
@@ -166,7 +170,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * 
 	 * @return InetAddress The address at which the file can be found
 	 */
-	public String getFilelocation(String filename) throws RemoteException {
+	public String getFilelocation(String filename) {
 		int hash = getShortHash(filename);
 		String location = null;
 
@@ -191,110 +195,39 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @return int	Number between 0 and 32768
 	 */
 	// TODO: maybe this should be in a shared class instead of using RMI
-	public int getShortHash(Object o) throws RemoteException {
+	public int getShortHash(Object o) {
 		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 	}
-	
-	@Override
-	public void packetReceived(InetAddress sender, String message) {
-		// TODO Auto-generated method stub
-		System.out.println("Received message from " + sender + ": " + message);
-		String[] command = message.split(" ");
-		if (command[0].equals(Protocol.REGISTER.getCommand())) {
-			// new node wants to register
-			// get name/ip from message
-			String name = command[1].split("/")[0];
-			String ip = command[1].split("/")[1];
+
+	public void packetReceived(InetAddress sender, String data) {
+		System.out.println("Received message from " + sender + ": " + data);
+		String[] message = data.split(" ");
+		Protocol command = Protocol.valueOf(message[0]);
+		
+		switch (command) {
+		case DISCOVER:
+			// Register the node
+			String nodeName = message[1].split("/")[1];
+			String nodeIp = message[1].split("/")[2];
+			boolean succces = registerNode(nodeName, nodeIp);
+			//TODO iets doen met succes flag?
+			// Send the node the required information
 			try {
-				registerNode(name, ip);
-				//respond with new nodemap size
 				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, udpClientPort, String.format(Protocol.REG_ACK.toString(), nodeMap.size()));
-			} catch (RemoteException e) {
-				// TODO This shouldn't happen as it's called locally?
-			} catch (IOException e) {
+				udp.sendMessage(sender, udpClientPort, Protocol.DISCOVER_ACK + " " + bindLocation + " " + nodeMap.size());
+			}
+			 catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} else if (command[0].equals(Protocol.REGISTER.getCommand())) {
-			
-		}
+			break;
+		case LEAVE:
+			//TODO
+			break;
 
-	}
 
-	public static void main(String[] args) throws Exception {
-		NameServer ns = new NameServer();
-		boolean failed = false;
-		boolean test = false;
-
-		// Test toevoegen
-		test = ns.registerNode("aaa123", "localhost");
-		if (!test) {
-			System.out.println("Fout bij het toevoegen");
-			failed = true;
-		}
-
-		// Test dubbel toevoegen
-		test = ns.registerNode("aaa123", "localhost");
-		if (test) {
-			System.out.println("Geen fout bij dubbel toevoegen");
-			failed = true;
-		}
-
-		// Test ophalen
-		String ip1 = ns.lookupNode("aaa123");
-		if (ip1 == null) {
-			System.out.println("Ip1 not found");
-			failed = true;
-		}
-
-		// Test verwijderen
-		test = ns.unregisterNode("aaa123");
-		String ip2 = ns.lookupNode("aaa123");
-		if (!test || ip2 != null) {
-			System.out.println("Ip2  found");
-			failed = true;
-		}
-
-		// Test dubbel verwijderen
-		test = ns.unregisterNode("aaa123");
-		String ip3 = ns.lookupNode("aaa123");
-		if (test || ip3 != null) {
-			System.out.println("Ip2  found");
-			failed = true;
-		}
-		
-		//Bestandsnaam opvragen
-		String node1Name = "fileNode";
-		String node1Location = "1.2.3.4";
-		String node2Name = "azerty";
-		String node2Location = "4.5.6.6";
-		String filename = "1";
-		
-		int node1Hash =  Math.abs(node1Name.hashCode()) % (int) Math.pow(2, 15);
-		int node2Hash =  Math.abs(node2Name.hashCode()) % (int) Math.pow(2, 15);
-		int fileHash =  Math.abs(filename.hashCode()) % (int) Math.pow(2, 15);
-		
-		ns.registerNode(node1Name, node1Location);
-		ns.registerNode(node2Name, node2Location);
-		
-		String location = ns.getFilelocation(filename);
-		
-		System.out.println("Node 1 hash: " + node1Hash + ", location: " + node1Location);
-		System.out.println("Node 2 hash: " + node2Hash + ", location: " + node2Location);
-		System.out.println("File hash: " + fileHash + ", location: " + location);
-		
-		if ((fileHash < node1Hash && !location.equals(node2Location)) || (fileHash > node1Hash && !location.equals(node1Location))) {
-			System.out.println("File lookup failed");
-			failed = true;
-		}
-		//TODO test voor gelijktijd opvragen
-		
-		System.out.println();
-		if (failed) {
-			System.out.println("One or more tests failed");
-		} else {
-			System.out.println("Test completed successfully");
+		default:
+			break;
 		}
 
 	}

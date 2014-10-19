@@ -8,21 +8,23 @@ import java.util.List;
 public class MulticastGroup implements Runnable{
 	private MulticastSocket socket = null;
     private DatagramPacket inPacket = null;
-    private byte[] inBuf = new byte[256];
+    private byte[] inBuffer;
     private List<PacketListener> listeners = new ArrayList<PacketListener>();
     private InetAddress address;
     private int port;
 
+    //TODO singleton maken?
     public MulticastGroup(String group, int port){
     	 try {
     	      //Prepare to join multicast group
     		  this.port = port;
     	      socket = new MulticastSocket(port);
     	      address = InetAddress.getByName(group);
-    	      //check if valid multicast address
-    	      assert(address.isMulticastAddress());
-    	      //join group
-    	      socket.joinGroup(address);
+    	      //Join group if valid multicast address
+    	      if (address.isMulticastAddress()) {
+        	      socket.joinGroup(address);
+    	      }
+    	      //TODO else?
     	 } catch (IOException e){
     		 e.printStackTrace();
     	 }
@@ -32,7 +34,8 @@ public class MulticastGroup implements Runnable{
     public void run(){
     	//keep listening for packets
     	while (true) {
-            inPacket = new DatagramPacket(inBuf, inBuf.length);
+    		inBuffer = new byte[1024];
+            inPacket = new DatagramPacket(inBuffer, inBuffer.length);
             try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
@@ -40,7 +43,7 @@ public class MulticastGroup implements Runnable{
 				e.printStackTrace();
 			}
             //when packet received, alert listeners
-            String msg = new String(inBuf, 0, inPacket.getLength());
+            String msg = new String(inBuffer, 0, inPacket.getLength());
             for (PacketListener pl : listeners){
             	pl.packetReceived(inPacket.getAddress(), msg);
             }
