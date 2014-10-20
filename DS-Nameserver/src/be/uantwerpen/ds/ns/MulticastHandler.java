@@ -24,6 +24,7 @@ public class MulticastHandler implements Runnable {
 		this.listener = listener;
 		try {
 			socket = new MulticastSocket(multicastPort);
+			socket.setInterface(listener.getAddress());
 			socket.joinGroup(InetAddress.getByName(multicastAddress));
 			// TODO else?
 		} catch (IOException e) {
