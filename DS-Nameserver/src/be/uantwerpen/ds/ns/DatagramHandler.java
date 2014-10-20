@@ -3,6 +3,7 @@ package be.uantwerpen.ds.ns;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -32,7 +33,8 @@ public class DatagramHandler implements Runnable {
 	public DatagramHandler(int listenPort, PacketListener listener) {
 		this.listener = listener;
 		try {
-			socket = new DatagramSocket(new InetSocketAddress(listener.getAddress(), listenPort));
+			// TODO: convince linux to bind on ipv4
+			socket = new DatagramSocket(new InetSocketAddress((Inet4Address)listener.getAddress(), listenPort));
 		} catch (SocketException e) {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
 		}
