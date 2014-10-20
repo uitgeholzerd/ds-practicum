@@ -12,7 +12,7 @@ import be.uantwerpen.ds.ns.server.NameServer;
  *
  */
 
-public class ConnectionFailureHandler implements PacketListener{
+public class ConnectionFailureHandler{
 
 	private NameServer nameServer;
 	private DatagramHandler udp;
@@ -49,29 +49,4 @@ public class ConnectionFailureHandler implements PacketListener{
 	}
 	
 	
-	
-	/**
-	 * This method is triggered when a package is sent to this class (unicast)
-	 * Depending on the command contained in the message, the handler will perform different actions
-	 * 
-	 * @param address	IP of the sender
-	 * @param port		Data containing the command and a message
-	 */
-	
-	@Override
-	public void packetReceived(InetAddress sendToID, String message) {
-
-	}
-	
-	@Override
-	public InetAddress getAddress() {
-		InetAddress address = null;
-		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return address;
-	}
 }

@@ -26,7 +26,7 @@ public class Client implements PacketListener {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private int thisPort;
+	private InetAddress serverAddress;
 
 	public Client() {
 		joinMulticastGroup();
@@ -89,6 +89,7 @@ public class Client implements PacketListener {
 		case DISCOVER_ACK:
 			// Server confirmed registration and answers with its location and the number of nodes
 			try {
+				serverAddress = sender;
 				// Try to bind the NameServer
 				nameServer = (INameServer) Naming.lookup(message[1]);
 			} catch (MalformedURLException | RemoteException | NotBoundException e) {
@@ -161,8 +162,7 @@ public class Client implements PacketListener {
 	 */
 	public void WarnNSExitNode(int idExitNode){
 		try{
-			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
-			udp.sendMessage(ipNameServer, udpClientPort, Protocol.LEAVE, ""+idExitNode);
+			udp.sendMessage(serverAddress, udpClientPort, Protocol.LEAVE, ""+idExitNode);
 		}catch(IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
