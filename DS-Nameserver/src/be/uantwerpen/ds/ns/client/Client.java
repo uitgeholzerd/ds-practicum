@@ -46,7 +46,7 @@ public class Client implements PacketListener {
 	public void connectToNetwork() {
 		joinMulticastGroup();
 		try {
-			name = InetAddress.getLocalHost().getHostName();
+			name = getAddress().getHostName();
 			group.sendMessage(Protocol.DISCOVER,
 					name + " " + getAddress());
 			//DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
