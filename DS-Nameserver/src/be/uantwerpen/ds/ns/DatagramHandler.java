@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 /**
  * @author seb
@@ -45,13 +46,12 @@ public class DatagramHandler implements Runnable {
 		}
 		buffer = new byte[1024];
 		// Listen for UDP datagrams
-		System.err.println("UDP socket listening...");
+		System.err.println("UDP socket listening on port " + socket.getLocalPort());
 		while (isRunning) {
 			inPacket = new DatagramPacket(buffer, buffer.length);
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
-				
 					System.err.println("Failed to receive UDP datagram: "
 							+ e.getMessage());
 			}
@@ -82,7 +82,7 @@ public class DatagramHandler implements Runnable {
 		DatagramPacket outPacket = new DatagramPacket(message.getBytes(),
 				message.length(), address, port);
 		socket.send(outPacket);
-		System.out.println("Sent datagram "+outPacket+"[" + message + "]");
+		System.out.println("Sent datagram "+outPacket+"[" + message + "] to " + address.getHostAddress()+":"+port);
 	}
 
 	/**
