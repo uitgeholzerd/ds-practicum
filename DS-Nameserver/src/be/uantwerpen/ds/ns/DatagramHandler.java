@@ -63,6 +63,9 @@ public class DatagramHandler implements Runnable{
 		socket.send(outPacket);
 	}
 	
+	/**
+	 * Closes the socket of the client
+	 */
 	public void closeClient(){
 		socket.close();
 	}
