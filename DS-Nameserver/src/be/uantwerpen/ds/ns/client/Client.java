@@ -145,12 +145,8 @@ public class Client implements PacketListener {
 	 * @param port		Data containing the command and a message
 	 */
 	
-	public void Shutdown(int port){
-		thisPort = port;
-		//set up UDP socket and receive messages
-		udp = new DatagramHandler(port, null);
-		new Thread(udp).start();
-		
+	public void Shutdown(){
+	
 		WarnPrevNode(previousNodeHash,nextNodeHash);
 		WarnNextNode(nextNodeHash,previousNodeHash);
 		WarnNSExitNode(hash);
@@ -166,7 +162,7 @@ public class Client implements PacketListener {
 	public void WarnNSExitNode(int idExitNode){
 		try{
 			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
-			udp.sendMessage(ipNameServer, thisPort, Protocol.LEAVE, ""+idExitNode);
+			udp.sendMessage(ipNameServer, udpClientPort, Protocol.LEAVE, ""+idExitNode);
 		}catch(IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
@@ -183,7 +179,7 @@ public class Client implements PacketListener {
 	public void WarnPrevNode(int idPrevNode, int idNextNode){
 		try{
 			InetAddress ipNode = InetAddress.getByName("" + idPrevNode);
-			udp.sendMessage(ipNode, thisPort, Protocol.NEXTNODE, ""+idNextNode);
+			udp.sendMessage(ipNode, udpClientPort, Protocol.NEXTNODE, ""+idNextNode);
 		}catch(IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();			
@@ -200,7 +196,7 @@ public class Client implements PacketListener {
 	public void WarnNextNode(int idNextNode, int idPrevNode){
 		try{
 			InetAddress ipNode = InetAddress.getByName("" + idNextNode);
-			udp.sendMessage(ipNode, thisPort, Protocol.PREVNODE, ""+idPrevNode);
+			udp.sendMessage(ipNode, udpClientPort, Protocol.PREVNODE, ""+idPrevNode);
 		}catch(IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -245,7 +245,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this servver (uni- or multicast)
+	 * This method is triggered when a package is sent to this server (uni- or multicast)
 	 * Depending on the command contained in the message, the server will perform different actions
 	 * 
 	 * @param address	IP of the sender
@@ -275,6 +275,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			
 		case LEAVE:
 			unregisterNode(message[1]);
+			System.out.println("CLIENT LEFT.");
 			break;
 			
 		case FAIL:

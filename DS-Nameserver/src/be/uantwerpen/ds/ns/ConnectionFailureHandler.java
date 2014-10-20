@@ -18,9 +18,10 @@ public class ConnectionFailureHandler implements PacketListener{
 	private DatagramHandler udp;
 
 	/**
-	 * @param failingID	The hash of the id which caused the connection failure
-	 * @param message	To know which error has occurred
-	 * @param port		Port for receiving and sending messages
+	 * @param failingID		The hash of the id which caused the connection failure
+	 * @param clientHash	The hash of client
+	 * @param message		To know which error has occurred
+	 * @param port			Port for receiving and sending messages
 	 */
 	public ConnectionFailureHandler(NameServer nameServer, DatagramHandler udp){
 		this.nameServer = nameServer;
