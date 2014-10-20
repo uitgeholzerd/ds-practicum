@@ -49,10 +49,11 @@ public class DatagramHandler implements Runnable {
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
-				if (!listenThread.isInterrupted())
+				
 					System.err.println("Failed to receive UDP datagram: "
 							+ e.getMessage());
 			}
+			System.out.println("Datagram: " + inPacket);
 			if (inPacket != null && inPacket.getAddress()!=null) {
 				String msg = new String(buffer, 0, inPacket.getLength());
 				listener.packetReceived(inPacket.getAddress(), msg);

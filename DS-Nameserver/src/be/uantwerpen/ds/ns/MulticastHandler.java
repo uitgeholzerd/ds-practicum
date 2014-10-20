@@ -43,10 +43,11 @@ public class MulticastHandler implements Runnable {
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
-				if (!listenThread.isInterrupted())
+				
 					System.err.println("Failed to receive multicast packet: "
 							+ e.getMessage());
 			}
+			System.out.println("Multicast: " + inPacket);
 			if (inPacket != null &&  inPacket.getAddress()!=null) {
 				try {
 					// Prevent sender from receiving its own broadcast
