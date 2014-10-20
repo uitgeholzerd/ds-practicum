@@ -3,12 +3,12 @@ package be.uantwerpen.ds.ns.client;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -48,7 +48,7 @@ public class Client implements PacketListener {
 		try {
 			name = InetAddress.getLocalHost().getHostName();
 			group.sendMessage(Protocol.DISCOVER,
-					name + " " + InetAddress.getLocalHost());
+					name + " " + getAddress());
 			//DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
 			replyTimer.schedule(new TimerTask() {
 				@Override
@@ -177,8 +177,10 @@ public class Client implements PacketListener {
 	public InetAddress getAddress() {
 		InetAddress address = null;
 		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
+			Socket s = new Socket("8.8.8.8", 53);
+			address = s.getLocalAddress();
+			s.close();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

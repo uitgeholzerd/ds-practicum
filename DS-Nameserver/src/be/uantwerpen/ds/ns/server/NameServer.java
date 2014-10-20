@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
@@ -126,7 +127,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 	}
 
-	@Override
+
 	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
 		boolean success;
@@ -238,7 +239,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			
 			try {
 				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, InetAddress.getLocalHost() + "/NameServer" + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "//" + getAddress().getHostAddress() + "/NameServer" + " " + nodeMap.size());
 			}
 			 catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -274,8 +275,10 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	public InetAddress getAddress() {
 		InetAddress address = null;
 		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
+			Socket s = new Socket("8.8.8.8", 53);
+			address = s.getLocalAddress();
+			s.close();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

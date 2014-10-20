@@ -7,6 +7,8 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import be.uantwerpen.ds.ns.client.Client;
+
 public class MulticastHandler implements Runnable {
 	private static final String multicastAddress = "225.6.7.8";
 	private static final int multicastPort = 5678;
@@ -47,22 +49,17 @@ public class MulticastHandler implements Runnable {
 					System.err.println("Failed to receive multicast packet: "
 							+ e.getMessage());
 			}
-			if (inPacket != null &&  inPacket.getAddress()!=null) {
-				try {
-					// Prevent sender from receiving its own broadcast
-					if (!inPacket.getAddress().equals(
-							InetAddress.getLocalHost())) {
-						String msg = new String(inBuffer, 0, inPacket.getLength());
-						listener.packetReceived(inPacket.getAddress(), msg);
-					} else // for debugging
-					{
-						System.out.println("discarded local multicast");
-					}
-				} catch (UnknownHostException e) {
-					// TODO Auto-generated catch block
-					System.err.println("Failed to get localhost address: "
-							+ e.getMessage());
+			if (inPacket != null && inPacket.getAddress() != null) {
+
+				// Prevent sender from receiving its own broadcast
+				if (!inPacket.getAddress().equals(listener.getAddress())) {
+					String msg = new String(inBuffer, 0, inPacket.getLength());
+					listener.packetReceived(inPacket.getAddress(), msg);
+				} else // for debugging
+				{
+					System.out.println("discarded local multicast");
 				}
+
 			}
 		}
 	}
@@ -99,6 +96,6 @@ public class MulticastHandler implements Runnable {
 		}
 
 		socket.close();
-		
+
 	}
 }
