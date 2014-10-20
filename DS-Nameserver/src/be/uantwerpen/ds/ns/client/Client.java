@@ -169,7 +169,8 @@ public class Client implements PacketListener {
 			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
 			udp.sendMessage(ipNameServer, thisPort, Protocol.LEAVE, ""+idExitNode);
 		}catch(IOException e){
-			
+			// TODO Auto-generated catch block
+			e.printStackTrace();			
 		}
 	}
 	
@@ -185,7 +186,8 @@ public class Client implements PacketListener {
 			InetAddress ipNode = InetAddress.getByName("" + idPrevNode);
 			udp.sendMessage(ipNode, thisPort, Protocol.NEXTNODE, ""+idNextNode);
 		}catch(IOException e){
-			
+			// TODO Auto-generated catch block
+			e.printStackTrace();			
 		}
 	}
 	
@@ -201,7 +203,8 @@ public class Client implements PacketListener {
 			InetAddress ipNode = InetAddress.getByName("" + idNextNode);
 			udp.sendMessage(ipNode, thisPort, Protocol.PREVNODE, ""+idPrevNode);
 		}catch(IOException e){
-			
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 

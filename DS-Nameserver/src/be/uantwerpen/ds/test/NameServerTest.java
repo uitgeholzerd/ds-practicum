@@ -78,6 +78,9 @@ public class NameServerTest {
 			System.out.println("Test completed successfully");
 		}
 
+		
+		//Test leave
+		
 	}
 
 }
