@@ -37,6 +37,7 @@ public class Client implements PacketListener {
 	public Client() {
 		replyTimer = new Timer();
 		connectToNetwork();
+		System.out.println("Client started on " + getAddress());
 	}
 
 	/**

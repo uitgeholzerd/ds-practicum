@@ -64,6 +64,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		
 		//set up UDP socket and receive messages
 		udp = new DatagramHandler(udpServerPort, this);
+		System.out.println("Server started on " + getAddress());
 	}
 	
 	/**
