@@ -16,7 +16,7 @@ public class ClientTest {
 		// TODO Auto-generated method stub
 		client = new Client();
 
-		// read commands from stdin
+		// read commands from stdio
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String input = null;
 		while (true) {
