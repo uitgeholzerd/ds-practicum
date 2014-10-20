@@ -23,7 +23,7 @@ import java.util.TreeMap;
 
 import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.INameServer;
-import be.uantwerpen.ds.ns.MulticastGroup;
+import be.uantwerpen.ds.ns.MulticastHandler;
 import be.uantwerpen.ds.ns.PacketListener;
 import be.uantwerpen.ds.ns.Protocol;
 import be.uantwerpen.ds.ns.client.Client;
@@ -41,7 +41,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private static final int udpServerPort = 2345;
 	
 	private SortedMap<Integer, String> nodeMap;
-	private MulticastGroup group;
+	private MulticastHandler group;
 	private DatagramHandler udp;
 
 	@SuppressWarnings("unchecked")
@@ -62,7 +62,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		rmiBind();
 		
 		//join multicast group and receive messages
-		group = new MulticastGroup(this);
+		group = new MulticastHandler(this);
 		
 		//set up UDP socket and receive messages
 		udp = new DatagramHandler(udpServerPort, this);
@@ -88,7 +88,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * 
 	 * @param	name	The name of the node
 	 * @param	address	The address at which the node can be found
-	 * @return	boolean	True if the node was added, false if the name already exists and the node was not added
+	 * @return	True if the node was added, false if the name already exists and the node was not added
 	 */
 	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
@@ -107,7 +107,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * Retrieve the address of the node the given name
 	 * 
 	 * @param	name	The name of the node
-	 * @return	InetAddress The address of the node, returns an empty string if the node was not found
+	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNode(String name) {
 		int hash = getShortHash(name);
@@ -169,7 +169,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * Removes a node from the name server's map
 	 * 
 	 * @param name	The name of the node
-	 * @return boolean	True if the node was removed, false if the node didn't exist
+	 * @return	True if the node was removed, false if the node didn't exist
 	 * @throws RemoteException 
 	 */
 	public boolean unregisterNode(String name) {
@@ -209,7 +209,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Saves the current map of nodes to the the hard disk
 	 * 
-	 * @return void
 	 */
 	private void saveMap() {
 		FileOutputStream fos = null;
@@ -230,7 +229,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Retrieve the address of the node that stores the file with the given name
 	 * 
-	 * @return InetAddress The address at which the file can be found
+	 * @return The address at which the file can be found
 	 */
 	public String getFilelocation(String filename) {
 		int hash = getShortHash(filename);
@@ -255,7 +254,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Generates a short hash based on the input object
 	 * 
-	 * @return int	Number between 0 and 32768
+	 * @return Number between 0 and 32768
 	 */
 	// TODO: maybe this should be in a shared class instead of using RMI
 	public int getShortHash(Object o) {
