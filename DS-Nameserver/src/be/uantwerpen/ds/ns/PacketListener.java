@@ -4,4 +4,5 @@ import java.net.InetAddress;
 
 public interface PacketListener {
 	void packetReceived(InetAddress sender, String message);
+	InetAddress getAddress();
 }

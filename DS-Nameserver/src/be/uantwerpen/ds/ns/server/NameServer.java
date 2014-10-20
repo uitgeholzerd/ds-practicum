@@ -23,6 +23,7 @@ import be.uantwerpen.ds.ns.INameServer;
 import be.uantwerpen.ds.ns.MulticastGroup;
 import be.uantwerpen.ds.ns.PacketListener;
 import be.uantwerpen.ds.ns.Protocol;
+import be.uantwerpen.ds.ns.client.Client;
 
 public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener{
 
@@ -30,15 +31,11 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * 
 	 */
-	// TODO: should we put these in a shared class so settings are shared?
 	private static final long serialVersionUID = -1957228712436209754L;
 	private static final String fileLocation = "./names.xml";
 	private static final String bindLocation =  "//localhost/NameServer";
-	private static final String multicastAddress = "225.6.7.8";
-	private static final int multicastPort = 5678;
 	private static final int rmiPort = 1099;
 	private static final int udpServerPort = 2345;
-	private static final int udpClientPort = 3456;
 	
 	private SortedMap<Integer, String> nodeMap;
 	private MulticastGroup group;
@@ -62,14 +59,10 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		rmiBind();
 		
 		//join multicast group and receive messages
-		group = new MulticastGroup(multicastAddress, multicastPort);
-		group.addPacketListener(this);
-		new Thread(group).start();
+		group = new MulticastGroup(this);
 		
 		//set up UDP socket and receive messages
-		udp = new DatagramHandler(udpServerPort);
-		udp.addPacketListener(this);
-		new Thread(udp).start();
+		udp = new DatagramHandler(udpServerPort, this);
 	}
 	
 	/**
@@ -213,14 +206,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		
 		switch (command) {
 		case DISCOVER:
-			// Register the node and send it the required information
+			// Register the node and send it the address of the nameserver + the number of clients in the system
 			String nodeName = message[1].split("/")[0];
 			String nodeIp = message[2].split("/")[0];
 			registerNode(nodeName, nodeIp);
 			
 			try {
 				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, udpClientPort, Protocol.DISCOVER_ACK, bindLocation + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, InetAddress.getLocalHost() + "/NameServer" + " " + nodeMap.size());
 			}
 			 catch (IOException e) {
 				// TODO Auto-generated catch block

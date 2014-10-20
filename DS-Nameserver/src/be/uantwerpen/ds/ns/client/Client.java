@@ -15,10 +15,7 @@ import be.uantwerpen.ds.ns.Protocol;
 
 public class Client implements PacketListener {
 
-	private static final int udpClientPort = 3456;
-	private static final int udpServerPort = 2345;
-	private static final String multicastAddress = "225.6.7.8";
-	private static final int multicastPort = 5678;
+	public static final int udpClientPort = 3456;
 
 	private MulticastGroup group;
 	private DatagramHandler udp;
@@ -29,19 +26,17 @@ public class Client implements PacketListener {
 	private int nextNodeHash;
 
 	public Client() {
-		joinMulticastGroup(multicastAddress, multicastPort);
+		joinMulticastGroup();
 		try {
 			name = InetAddress.getLocalHost().getHostName();
-			group.sendMessage(Protocol.DISCOVER + " " + name + " " + InetAddress.getLocalHost());
+			group.sendMessage(Protocol.DISCOVER, name + " " + InetAddress.getLocalHost());
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
 		// set up UDP socket and receive messages
-		udp = new DatagramHandler(udpClientPort);
-		udp.addPacketListener(this);
-		new Thread(udp).start();
+		udp = new DatagramHandler(udpClientPort, this);
 	}
 
 	/**
@@ -51,9 +46,8 @@ public class Client implements PacketListener {
 	 * @param address	IP of the multicast group
 	 * @param port		Port for receiving and sending messages
 	 */
-	private void joinMulticastGroup(String address, int port) {
-		group = new MulticastGroup(address, port);
-		group.addPacketListener(this);
+	private void joinMulticastGroup() {
+		group = new MulticastGroup(this);
 		new Thread(group).start();
 
 	}
