@@ -10,8 +10,13 @@ public interface INameServer extends Remote {
 	 * @return	The location (IP) at which the node can be found if it exists, else returns null
 	 * @throws	RemoteException
 	 */
+	String lookupNodeByHash(int hash) throws RemoteException;
+	/**
+	 * @param hash	The hash of the node
+	 * @return	The location (IP) at which the node can be found if it exists, else returns null
+	 * @throws	RemoteException
+	 */
 	String lookupNode(String name) throws RemoteException;
-	
 	/**
 	 * @param	filename The name of the file
 	 * @return The location (IP) at which the file can be found if it exists, else returns null

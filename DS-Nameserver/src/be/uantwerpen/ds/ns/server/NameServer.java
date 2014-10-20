@@ -101,15 +101,24 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	/**
-	 * Retrieve the address of the node the given name
+	 * Retrieve the address of the node given its name
 	 * 
 	 * @param	name	The name of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNode(String name) {
 		int hash = getShortHash(name);
+		return lookupNodeByHash(hash);
+	}
+
+	/**
+	 * Retrieve the address of the node given its hash
+	 * @param hash The hash of the node
+	 * @return The address of the node, returns an empty string if the node was not found
+	 */
+	public String lookupNodeByHash(int hash) {
 		if (!nodeMap.containsKey(hash)) {
-			return nodeMap.get(getShortHash(name));
+			return nodeMap.get(hash);
 		}
 		else {
 			return "";
