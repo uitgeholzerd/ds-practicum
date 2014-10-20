@@ -14,7 +14,9 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -116,6 +118,52 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			return "";
 		}
 	}
+	
+	public String lookupSurroundingNodes(int name){
+		int prevNode=0,nextNode=0;
+		String prevAddress=null, nextAddress=null;
+		boolean foundPrev=false, foundNext=false;
+		String send;
+		
+		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
+			if(nodeMap.size()>1){
+				if (entry.getKey() == name) {
+					if(nodeMap.firstKey()==name){
+						prevNode=nodeMap.lastKey();
+						prevAddress = nodeMap.get(prevNode);
+					}
+					foundPrev=true;
+				}
+				else {
+					if(foundPrev==false){
+						prevNode = name;
+						prevAddress = entry.getValue();
+					}
+					else{
+						if(foundNext==false){
+							if(nodeMap.lastKey()==name){
+								nextNode=nodeMap.firstKey();
+								nextAddress = nodeMap.get(nextNode);
+							}
+							else{
+								nextNode=name;
+								nextAddress = entry.getValue();
+							}
+							foundNext=true;
+						}						
+					}	
+				}
+			}
+			else {
+				prevNode=name;
+				nextNode=name;
+			}
+		}
+		
+		send = prevNode + " " + prevAddress + " " + nextNode + " " + nextAddress;
+		
+		return send;
+	}
 
 	/**
 	 * Removes a node from the name server's map
@@ -126,6 +174,26 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 */
 	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
+		boolean success;
+
+		if (nodeMap.containsKey(hash)) {
+			nodeMap.remove(hash);
+			success = true;
+		} else {
+			success = false;
+		}
+		saveMap();
+		return success;
+	}
+	
+	/**
+	 * Removes a node from the name server's map
+	 * 
+	 * @param name	The name of the node
+	 * @return boolean	True if the node was removed, false if the node didn't exist
+	 * @throws RemoteException 
+	 */
+	public boolean unregisterNode(int hash) {
 		boolean success;
 
 		if (nodeMap.containsKey(hash)) {
@@ -183,6 +251,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return location;
 	}
 
+
 	/**
 	 * Generates a short hash based on the input object
 	 * 
@@ -223,7 +292,18 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			break;
 			
 		case LEAVE:
-			//TODO
+			unregisterNode(message[1]);
+			break;
+			
+		case FAIL:
+			String dataReturn = lookupSurroundingNodes(Integer.parseInt(message[1]));
+			try {
+				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
+			}
+			 catch (IOException e) {
+				e.printStackTrace();
+			}
+			
 			break;
 
 		default:

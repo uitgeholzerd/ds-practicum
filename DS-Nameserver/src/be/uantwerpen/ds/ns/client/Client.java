@@ -22,9 +22,10 @@ public class Client implements PacketListener {
 	private DatagramHandler udp;
 	private INameServer nameServer;
 	private String name;
-	private int hash;
-	private int previousNodeHash;
-	private int nextNodeHash;
+	public int hash;
+	public int previousNodeHash;
+	public int nextNodeHash;
+	private int thisPort;
 
 	public Client() {
 		joinMulticastGroup();
@@ -107,6 +108,14 @@ public class Client implements PacketListener {
 			nextNodeHash = Integer.parseInt(message[2]);
 			break;
 			
+		case PREVNODE:
+			previousNodeHash = Integer.parseInt(message[1]);
+			break;
+			
+		case NEXTNODE:
+			nextNodeHash = Integer.parseInt(message[1]);
+			break;
+			
 		default:
 			System.err.println("Command not found");
 			break;
@@ -125,6 +134,46 @@ public class Client implements PacketListener {
 			e.printStackTrace();
 		}
 		return address;
+	}
+	
+	public void Shutdown(int port){
+		thisPort = port;
+		//set up UDP socket and receive messages
+		udp = new DatagramHandler(port, null);
+		new Thread(udp).start();
+		
+		WarnPrevNode(previousNodeHash,nextNodeHash);
+		WarnNextNode(nextNodeHash,previousNodeHash);
+		WarnNSExitNode(hash);
+		
+		udp.closeClient();
+	}
+	
+	public void WarnNSExitNode(int idExitNode){
+		try{
+			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
+			udp.sendMessage(ipNameServer, thisPort, Protocol.LEAVE, ""+idExitNode);
+		}catch(IOException e){
+			
+		}
+	}
+	
+	public void WarnPrevNode(int idPrevNode, int idNextNode){
+		try{
+			InetAddress ipNode = InetAddress.getByName("" + idPrevNode);
+			udp.sendMessage(ipNode, thisPort, Protocol.NEXTNODE, ""+idNextNode);
+		}catch(IOException e){
+			
+		}
+	}
+	
+	public void WarnNextNode(int idNextNode, int idPrevNode){
+		try{
+			InetAddress ipNode = InetAddress.getByName("" + idNextNode);
+			udp.sendMessage(ipNode, thisPort, Protocol.PREVNODE, ""+idPrevNode);
+		}catch(IOException e){
+			
+		}
 	}
 
 }

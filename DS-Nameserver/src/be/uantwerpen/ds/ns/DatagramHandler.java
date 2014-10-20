@@ -61,4 +61,8 @@ public class DatagramHandler implements Runnable{
 		DatagramPacket outPacket = new DatagramPacket (message.getBytes(), message.length(), address, port);
 		socket.send(outPacket);
 	}
+	
+	public void closeClient(){
+		socket.close();
+	}
 }
