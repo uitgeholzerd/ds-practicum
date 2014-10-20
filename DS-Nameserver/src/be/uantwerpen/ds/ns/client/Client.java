@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.INameServer;
-import be.uantwerpen.ds.ns.MulticastGroup;
+import be.uantwerpen.ds.ns.MulticastHandler;
 import be.uantwerpen.ds.ns.PacketListener;
 import be.uantwerpen.ds.ns.Protocol;
 
@@ -18,7 +18,7 @@ public class Client implements PacketListener {
 
 	public static final int udpClientPort = 3456;
 
-	private MulticastGroup group;
+	private MulticastHandler group;
 	private DatagramHandler udp;
 	private INameServer nameServer;
 	private String name;
@@ -48,7 +48,7 @@ public class Client implements PacketListener {
 	 * @param port		Port for receiving and sending messages
 	 */
 	private void joinMulticastGroup() {
-		group = new MulticastGroup(this);
+		group = new MulticastHandler(this);
 		new Thread(group).start();
 
 	}

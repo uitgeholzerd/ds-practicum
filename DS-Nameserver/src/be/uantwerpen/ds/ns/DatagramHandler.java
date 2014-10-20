@@ -51,8 +51,9 @@ public class DatagramHandler implements Runnable{
 	/**
 	 * Sends a message via UDP
 	 * 
-	 * @param to	Remote address
+	 * @param address	Remote address
 	 * @param port 	Remote port
+	 * @param command A command from the Protocol enum
 	 * @param message The message to send
 	 * @throws IOException
 	 */

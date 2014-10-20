@@ -1,4 +1,4 @@
-package be.uantwerpn.ds.test;
+package be.uantwerpen.ds.test;
 
 import be.uantwerpen.ds.ns.server.NameServer;
 

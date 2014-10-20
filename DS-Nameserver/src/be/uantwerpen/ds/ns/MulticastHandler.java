@@ -5,7 +5,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-public class MulticastGroup implements Runnable {
+public class MulticastHandler implements Runnable {
 	private static final String multicastAddress = "225.6.7.8";
 	private static final int multicastPort = 5678;
 
@@ -14,7 +14,7 @@ public class MulticastGroup implements Runnable {
 	private byte[] inBuffer;
 	private PacketListener listener;
 
-	public MulticastGroup(PacketListener listener) {
+	public MulticastHandler(PacketListener listener) {
 		this.listener = listener;
 		try {
 			socket = new MulticastSocket(multicastPort);
@@ -38,13 +38,17 @@ public class MulticastGroup implements Runnable {
 				e.printStackTrace();
 			}
 			String msg = new String(inBuffer, 0, inPacket.getLength());
-			listener.packetReceived(inPacket.getAddress(), msg);
+			// Prevent sender from receiving its own broadcast
+			if (inPacket.getAddress() != listener.getAddress()) {
+				listener.packetReceived(inPacket.getAddress(), msg);
+			}
 		}
 	}
 
 	/**
 	 * Sends a message to the multicast group
 	 * 
+	 * @param command A command from the Protocol enum
 	 * @param message	The message to send
 	 * @throws IOException
 	 */
