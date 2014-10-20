@@ -9,7 +9,7 @@ public class ClientTest {
 		Client node1 = new Client();
 		
 		//Test leave
-		node1.Shutdown(2345);
+		node1.Shutdown();
 	}
 
 }

@@ -5,7 +5,6 @@ import java.net.*;
 
 import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.PacketListener;
-import be.uantwerpen.ds.ns.client.Client;
 
 /**
  * Contains the methods for handling a connection failure from node to node
@@ -14,21 +13,22 @@ import be.uantwerpen.ds.ns.client.Client;
 
 public class ConnectionFailureHandler implements PacketListener{
 
-	private Client client = new Client();
-	private int thisID = client.hash;
+	private int thisID;
 	private int failID;
 	private String thisMessage;
 	private DatagramHandler udp;
 	private int thisPort;
 
 	/**
-	 * @param failingID	The hash of the id which caused the connection failure
-	 * @param message	To know which error has occurred
-	 * @param port		Port for receiving and sending messages
+	 * @param failingID		The hash of the id which caused the connection failure
+	 * @param clientHash	The hash of client
+	 * @param message		To know which error has occurred
+	 * @param port			Port for receiving and sending messages
 	 */
 
-	public ConnectionFailureHandler(int failingID, String message, int port){
+	public ConnectionFailureHandler(int failingID, int clientHash, String message, int port){
 		failID = failingID;
+		thisID = clientHash;
 		thisMessage = message;
 		thisPort = port;
 		//set up UDP socket and receive messages
