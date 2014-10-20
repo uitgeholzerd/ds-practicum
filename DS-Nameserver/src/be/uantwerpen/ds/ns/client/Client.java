@@ -14,6 +14,7 @@ import be.uantwerpen.ds.ns.MulticastHandler;
 import be.uantwerpen.ds.ns.PacketListener;
 import be.uantwerpen.ds.ns.Protocol;
 
+
 public class Client implements PacketListener {
 
 	public static final int udpClientPort = 3456;
@@ -109,10 +110,12 @@ public class Client implements PacketListener {
 			break;
 			
 		case PREVNODE:
+			// Another client received the fail message and will provide this client with its previous node
 			previousNodeHash = Integer.parseInt(message[1]);
 			break;
 			
 		case NEXTNODE:
+			// Another client received the fail message and will provide this client with its next node
 			nextNodeHash = Integer.parseInt(message[1]);
 			break;
 			
@@ -122,8 +125,7 @@ public class Client implements PacketListener {
 		}
 
 	}
-	
-	
+
 	@Override
 	public InetAddress getAddress() {
 		InetAddress address = null;
@@ -135,6 +137,13 @@ public class Client implements PacketListener {
 		}
 		return address;
 	}
+	
+	
+	/**
+	 * This method will be called when the client will exit the group and shut itself down
+	 *
+	 * @param port		Data containing the command and a message
+	 */
 	
 	public void Shutdown(int port){
 		thisPort = port;
@@ -149,30 +158,53 @@ public class Client implements PacketListener {
 		udp.closeClient();
 	}
 	
+	/**
+	 * This method will be called to inform the server about its exit
+	 *
+	 * @param id		client hash
+	 */
+	
 	public void WarnNSExitNode(int idExitNode){
 		try{
 			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
 			udp.sendMessage(ipNameServer, thisPort, Protocol.LEAVE, ""+idExitNode);
 		}catch(IOException e){
-			
+			// TODO Auto-generated catch block
+			e.printStackTrace();			
 		}
 	}
+	
+	/**
+	 * This method will be called to change the next node of the previous client
+	 *
+	 * @param prevNode		previous client hash
+	 * @param nextNode		next client hash
+	 */
 	
 	public void WarnPrevNode(int idPrevNode, int idNextNode){
 		try{
 			InetAddress ipNode = InetAddress.getByName("" + idPrevNode);
 			udp.sendMessage(ipNode, thisPort, Protocol.NEXTNODE, ""+idNextNode);
 		}catch(IOException e){
-			
+			// TODO Auto-generated catch block
+			e.printStackTrace();			
 		}
 	}
+	
+	/**
+	 * This method will be called to change the previous node of the next client
+	 *
+	 * @param nextNode		next client hash
+	 * @param prevNode		previous client hash
+	 */
 	
 	public void WarnNextNode(int idNextNode, int idPrevNode){
 		try{
 			InetAddress ipNode = InetAddress.getByName("" + idNextNode);
 			udp.sendMessage(ipNode, thisPort, Protocol.PREVNODE, ""+idPrevNode);
 		}catch(IOException e){
-			
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
