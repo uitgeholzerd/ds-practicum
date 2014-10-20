@@ -14,10 +14,10 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -29,7 +29,6 @@ import be.uantwerpen.ds.ns.Protocol;
 import be.uantwerpen.ds.ns.client.Client;
 
 public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener{
-
 	
 	/**
 	 * 
@@ -119,50 +118,37 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 	}
 	
-	public String lookupSurroundingNodes(int name){
-		int prevNode=0,nextNode=0;
-		String prevAddress=null, nextAddress=null;
-		boolean foundPrev=false, foundNext=false;
-		String send;
+	/**
+	 * @param hash The hash of the node of who the neighbours are being looked up
+	 * @return An array containing the hashes of previous and the next node
+	 */
+	public String lookupNeighbours(int hash) {
+		int previousNode, nextNode;
+		int index = 0;
 		
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
-			if(nodeMap.size()>1){
-				if (entry.getKey() == name) {
-					if(nodeMap.firstKey()==name){
-						prevNode=nodeMap.lastKey();
-						prevAddress = nodeMap.get(prevNode);
-					}
-					foundPrev=true;
-				}
-				else {
-					if(foundPrev==false){
-						prevNode = name;
-						prevAddress = entry.getValue();
-					}
-					else{
-						if(foundNext==false){
-							if(nodeMap.lastKey()==name){
-								nextNode=nodeMap.firstKey();
-								nextAddress = nodeMap.get(nextNode);
-							}
-							else{
-								nextNode=name;
-								nextAddress = entry.getValue();
-							}
-							foundNext=true;
-						}						
-					}	
-				}
+			if (entry.getKey() == hash) {
+				break;
 			}
-			else {
-				prevNode=name;
-				nextNode=name;
-			}
+			index++;
 		}
 		
-		send = prevNode + " " + prevAddress + " " + nextNode + " " + nextAddress;
+		if (index == 0) {
+			previousNode = (int) nodeMap.keySet().toArray()[nodeMap.size() - 1];
+		}
+		else {
+			previousNode = (int) nodeMap.keySet().toArray()[index - 1];
+		}
 		
-		return send;
+		if (index == nodeMap.size() - 1) {
+			nextNode = (int) nodeMap.keySet().toArray()[0];
+		}
+		else {
+			nextNode = (int) nodeMap.keySet().toArray()[index + 1];
+		}
+
+		//return new int[]{previousNode, nextNode};
+		return "";
 	}
 
 	/**
@@ -170,7 +156,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * 
 	 * @param name	The name of the node
 	 * @return	True if the node was removed, false if the node didn't exist
-	 * @throws RemoteException 
 	 */
 	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
@@ -189,9 +174,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Removes a node from the name server's map
 	 * 
-	 * @param name	The name of the node
+	 * @param hash	The hash of the node
 	 * @return boolean	True if the node was removed, false if the node didn't exist
-	 * @throws RemoteException 
 	 */
 	public boolean unregisterNode(int hash) {
 		boolean success;
@@ -295,7 +279,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			break;
 			
 		case FAIL:
-			String dataReturn = lookupSurroundingNodes(Integer.parseInt(message[1]));
+			String dataReturn = lookupNeighbours(Integer.parseInt(message[1]));
 			try {
 				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
 			}
