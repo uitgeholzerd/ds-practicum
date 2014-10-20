@@ -44,7 +44,7 @@ public class Client implements PacketListener {
 	 * for replies.
 	 */
 	public void connectToNetwork() {
-		joinMulticastGroup();
+		group = new MulticastHandler(this);
 		try {
 			name = getAddress().getHostName();
 			group.sendMessage(Protocol.DISCOVER,
@@ -65,16 +65,6 @@ public class Client implements PacketListener {
 
 		// set up UDP socket and receive messages
 		udp = new DatagramHandler(udpClientPort, this);
-	}
-
-	/**
-	 * Joins a multicast group and starts a thread to listen for incoming
-	 * messages
-	 */
-	private void joinMulticastGroup() {
-		group = new MulticastHandler(this);
-		new Thread(group).start();
-
 	}
 
 	/**
