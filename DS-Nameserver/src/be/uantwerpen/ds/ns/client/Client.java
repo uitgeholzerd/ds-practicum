@@ -3,6 +3,7 @@ package be.uantwerpen.ds.ns.client;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -111,6 +112,19 @@ public class Client implements PacketListener {
 			break;
 		}
 
+	}
+	
+	
+	@Override
+	public InetAddress getAddress() {
+		InetAddress address = null;
+		try {
+			address = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return address;
 	}
 
 }

@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -230,5 +231,17 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			break;
 		}
 
+	}
+	
+	@Override
+	public InetAddress getAddress() {
+		InetAddress address = null;
+		try {
+			address = InetAddress.getLocalHost();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return address;
 	}
 }
