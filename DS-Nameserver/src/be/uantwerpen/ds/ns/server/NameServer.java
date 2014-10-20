@@ -116,39 +116,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			return "";
 		}
 	}
-	
-	/**
-	 * @param hash The hash of the node of who the neighbours are being looked up
-	 * @return An array containing the hashes of previous and the next node
-	 */
-	public String lookupNeighbours(int hash) {
-		int previousNode, nextNode;
-		int index = 0;
-		
-		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
-			if (entry.getKey() == hash) {
-				break;
-			}
-			index++;
-		}
-		
-		if (index == 0) {
-			previousNode = (int) nodeMap.keySet().toArray()[nodeMap.size() - 1];
-		}
-		else {
-			previousNode = (int) nodeMap.keySet().toArray()[index - 1];
-		}
-		
-		if (index == nodeMap.size() - 1) {
-			nextNode = (int) nodeMap.keySet().toArray()[0];
-		}
-		else {
-			nextNode = (int) nodeMap.keySet().toArray()[index + 1];
-		}
-
-		//return new int[]{previousNode, nextNode};
-		return "";
-	}
 
 	/**
 	 * Removes a node from the name server's map
@@ -232,6 +199,39 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		return location;
 	}
+	
+	/**
+	 * @param name The name of the node of who the neighbours are being looked up
+	 * @return An array containing the names of previous and the next node
+	 */
+	public String[] lookupNeighbours(String name) {
+		int hash = getShortHash(name);
+		String previousNode, nextNode;
+		int index = 0;
+		
+		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
+			if (entry.getKey() == hash) {
+				break;
+			}
+			index++;
+		}
+		
+		if (index == 0) {
+			previousNode = (String) nodeMap.values().toArray()[nodeMap.size() - 1];
+		}
+		else {
+			previousNode = (String) nodeMap.values().toArray()[index - 1];
+		}
+		
+		if (index == nodeMap.size() - 1) {
+			nextNode = (String) nodeMap.values().toArray()[0];
+		}
+		else {
+			nextNode = (String) nodeMap.values().toArray()[index + 1];
+		}
+
+		return new String[]{previousNode, nextNode};
+	}
 
 
 	/**
@@ -278,13 +278,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			break;
 			
 		case FAIL:
-			String dataReturn = lookupNeighbours(Integer.parseInt(message[1]));
-			try {
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
-			}
-			 catch (IOException e) {
-				e.printStackTrace();
-			}
+			//TODO nog nodig?
+//			String dataReturn = lookupNeighbours(Integer.parseInt(message[1]));
+//			try {
+//				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
+//			}
+//			 catch (IOException e) {
+//				e.printStackTrace();
+//			}
 			
 			break;
 

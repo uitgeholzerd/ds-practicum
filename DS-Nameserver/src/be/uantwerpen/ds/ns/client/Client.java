@@ -23,9 +23,9 @@ public class Client implements PacketListener {
 	private DatagramHandler udp;
 	private INameServer nameServer;
 	private String name;
-	public int hash;
-	public int previousNodeHash;
-	public int nextNodeHash;
+	private int hash;
+	private int previousNodeHash;
+	private int nextNodeHash;
 	private int thisPort;
 
 	public Client() {
@@ -163,7 +163,6 @@ public class Client implements PacketListener {
 	 *
 	 * @param id		client hash
 	 */
-	
 	public void WarnNSExitNode(int idExitNode){
 		try{
 			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
