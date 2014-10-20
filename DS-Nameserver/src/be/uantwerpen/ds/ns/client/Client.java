@@ -26,7 +26,6 @@ public class Client implements PacketListener {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private int thisPort;
 
 	public Client() {
 		joinMulticastGroup();
