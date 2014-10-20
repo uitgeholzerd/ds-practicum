@@ -30,6 +30,7 @@ public class MulticastHandler implements Runnable {
 			System.err.println("Failed to open multicast socket: "
 					+ e.getMessage());
 		}
+		
 		isRunning = true;
 		listenThread = new Thread(this);
 		listenThread.setName("MulticastHandler");
@@ -38,10 +39,11 @@ public class MulticastHandler implements Runnable {
 
 	public void run() {
 		// Listen for packets
-
+		System.err.println("Multicast socket listening...");
 		while (isRunning) {
 			inBuffer = new byte[1024];
 			inPacket = new DatagramPacket(inBuffer, inBuffer.length);
+			
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {

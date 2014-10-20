@@ -44,6 +44,7 @@ public class DatagramHandler implements Runnable {
 		}
 		buffer = new byte[1024];
 		// Listen for UDP datagrams
+		System.err.println("UDP socket listening...");
 		while (isRunning) {
 			inPacket = new DatagramPacket(buffer, buffer.length);
 			try {
