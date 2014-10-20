@@ -32,8 +32,7 @@ public class DatagramHandler implements Runnable {
 	public DatagramHandler(int listenPort, PacketListener listener) {
 		this.listener = listener;
 		try {
-			socket = new DatagramSocket();
-			socket.bind(new InetSocketAddress(listener.getAddress(), listenPort));
+			socket = new DatagramSocket(new InetSocketAddress(listener.getAddress(), listenPort));
 		} catch (SocketException e) {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
 		}
