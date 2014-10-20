@@ -8,6 +8,7 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
+import be.uantwerpen.ds.ns.ConnectionFailureHandler;
 import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.INameServer;
 import be.uantwerpen.ds.ns.MulticastHandler;
@@ -26,6 +27,7 @@ public class Client implements PacketListener {
 	public int hash;
 	public int previousNodeHash;
 	public int nextNodeHash;
+	private ConnectionFailureHandler cfh;
 
 	public Client() {
 		joinMulticastGroup();
@@ -35,6 +37,8 @@ public class Client implements PacketListener {
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			String ex = e1.toString();
+			cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
 		}
 		
 		// set up UDP socket and receive messages
@@ -82,6 +86,8 @@ public class Client implements PacketListener {
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+				String ex = e1.toString();
+				cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
 			}
 			break;
 			
@@ -182,7 +188,9 @@ public class Client implements PacketListener {
 			udp.sendMessage(ipNode, udpClientPort, Protocol.NEXTNODE, ""+idNextNode);
 		}catch(IOException e){
 			// TODO Auto-generated catch block
-			e.printStackTrace();			
+			e.printStackTrace();		
+			String ex = e.toString();
+			cfh = new ConnectionFailureHandler(idPrevNode, hash, ex, udpClientPort);
 		}
 	}
 	
@@ -200,6 +208,8 @@ public class Client implements PacketListener {
 		}catch(IOException e){
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			String ex = e.toString();
+			cfh = new ConnectionFailureHandler(idNextNode, hash, ex, udpClientPort);
 		}
 	}
 
