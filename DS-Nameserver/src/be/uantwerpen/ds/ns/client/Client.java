@@ -26,10 +26,8 @@ public class Client implements PacketListener {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-<<<<<<< HEAD
 	private InetAddress serverAddress;
-=======
->>>>>>> 0e39b15f0b3e9e4fd303044f388596d04eb2fc08
+
 
 	public Client() {
 		joinMulticastGroup();
