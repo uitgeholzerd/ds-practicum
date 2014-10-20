@@ -61,7 +61,7 @@ public class MulticastHandler implements Runnable {
 					listener.packetReceived(inPacket.getAddress(), msg);
 				} else // for debugging
 				{
-					System.out.println("discarded local multicast");
+					System.out.println("(discarded local multicast)");
 				}
 
 			}
@@ -85,6 +85,7 @@ public class MulticastHandler implements Runnable {
 				message.getBytes().length,
 				InetAddress.getByName(multicastAddress), multicastPort);
 		socket.send(outPacket);
+		System.out.println("Sent multicast "+outPacket+"[" + message + "]");
 	}
 
 	/**

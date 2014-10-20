@@ -82,6 +82,7 @@ public class DatagramHandler implements Runnable {
 		DatagramPacket outPacket = new DatagramPacket(message.getBytes(),
 				message.length(), address, port);
 		socket.send(outPacket);
+		System.out.println("Sent datagram "+outPacket+"[" + message + "]");
 	}
 
 	/**
