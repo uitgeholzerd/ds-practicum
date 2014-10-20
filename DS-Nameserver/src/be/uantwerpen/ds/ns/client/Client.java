@@ -44,8 +44,7 @@ public class Client implements PacketListener {
 	}
 
 	/**
-	 * Joins a multicast group and starts a thread to listen for incoming
-	 * messages
+	 * Joins a multicast group and starts a thread to listen for incoming messages
 	 * 
 	 * @param address	IP of the multicast group
 	 * @param port		Port for receiving and sending messages

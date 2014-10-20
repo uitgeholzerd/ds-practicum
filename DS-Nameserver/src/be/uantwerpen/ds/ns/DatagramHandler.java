@@ -31,6 +31,7 @@ public class DatagramHandler implements Runnable{
 		}
 		new Thread(this).start();
 	}
+	
 	@Override
 	public void run() {
 		buffer = new byte[1024];
