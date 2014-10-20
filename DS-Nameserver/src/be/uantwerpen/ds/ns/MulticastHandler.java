@@ -49,6 +49,7 @@ public class MulticastHandler implements Runnable {
 					System.err.println("Failed to receive multicast packet: "
 							+ e.getMessage());
 			}
+			System.out.println("Multicast: " + inPacket);
 			if (inPacket != null && inPacket.getAddress() != null) {
 
 				// Prevent sender from receiving its own broadcast
