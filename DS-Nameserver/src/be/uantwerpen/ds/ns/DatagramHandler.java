@@ -4,7 +4,11 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketPermission;
 import java.net.SocketTimeoutException;
 
 /**
@@ -28,8 +32,8 @@ public class DatagramHandler implements Runnable {
 	public DatagramHandler(int listenPort, PacketListener listener) {
 		this.listener = listener;
 		try {
-			socket = new DatagramSocket(listenPort);
-			//socket.
+			socket = new DatagramSocket();
+			socket.bind(new InetSocketAddress(listener.getAddress(), listenPort));
 		} catch (SocketException e) {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
 		}
