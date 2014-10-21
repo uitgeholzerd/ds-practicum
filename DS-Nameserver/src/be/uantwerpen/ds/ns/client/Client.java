@@ -24,10 +24,16 @@ public class Client implements PacketListener {
 	private DatagramHandler udp;
 	private INameServer nameServer;
 	private String name;
+<<<<<<< HEAD
 	public int hash;
 	public int previousNodeHash;
 	public int nextNodeHash;
 	private ConnectionFailureHandler cfh;
+=======
+	private int hash;
+	private int previousNodeHash;
+	private int nextNodeHash;
+>>>>>>> 0e39b15f0b3e9e4fd303044f388596d04eb2fc08
 
 	public Client() {
 		joinMulticastGroup();
@@ -164,7 +170,6 @@ public class Client implements PacketListener {
 	 *
 	 * @param id		client hash
 	 */
-	
 	public void WarnNSExitNode(int idExitNode){
 		try{
 			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");

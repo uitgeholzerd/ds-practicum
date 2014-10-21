@@ -10,7 +10,6 @@ public enum Protocol {
 	LEAVE,
 	ACTION_FAILED,
 	FAIL,
-	ID_ACK,
 	PREVNODE,
 	NEXTNODE
 }

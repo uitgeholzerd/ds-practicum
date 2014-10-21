@@ -18,5 +18,13 @@ public interface INameServer extends Remote {
 	 * @throws RemoteException
 	 */
 	String getFilelocation(String filename) throws RemoteException;
+	
+	/**
+	 * @param o The object that should be hashed
+	 * @return The hash of the object
+	 * @throws RemoteException
+	 */
 	int getShortHash(Object o) throws RemoteException;
+	
+	String[] lookupNeighbours(String name) throws RemoteException;
 }

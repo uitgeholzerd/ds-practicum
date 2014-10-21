@@ -27,7 +27,6 @@ import be.uantwerpen.ds.ns.Protocol;
 import be.uantwerpen.ds.ns.client.Client;
 
 public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener{
-
 	
 	/**
 	 * 
@@ -116,59 +115,12 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			return "";
 		}
 	}
-	
-	public String lookupSurroundingNodes(int name){
-		int prevNode=0,nextNode=0;
-		String prevAddress=null, nextAddress=null;
-		boolean foundPrev=false, foundNext=false;
-		String send;
-		
-		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
-			if(nodeMap.size()>1){
-				if (entry.getKey() == name) {
-					if(nodeMap.firstKey()==name){
-						prevNode=nodeMap.lastKey();
-						prevAddress = nodeMap.get(prevNode);
-					}
-					foundPrev=true;
-				}
-				else {
-					if(foundPrev==false){
-						prevNode = name;
-						prevAddress = entry.getValue();
-					}
-					else{
-						if(foundNext==false){
-							if(nodeMap.lastKey()==name){
-								nextNode=nodeMap.firstKey();
-								nextAddress = nodeMap.get(nextNode);
-							}
-							else{
-								nextNode=name;
-								nextAddress = entry.getValue();
-							}
-							foundNext=true;
-						}						
-					}	
-				}
-			}
-			else {
-				prevNode=name;
-				nextNode=name;
-			}
-		}
-		
-		send = prevNode + " " + prevAddress + " " + nextNode + " " + nextAddress;
-		
-		return send;
-	}
 
 	/**
 	 * Removes a node from the name server's map
 	 * 
 	 * @param name	The name of the node
 	 * @return	True if the node was removed, false if the node didn't exist
-	 * @throws RemoteException 
 	 */
 	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
@@ -187,9 +139,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Removes a node from the name server's map
 	 * 
-	 * @param name	The name of the node
+	 * @param hash	The hash of the node
 	 * @return boolean	True if the node was removed, false if the node didn't exist
-	 * @throws RemoteException 
 	 */
 	public boolean unregisterNode(int hash) {
 		boolean success;
@@ -247,6 +198,39 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		return location;
 	}
+	
+	/**
+	 * @param name The name of the node of who the neighbours are being looked up
+	 * @return An array containing the names of previous and the next node
+	 */
+	public String[] lookupNeighbours(String name) {
+		int hash = getShortHash(name);
+		String previousNode, nextNode;
+		int index = 0;
+		
+		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
+			if (entry.getKey() == hash) {
+				break;
+			}
+			index++;
+		}
+		
+		if (index == 0) {
+			previousNode = (String) nodeMap.values().toArray()[nodeMap.size() - 1];
+		}
+		else {
+			previousNode = (String) nodeMap.values().toArray()[index - 1];
+		}
+		
+		if (index == nodeMap.size() - 1) {
+			nextNode = (String) nodeMap.values().toArray()[0];
+		}
+		else {
+			nextNode = (String) nodeMap.values().toArray()[index + 1];
+		}
+
+		return new String[]{previousNode, nextNode};
+	}
 
 
 	/**
@@ -294,13 +278,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			break;
 			
 		case FAIL:
-			String dataReturn = lookupSurroundingNodes(Integer.parseInt(message[1]));
-			try {
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
-			}
-			 catch (IOException e) {
-				e.printStackTrace();
-			}
+			//TODO nog nodig?
+//			String dataReturn = lookupNeighbours(Integer.parseInt(message[1]));
+//			try {
+//				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
+//			}
+//			 catch (IOException e) {
+//				e.printStackTrace();
+//			}
 			
 			break;
 

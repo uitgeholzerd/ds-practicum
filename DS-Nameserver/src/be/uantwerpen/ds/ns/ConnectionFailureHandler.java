@@ -1,10 +1,11 @@
 package be.uantwerpen.ds.ns;
 
 import java.io.IOException;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
-import be.uantwerpen.ds.ns.DatagramHandler;
-import be.uantwerpen.ds.ns.PacketListener;
+import be.uantwerpen.ds.ns.client.Client;
+import be.uantwerpen.ds.ns.server.NameServer;
 
 /**
  * Contains the methods for handling a connection failure from node to node
@@ -13,11 +14,8 @@ import be.uantwerpen.ds.ns.PacketListener;
 
 public class ConnectionFailureHandler implements PacketListener{
 
-	private int thisID;
-	private int failID;
-	private String thisMessage;
+	private NameServer nameServer;
 	private DatagramHandler udp;
-	private int thisPort;
 
 	/**
 	 * @param failingID		The hash of the id which caused the connection failure
@@ -25,33 +23,32 @@ public class ConnectionFailureHandler implements PacketListener{
 	 * @param message		To know which error has occurred
 	 * @param port			Port for receiving and sending messages
 	 */
-
-	public ConnectionFailureHandler(int failingID, int clientHash, String message, int port){
-		failID = failingID;
-		thisID = clientHash;
-		thisMessage = message;
-		thisPort = port;
-		//set up UDP socket and receive messages
-		udp = new DatagramHandler(port, this);
-		new Thread(udp).start();
+	public ConnectionFailureHandler(NameServer nameServer, DatagramHandler udp){
+		this.nameServer = nameServer;
+		this.udp = udp;
+	}
+	
+	public void fixFailure(String failedNodeName) {
+		String[] neighbours = nameServer.lookupNeighbours(failedNodeName);
 		
-		WarnNSFailNode(failID);
+		String ipPrevNode, ipNextNode;
+				
+			try {
+				ipPrevNode = nameServer.lookupNode(neighbours[0]);
+				ipNextNode = nameServer.lookupNode(neighbours[1]);
+				
+				// Send the previous node of the failed node to the next node of the failed note and vice versa
+				udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+				udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+				
+				nameServer.unregisterNode(failedNodeName);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 	
 	
-	/**
-	 * @param idFailNode	The hash of the id which caused the connection failure 
-	 */
-	
-	public void WarnNSFailNode(int idFailNode){
-		try{
-			InetAddress ipNameServer = InetAddress.getByName("//localhost/NameServer");
-			udp.sendMessage(ipNameServer, thisPort, Protocol.FAIL, ""+idFailNode);
-		}catch(IOException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();			
-		}
-	}
 	
 	/**
 	 * This method is triggered when a package is sent to this class (unicast)
@@ -63,34 +60,7 @@ public class ConnectionFailureHandler implements PacketListener{
 	
 	@Override
 	public void packetReceived(InetAddress sendToID, String message) {
-		// TODO Auto-generated method stub
-		InetAddress ipPrevNode, ipNextNode;
-		int idPrevNode, idNextNode;
-		String[] command = message.split(" ");
-				
-		if (command[0].equals(Protocol.ID_ACK)) {
-			//params zo binnenkrijgen vanuit server int id1, InetAddress ip1, int id2, InetAddress ip2
-			// id1 = command[1], ip1 = command[2], id2 = command[3], ip2 = command[4]
-				
-			try {
-				idPrevNode = Integer.parseInt(command[1]);
-				idNextNode = Integer.parseInt(command[3]);
-				ipPrevNode = InetAddress.getByName(command[2]);
-				ipNextNode = InetAddress.getByName(command[4]);
-				
-				if(thisID == idPrevNode){
-					//hash prevNode veranderen
-					udp.sendMessage(ipNextNode, thisPort, Protocol.PREVNODE, ""+idPrevNode);
-				}
-				if(thisID == idNextNode){
-					//hash nextNode veranderen
-					udp.sendMessage(ipPrevNode, thisPort,  Protocol.NEXTNODE, "" + idNextNode);
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
+
 	}
 	
 	@Override
