@@ -10,6 +10,10 @@
     <int>5205</int>
     <string>4.5.6.6</string>
    </void>
+   <void method="put">
+    <int>15727</int>
+    <string>10.0.5.5</string>
+   </void>
   </object>
  </object>
 </java>
