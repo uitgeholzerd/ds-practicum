@@ -20,4 +20,5 @@ NEW=$1
 sed -i s/$OLD/$NEW/g /etc/hostname
 sed -i s/$OLD/$NEW/g /etc/hosts
 
-
+read -p "Press Enter to reboot..."
+reboot 
