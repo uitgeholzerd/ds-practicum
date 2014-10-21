@@ -51,6 +51,8 @@ public class ClientTest {
 					System.err.println("Failed to send multicast ping: "
 							+ e.getMessage());
 				}
+			} else if (command.equals("quit")) {
+				System.exit(0);
 			} else {
 				System.err.println("Unknown command.");
 			}
