@@ -42,6 +42,8 @@ public class ClientTest {
 					System.err
 							.println("Failed to send ping: " + e.getMessage());
 				}
+			} else if (command.equals("lookup")) {
+					System.out.println(client.lookupNode(cmd[0]));
 			} else if (command.equals("pingall")) {
 				try {
 					client.pingGroup();

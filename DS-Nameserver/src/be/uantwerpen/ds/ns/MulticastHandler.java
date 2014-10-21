@@ -64,8 +64,9 @@ public class MulticastHandler implements Runnable {
 				//	System.out.println("(discarded local multicast)");
 				}
 			}
-			System.out.println("Multicast socket closed ");
+			
 		}
+		System.out.println("Multicast socket closed ");
 	}
 
 	/**
