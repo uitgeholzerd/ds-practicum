@@ -90,7 +90,6 @@ public class Client implements PacketListener {
 			// Server confirmed registration and answers with its location and the number of nodes
 			try {
 				serverAddress = sender;
-				// Try to bind the NameServer
 				nameServer = (INameServer) Naming.lookup(message[1]);
 			} catch (MalformedURLException | RemoteException | NotBoundException e) {
 				// TODO Auto-generated catch block
@@ -98,25 +97,24 @@ public class Client implements PacketListener {
 			}
 			// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 			if (Integer.parseInt(message[2]) == 1) {
-				// this is the only node
 				nextNodeHash = hash;
 				previousNodeHash = hash;
 			}
 			break;
 			
 		case SET_NODES:
-			// Another client received the discover message and will provide this client with its neighbours
+			// Another client received the discover message and provides this client with its neighbours
 			previousNodeHash = Integer.parseInt(message[1]);
 			nextNodeHash = Integer.parseInt(message[2]);
 			break;
 			
 		case PREVNODE:
-			// Another client received the fail message and will provide this client with its previous node
+			// Another client encountered a failed node and provides this client with its new previous node
 			previousNodeHash = Integer.parseInt(message[1]);
 			break;
 			
 		case NEXTNODE:
-			// Another client received the fail message and will provide this client with its next node
+			// Another client encountered a failed node and provides this client with its new next node
 			nextNodeHash = Integer.parseInt(message[1]);
 			break;
 			
@@ -147,26 +145,17 @@ public class Client implements PacketListener {
 	 */
 	
 	public void Shutdown(){
+		try {
+			nameServer.unregisterNode(this.name);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	
 		WarnPrevNode(previousNodeHash,nextNodeHash);
 		WarnNextNode(nextNodeHash,previousNodeHash);
-		WarnNSExitNode(hash);
 		
 		udp.closeClient();
-	}
-	
-	/**
-	 * This method will be called to inform the server about its exit
-	 *
-	 * @param id		client hash
-	 */
-	public void WarnNSExitNode(int idExitNode){
-		try{
-			udp.sendMessage(serverAddress, udpClientPort, Protocol.LEAVE, ""+idExitNode);
-		}catch(IOException e){
-			// TODO Auto-generated catch block
-			e.printStackTrace();			
-		}
 	}
 	
 	/**
