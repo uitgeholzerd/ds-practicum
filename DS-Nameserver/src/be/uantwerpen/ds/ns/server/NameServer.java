@@ -33,7 +33,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 */
 	private static final long serialVersionUID = -1957228712436209754L;
 	private static final String fileLocation = "./names.xml";
-	private static final String bindLocation =  "//localhost/NameServer";
+	private static final String bindLocation =  "NameServer";
 	private static final int rmiPort = 1099;
 	private static final int udpServerPort = 2345;
 	
@@ -73,7 +73,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private void rmiBind() {
         try { 
 			LocateRegistry.createRegistry(rmiPort);
-			Naming.bind("//" + getAddress().getHostAddress() + "/NameServer", this);
+			Naming.bind("//" + getAddress().getHostAddress() +"/" + bindLocation, this);
         } catch (MalformedURLException | AlreadyBoundException e) {
             System.err.println("java RMI registry already exists.");
         } catch (RemoteException e) {
@@ -92,6 +92,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
 		boolean success;
+		// TODO like this it will refuse to re-register a node after its IP has changed
 		if (!nodeMap.containsKey(hash)) {
 			nodeMap.put(hash, address);
 			success = true;
@@ -147,7 +148,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * Saves the current map of nodes to the the hard disk
 	 * 
 	 */
-	private void saveMap() {
+	//TODO de enige reden dat deze methode public is, is voor de tests
+	public void saveMap() {
 		FileOutputStream fos = null;
 		XMLEncoder xml = null;
 		
@@ -270,4 +272,17 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		return address;
 	}
+	
+	//TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	public String dumpMap(){
+		String result = "";
+		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
+			result+=entry.getKey()+"="+entry.getValue()+"\n";
+		}
+		return result;
+	}
+	public void clearMap(){
+		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>()) ;
+	}
+
 }
