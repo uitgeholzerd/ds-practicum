@@ -45,11 +45,14 @@ public class Client implements PacketListener {
 	 * for replies.
 	 */
 	public void connectToNetwork() {
+		// set up UDP socket and receive messages
+		udp = new DatagramHandler(udpClientPort, this);
+		//join multicast group
 		group = new MulticastHandler(this);
 		try {
 			name = getAddress().getHostName();
 			group.sendMessage(Protocol.DISCOVER,
-					name + " " + getAddress());
+					name + " " + getAddress().getHostAddress());
 			//DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
 			replyTimer.schedule(new TimerTask() {
 				@Override
@@ -64,8 +67,7 @@ public class Client implements PacketListener {
 			e1.printStackTrace();
 		}
 
-		// set up UDP socket and receive messages
-		udp = new DatagramHandler(udpClientPort, this);
+
 	}
 
 	/**
@@ -88,9 +90,10 @@ public class Client implements PacketListener {
 		case DISCOVER:
 			// The client received a discover-message from a new host and will
 			// recalculate its neighbours if needed
+			if (nameServer == null ) return;
 			try {
 				int newNodeHash = nameServer
-						.getShortHash(message[1].split("/")[0]);
+						.getShortHash(message[1]);
 				if (hash < newNodeHash && newNodeHash < nextNodeHash) {
 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
 							hash + " " + nextNodeHash);
