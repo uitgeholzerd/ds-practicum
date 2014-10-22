@@ -349,7 +349,8 @@ public class Client implements PacketListener {
 			System.err.println("Can't ping if not connected!");
 			return;
 		}
-		group.sendMessage(Protocol.PING, "");
+		final String uuid = UUID.randomUUID().toString();
+		group.sendMessage(Protocol.PING, uuid);
 	}
 
 	@Override
