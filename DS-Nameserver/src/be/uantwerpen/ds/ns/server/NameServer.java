@@ -38,7 +38,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private static final int udpServerPort = 2345;
 	
 	private SortedMap<Integer, String> nodeMap;
-	@SuppressWarnings("unused")
+
 	private MulticastHandler group;
 	private DatagramHandler udp;
 
@@ -50,11 +50,19 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		loadMap();
 		rmiBind();
 		
-		//join multicast group and receive messages
-		group = new MulticastHandler(this);
-		
-		//set up UDP socket and receive messages
-		udp = new DatagramHandler(udpServerPort, this);
+		try {
+			//join multicast group and receive messages
+			group = new MulticastHandler(this);
+			
+			//set up UDP socket and receive messages
+			udp = new DatagramHandler(udpServerPort, this);
+		} catch (IOException e) {
+			System.err.println("Server set-up failed: " + e.getMessage());
+			udp.closeClient();
+			group.closeClient();
+			udp = null;
+			group = null;
+		}
 		System.out.println("Server started on " + getAddress());
 	}
 

@@ -59,11 +59,13 @@ public class ClientTest {
 				}
 			} else if (command.equals("quit")) {
 				client.disconnect();
+				System.out.println("Bye.");
 				System.exit(0);
 			} else if (command.equals("fail")) {
+				System.out.println("Ooops.");
 				System.exit(1);
 			} else {
-				System.err.println("Unknown command.");
+				System.err.println("Say what?!");
 			}
 			try {
 				Thread.sleep(500);

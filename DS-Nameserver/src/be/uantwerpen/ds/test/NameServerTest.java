@@ -115,7 +115,7 @@ public class NameServerTest {
 				System.out.println("Bye.");
 				System.exit(0);
 			} else {
-				System.err.println("Unknown command.");
+				System.err.println("Say what?!");
 			}
 			try {
 				Thread.sleep(100);

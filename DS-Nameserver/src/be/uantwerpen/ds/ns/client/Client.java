@@ -54,13 +54,12 @@ public class Client implements PacketListener {
 	 * for replies.
 	 */
 	public void connect() {
-		// set up UDP socket and receive messages
-		System.out.println("Connecting to network...");
-		udp = new DatagramHandler(udpClientPort, this);
-
-		// join multicast group
-		group = new MulticastHandler(this);
 		try {
+			// set up UDP socket and receive messages
+			System.out.println("Connecting to network...");
+			udp = new DatagramHandler(udpClientPort, this);
+			// join multicast group
+			group = new MulticastHandler(this);
 			setName(getAddress().getHostName());
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
 
@@ -76,7 +75,12 @@ public class Client implements PacketListener {
 				}
 			}, 3 * 1000);
 		} catch (IOException e) {
-			System.err.println("Failed to connect: " + e.getMessage());
+			System.err.println("Connect failed: " + e.getMessage());
+			udp.closeClient();
+			group.closeClient();
+			udp = null;
+			group = null;
+			nameServer = null;
 		}
 	}
 
@@ -100,15 +104,16 @@ public class Client implements PacketListener {
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
 
+		} catch (IOException e) {
+			System.err.println("Disconnect failed: " + e.getMessage());
+		} finally {
 			// Close connections
 			udp.closeClient();
 			group.closeClient();
 			System.out.println("Disconnected from network");
-			// Shutdown the program - disabled for testing (also, there's a
-			// command for that)
-			// System.exit(0);
-		} catch (IOException e) {
-			System.err.println("Shutdown failed: " + e.getMessage());
+			udp = null;
+			group = null;
+			nameServer = null;
 		}
 	}
 

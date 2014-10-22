@@ -23,15 +23,15 @@ public class DatagramHandler implements Runnable {
 	/**
 	 * @param port
 	 *            UDP port to listen on
+	 * @throws SocketException 
 	 */
-	public DatagramHandler(int listenPort, PacketListener listener) {
+	public DatagramHandler(int listenPort, PacketListener listener) throws SocketException {
 		this.listener = listener;
 		try {
-			// TODO: convince linux to bind on ipv4
-			//socket = new DatagramSocket(new InetSocketAddress(InetAddress.getByName("0.0.0.0"), listenPort));
 			socket = new DatagramSocket(listenPort);
-		} catch (SocketException/* | UnknownHostException*/ e) {
+		} catch (SocketException e) {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
+			throw e;
 		}
 		isRunning = true;
 		listenThread = new Thread(this);
@@ -94,5 +94,7 @@ public class DatagramHandler implements Runnable {
 	public void closeClient() {
 		isRunning = false;
 		socket.close();
+		socket = null;
+		listenThread = null;
 	}
 }

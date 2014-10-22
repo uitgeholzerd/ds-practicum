@@ -23,7 +23,6 @@ public class MulticastHandler implements Runnable {
 			socket = new MulticastSocket(multicastPort);
 			socket.setInterface(listener.getAddress());
 			socket.joinGroup(InetAddress.getByName(multicastAddress));
-			// TODO else?
 		} catch (IOException e) {
 			System.err.println("Failed to open multicast socket: "
 					+ e.getMessage());
@@ -98,6 +97,8 @@ public class MulticastHandler implements Runnable {
 		}
 
 		socket.close();
+		socket = null;
+		listenThread = null;
 
 	}
 }
