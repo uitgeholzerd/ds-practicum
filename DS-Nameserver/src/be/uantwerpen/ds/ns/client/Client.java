@@ -146,7 +146,7 @@ public class Client implements PacketListener {
 				}*/
 				
 				
-				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && newNodeHash > hash || newNodeHash < nextNodeHash)) {
+				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
  					System.out.println("It's between me and the next node!");
  					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
  					nextNodeHash = newNodeHash;
