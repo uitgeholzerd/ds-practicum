@@ -55,6 +55,9 @@ public class ClientTest {
 							+ e.getMessage());
 				}
 			} else if (command.equals("quit")) {
+				client.disconnect();
+				System.exit(0);
+			} else if (command.equals("fail")) {
 				System.exit(0);
 			} else {
 				System.err.println("Unknown command.");
