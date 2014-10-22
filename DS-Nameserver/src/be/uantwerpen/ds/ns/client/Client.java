@@ -121,6 +121,8 @@ public class Client implements PacketListener {
 				serverAddress = sender;
 				// Try to bind the NameServer
 				nameServer = (INameServer) Naming.lookup(message[1]);
+				//test if it works
+				nameServer.lookupNode(name);
 				System.out.println("NameServer bound to " + message[1]);
 			} catch (MalformedURLException | RemoteException
 					| NotBoundException e) {
