@@ -122,11 +122,13 @@ public class Client implements PacketListener {
 				//test if correctly registered
 				String registeredAddress = nameServer.lookupNode(name);
 				String localAddress = getAddress().getHostAddress();
+				hash = nameServer.getShortHash(name);
 				if (registeredAddress.equals(localAddress)){
-					System.out.println(message[1] +" self-test success: registered as "+ registeredAddress);
+					System.out.println(message[1] +" self-test success: registered as ["+ hash + "]=" + registeredAddress);
 				} else {
-					System.err.println(message[1] +" self-test failed: registered as "+ registeredAddress + ", should be " + localAddress);
+					System.err.println(message[1] +" self-test failed: registered as ["+ hash + "]="+ registeredAddress + ", should be " + localAddress);
 				}
+				
 				
 			} catch (RemoteException | NotBoundException e) {
 				// TODO Auto-generated catch block
@@ -278,6 +280,6 @@ public class Client implements PacketListener {
 		return result;
 	}
 	public String getNodes(){
-		return "Previous" + previousNodeHash + "\nLocal: "+ hash+ "\nNext: "+ nextNodeHash;
+		return "Previous: " + previousNodeHash + "\nLocal: "+ hash+ "\nNext: "+ nextNodeHash;
 	}
 }
