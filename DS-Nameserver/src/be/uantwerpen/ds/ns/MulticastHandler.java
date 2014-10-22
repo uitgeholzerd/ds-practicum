@@ -51,11 +51,10 @@ public class MulticastHandler implements Runnable {
 					System.err.println("Failed to receive multicast packet: "
 							+ e.getMessage());
 			}
-			System.out.println("Multicast: " + inPacket + " from " + inPacket.getAddress());
+			//System.out.println("Multicast: " + inPacket + " from " + inPacket.getAddress().getHostAddress());
 			if (inPacket != null && inPacket.getAddress() != null) {
 				// Prevent sender from receiving its own broadcast
-				//System.out.println("inpacket: " + inPacket.getAddress());
-				//System.out.println("listener: " + listener.getAddress());
+				// TODO: Actually, if we do this in the Client or not at all we can run server & client on one machine.
 				//if (!inPacket.getAddress().equals(listener.getAddress())) {
 					String msg = new String(inBuffer, 0, inPacket.getLength());
 					listener.packetReceived(inPacket.getAddress(), msg);

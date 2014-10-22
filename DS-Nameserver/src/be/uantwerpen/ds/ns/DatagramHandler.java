@@ -61,7 +61,7 @@ public class DatagramHandler implements Runnable {
 					System.err.println("Failed to receive UDP datagram: "
 							+ e.getMessage());
 			}
-			System.out.println("Datagram: " + inPacket);
+			//System.out.println("Datagram: " + inPacket);
 			if (inPacket != null && inPacket.getAddress()!=null) {
 				String msg = new String(buffer, 0, inPacket.getLength());
 				listener.packetReceived(inPacket.getAddress(), msg);

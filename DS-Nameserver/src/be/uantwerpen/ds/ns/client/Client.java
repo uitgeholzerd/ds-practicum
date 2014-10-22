@@ -93,13 +93,21 @@ public class Client implements PacketListener {
 		switch (command) {
 		case DISCOVER:
 			// The client received a discover-message from a new host and will recalculate its neighbours if needed
-			if (nameServer == null ) return;
+			// disregard if it's myself
+			if (sender.getHostAddress().equals(getAddress().getHostAddress())) return;
+			if (nameServer == null ) {
+				System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
+				return;
+			}
 			try {
 				int newNodeHash = nameServer.getShortHash(message[1]);
+				System.out.println("New node hash: " + newNodeHash);
 				if (hash < newNodeHash && newNodeHash < nextNodeHash) {
+					System.out.println("It's between me and the next node!");
 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
 					nextNodeHash = newNodeHash;
 				} else if (previousNodeHash < newNodeHash && newNodeHash < hash) {
+					System.out.println("It's between me and the previous node!");
 					previousNodeHash = newNodeHash;
 				}
 			} catch (IOException e1) {
