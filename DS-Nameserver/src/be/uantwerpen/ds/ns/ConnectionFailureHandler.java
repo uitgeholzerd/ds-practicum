@@ -11,26 +11,15 @@ import be.uantwerpen.ds.ns.server.NameServer;
  *
  */
 
-public class ConnectionFailureHandler{
-
-	private NameServer nameServer;
-	private DatagramHandler udp;
-
-	public ConnectionFailureHandler(NameServer nameServer, DatagramHandler udp){
-		this.nameServer = nameServer;
-		this.udp = udp;
-	}
-	
-	
+public class ConnectionFailureHandler{	
 	/**
 	 * This method removes the failed node from the network by informing its previous neighbours and the nameserver
 	 * 
 	 * @param failedNodeName The name of the failed node
 	 */
-	//TODO static maken
-	public void fixFailure(String failedNodeName) {
+	
+	public static void fixFailure(NameServer nameServer, DatagramHandler udp, String failedNodeName) {
 		String[] neighbours = nameServer.lookupNeighbours(failedNodeName);
-		
 		String ipPrevNode, ipNextNode;
 				
 			try {

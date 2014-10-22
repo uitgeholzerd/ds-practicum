@@ -7,12 +7,13 @@ import java.net.Socket;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-import be.uantwerpen.ds.ns.ConnectionFailureHandler;
 import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.INameServer;
 import be.uantwerpen.ds.ns.MulticastHandler;
@@ -92,8 +93,7 @@ public class Client implements PacketListener {
 			// The client received a discover-message from a new host and will recalculate its neighbours if needed
 			if (nameServer == null ) return;
 			try {
-				int newNodeHash = nameServer
-						.getShortHash(message[1]);
+				int newNodeHash = nameServer.getShortHash(message[1]);
 				if (hash < newNodeHash && newNodeHash < nextNodeHash) {
 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
 					nextNodeHash = newNodeHash;
@@ -111,12 +111,16 @@ public class Client implements PacketListener {
 		case DISCOVER_ACK:
 			// Server confirmed registration and answers with its location and the number of nodes
 			try {
-				nameServer = (INameServer) Naming.lookup(message[1]);
+				Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
+				String[] list = registry.list();
+				for (String string : list) {
+					System.out.println(string);
+				}
+				nameServer = (INameServer) registry.lookup(message[1]);
 				//test if it works
 				System.out.println("Self-test: registered as "+ nameServer.lookupNode(name));
 				System.out.println("NameServer bound to " + message[1]);
-			} catch (MalformedURLException | RemoteException
-					| NotBoundException e) {
+			} catch (RemoteException | NotBoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}

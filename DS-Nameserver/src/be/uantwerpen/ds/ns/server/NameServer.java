@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -74,7 +73,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private void rmiBind() {
         try { 
 			LocateRegistry.createRegistry(rmiPort);
-			Naming.bind(bindLocation, this);
+			Naming.bind("//" + getAddress().getHostAddress() + "/NameServer", this);
         } catch (MalformedURLException | AlreadyBoundException e) {
             System.err.println("java RMI registry already exists.");
         } catch (RemoteException e) {
@@ -243,8 +242,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			registerNode(nodeName, nodeIp);
 			
 			try {
-				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "//" + getAddress().getHostAddress() + "/NameServer" + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "NameServer" + " " + nodeMap.size());
 			}
 			 catch (IOException e) {
 				// TODO Auto-generated catch block
