@@ -47,7 +47,7 @@ public class MulticastHandler implements Runnable {
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
-				
+				if (isRunning)
 					System.err.println("Failed to receive multicast packet: "
 							+ e.getMessage());
 			}

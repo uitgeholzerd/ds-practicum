@@ -102,12 +102,13 @@ public class Client implements PacketListener {
 			try {
 				int newNodeHash = nameServer.getShortHash(message[1]);
 				System.out.println("New node joined with hash " + newNodeHash);
-				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && newNodeHash > nextNodeHash)) {
+				//You don't  ask about these booleans
+				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > nextNodeHash || newNodeHash > hash))) {
 					System.out.println("It's between me and the next node!");
 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
 					nextNodeHash = newNodeHash;
 				} 
-				if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && newNodeHash > previousNodeHash)) {
+				if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && ( newNodeHash > previousNodeHash || newNodeHash < previousNodeHash))) {
 					System.out.println("It's between me and the previous node!");
 					previousNodeHash = newNodeHash;
 				}

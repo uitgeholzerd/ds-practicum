@@ -58,6 +58,7 @@ public class DatagramHandler implements Runnable {
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
+				if (isRunning)
 					System.err.println("Failed to receive UDP datagram: "
 							+ e.getMessage());
 			}
