@@ -77,7 +77,13 @@ public class Client implements PacketListener {
 
 
 	}
+	public String getName() {
+		return name;
+	}
 
+	private void setName(String name) {
+		this.name = name;
+	}
 	/**
 	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
 	 * different actions
@@ -181,9 +187,9 @@ public class Client implements PacketListener {
 				String localAddress = getAddress().getHostAddress();
 				hash = nameServer.getShortHash(getName());
 				if (registeredAddress.equals(localAddress)){
-					System.out.println(message[1] +" self-test success: registered as ["+ hash + "]=" + registeredAddress);
+					System.out.println(message[1] +" self-test success: registered as "+ hash + " [" + registeredAddress +"]");
 				} else {
-					System.err.println(message[1] +" self-test failed: registered as ["+ hash + "]="+ registeredAddress + ", should be " + localAddress);
+					System.err.println(message[1] +" self-test failed: registered as "+ hash + " ["+ registeredAddress + "], should be " + localAddress);
 				}
 				
 				
@@ -307,6 +313,7 @@ public class Client implements PacketListener {
 					System.out.println("Ping reply from " + name);
 				} else {
 					System.err.println("Ping timeout from " + name);
+					nodeFailed(name);
 				}
 			}
 		}, 3 * 1000);
@@ -325,6 +332,23 @@ public class Client implements PacketListener {
 		group.sendMessage(Protocol.PING, "");
 	}
 	
+	private void nodeFailed(String nodeName){
+			try {
+				String ipPrevNode, ipNextNode;
+				String[] neighbours = nameServer.lookupNeighbours(nodeName);
+				ipPrevNode = nameServer.lookupNode(neighbours[0]);
+				ipNextNode = nameServer.lookupNode(neighbours[1]);
+				
+				// Send the previous node of the failed node to the next node of the failed note and vice versa
+				udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+				udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+				
+				nameServer.unregisterNode(nodeName);
+			} catch (IOException e) {
+				System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
+			}
+	}
+	
 	//TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public String lookupNode(String name){
 		String result = "";
@@ -340,11 +364,5 @@ public class Client implements PacketListener {
 		return "Previous: " + previousNodeHash + "\nLocal: "+ hash+ "\nNext: "+ nextNodeHash;
 	}
 
-	public String getName() {
-		return name;
-	}
 
-	private void setName(String name) {
-		this.name = name;
-	}
 }
