@@ -75,6 +75,27 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 	
 	/**
+	 * Saves the current map of nodes to the the hard disk
+	 * 
+	 */
+	//TODO de enige reden dat deze methode public is, is voor de tests
+	public void saveMap() {
+		FileOutputStream fos = null;
+		XMLEncoder xml = null;
+		
+		try {
+			fos = new FileOutputStream(fileLocation);
+			xml = new XMLEncoder(fos);
+			xml.writeObject(nodeMap);
+			xml.close();
+			fos.close();
+		} catch ( IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/**
 	 * Binds the current NameServer object to the bindlocation
 	 * 
 	 */
@@ -112,7 +133,21 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		saveMap();
 		return success;
 	}
+	
+	public boolean unregisterNode(String name) {
+		int hash = getShortHash(name);
+		boolean success;
 
+		if (nodeMap.containsKey(hash)) {
+			nodeMap.remove(hash);
+			success = true;
+		} else {
+			success = false;
+		}
+		saveMap();
+		return success;
+	}
+	
 	/**
 	 * Retrieve the address of the node given its name
 	 * @param	name	The name of the node
@@ -134,42 +169,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		else {
 			return "";
-		}
-	}
-
-
-	public boolean unregisterNode(String name) {
-		int hash = getShortHash(name);
-		boolean success;
-
-		if (nodeMap.containsKey(hash)) {
-			nodeMap.remove(hash);
-			success = true;
-		} else {
-			success = false;
-		}
-		saveMap();
-		return success;
-	}
-
-	/**
-	 * Saves the current map of nodes to the the hard disk
-	 * 
-	 */
-	//TODO de enige reden dat deze methode public is, is voor de tests
-	public void saveMap() {
-		FileOutputStream fos = null;
-		XMLEncoder xml = null;
-		
-		try {
-			fos = new FileOutputStream(fileLocation);
-			xml = new XMLEncoder(fos);
-			xml.writeObject(nodeMap);
-			xml.close();
-			fos.close();
-		} catch ( IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 	}
 
@@ -226,11 +225,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return new String[]{previousNode, nextNode};
 	}
 
-	@Override
-	public int getShortHash(Object o) {
-		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
-	}
-
 	/**
 	 * This method is triggered when a package is sent to this server (uni- or multicast)
 	 * Depending on the command contained in the message, the server will perform different actions
@@ -238,6 +232,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param address	IP of the sender
 	 * @param port		Data containing the command and a message
 	 */
+	
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
 		System.out.println("Received message from " + sender + ": " + data);
@@ -268,6 +263,12 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 	
 	@Override
+	public int getShortHash(Object o) {
+		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+	}
+
+	
+	@Override
 	public InetAddress getAddress() {
 		InetAddress address = null;
 		try {
@@ -289,6 +290,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		return result;
 	}
+	
 	public void clearMap(){
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>()) ;
 	}

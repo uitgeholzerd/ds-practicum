@@ -129,100 +129,11 @@ public class Client implements PacketListener {
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
 		case DISCOVER:
-			// The client received a discover-message from a new host and will
-			// recalculate its neighbours if needed
-			// disregard if it's myself
-			if (sender.getHostAddress().equals(getAddress().getHostAddress()))
-				return;
-			if (nameServer == null) {
-				System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
-				return;
-			}
-			try {
-				int newNodeHash = nameServer.getShortHash(message[1]);
-				System.out.println("New node joined with hash " + newNodeHash);
-
-				// requiem for 3 hours of my life i'll never get back
-				/*
-				 * if (newNodeHash > hash){ if (newNodeHash > nextNodeHash){ if
-				 * (nextNodeHash <= hash){ nextNodeHash = newNodeHash;
-				 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
-				 * hash + " " + hash); } } else { nextNodeHash = newNodeHash;
-				 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
-				 * hash + " " + hash); } } else { if (newNodeHash <
-				 * previousNodeHash){ if (previousNodeHash >= hash) {
-				 * previousNodeHash = newNodeHash; udp.sendMessage(sender,
-				 * udpClientPort, Protocol.SET_NODES, hash + " " + hash); } }
-				 * else { previousNodeHash = newNodeHash; } }
-				 */
-
-				/*
-				 * if (previousNodeHash == hash && nextNodeHash == hash){
-				 * System.out.println("Finally, someone to talk to!");
-				 * previousNodeHash = newNodeHash; nextNodeHash = newNodeHash;
-				 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
-				 * hash + " " + hash); } else if (newNodeHash < nextNodeHash &&
-				 * newNodeHash > hash){
-				 * System.out.println("It's between me and the next node!");
-				 * nextNodeHash = newNodeHash; udp.sendMessage(sender,
-				 * udpClientPort, Protocol.SET_NODES, hash + " " +
-				 * nextNodeHash); } else if (nextNodeHash < hash && newNodeHash
-				 * < nextNodeHash){
-				 * System.out.println("Now he's the first node!"); nextNodeHash
-				 * = newNodeHash; udp.sendMessage(sender, udpClientPort,
-				 * Protocol.SET_NODES, hash + " " + nextNodeHash); } else if
-				 * (newNodeHash > previousNodeHash & newNodeHash < hash) {
-				 * System.out.println("It's between me and the previous node!");
-				 * previousNodeHash = newNodeHash; } else if (previousNodeHash >
-				 * hash && newNodeHash > previousNodeHash) {
-				 * System.out.println("Now he's the last node!");
-				 * previousNodeHash = newNodeHash; }
-				 */
-
-				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
-					System.out.println("It's between me and the next node!");
-					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
-					nextNodeHash = newNodeHash;
-				}
-				if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (newNodeHash < hash || newNodeHash > previousNodeHash))) {
-					System.out.println("It's between me and the previous node!");
-					previousNodeHash = newNodeHash;
-				}
-
-			} catch (IOException e) {
-System.err.println("RMI name lookup failed: " + e.getMessage());
-			}
+			processDISCOVER(sender, message);
 			break;
 
 		case DISCOVER_ACK:
-			// Server confirmed registration and answers with its location and
-			// the number of nodes
-			try {
-				Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
-				/*
-				 * String[] list = registry.list();
-				 * for (String string : list) { System.out.println(string); }
-				 */
-				nameServer = (INameServer) registry.lookup(message[1]);
-				// test if correctly registered
-				String registeredAddress = nameServer.lookupNode(getName());
-				String localAddress = getAddress().getHostAddress();
-				hash = nameServer.getShortHash(getName());
-				if (registeredAddress.equals(localAddress)) {
-					System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
-				} else {
-					System.err.println(message[1] + " self-test failed: registered as " + hash + " [" + registeredAddress + "], should be " + localAddress);
-				}
-
-			} catch (RemoteException | NotBoundException e) {
-System.err.println("RMI setup failed: " +e.getMessage());
-			}
-			// If this is the only client in the system, it is its own
-			// neighbours. Else wait for answer from neighbour (= do nothing)
-			if (Integer.parseInt(message[2]) == 1) {
-				nextNodeHash = hash;
-				previousNodeHash = hash;
-			}
+			processDISCOVER_ACK(sender, message);
 			break;
 
 		case SET_NODES:
@@ -245,14 +156,7 @@ System.err.println("RMI setup failed: " +e.getMessage());
 			break;
 
 		case PING:
-			// Respond to other client's ping
-			if (udp != null) {
-				try {
-					udp.sendMessage(sender, udpClientPort, Protocol.PING_ACK, message[1]);
-				} catch (IOException e) {
-					System.err.println("Failed to respond to ping from " + sender.getAddress() + ": " + e.getMessage());
-				}
-			}
+			processPING(sender, message);
 			break;
 		case PING_ACK:
 			receivedPings.add(message[1]);
@@ -262,6 +166,114 @@ System.err.println("RMI setup failed: " +e.getMessage());
 			break;
 		}
 
+	}
+
+	private void processPING(InetAddress sender, String[] message) {
+		// Respond to other client's ping
+		if (udp != null) {
+			try {
+				udp.sendMessage(sender, udpClientPort, Protocol.PING_ACK, message[1]);
+			} catch (IOException e) {
+				System.err.println("Failed to respond to ping from " + sender.getAddress() + ": " + e.getMessage());
+			}
+		}
+	}
+
+	private void processDISCOVER_ACK(InetAddress sender, String[] message) {
+		// Server confirmed registration and answers with its location and
+		// the number of nodes
+		try {
+			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
+			/*
+			 * String[] list = registry.list(); for (String string : list) {
+			 * System.out.println(string); }
+			 */
+			nameServer = (INameServer) registry.lookup(message[1]);
+			// test if correctly registered
+			String registeredAddress = nameServer.lookupNode(getName());
+			String localAddress = getAddress().getHostAddress();
+			hash = nameServer.getShortHash(getName());
+			if (registeredAddress.equals(localAddress)) {
+				System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
+			} else {
+				System.err.println(message[1] + " self-test failed: registered as " + hash + " [" + registeredAddress + "], should be " + localAddress);
+			}
+
+		} catch (RemoteException | NotBoundException e) {
+			System.err.println("RMI setup failed: " + e.getMessage());
+		}
+		// If this is the only client in the system, it is its own
+		// neighbours. Else wait for answer from neighbour (= do nothing)
+		if (Integer.parseInt(message[2]) == 1) {
+			nextNodeHash = hash;
+			previousNodeHash = hash;
+		}
+	}
+
+	private void processDISCOVER(InetAddress sender, String[] message) {
+		// The client received a discover-message from a new host and will
+		// recalculate its neighbours if needed
+		// disregard if it's myself
+		if (sender.getHostAddress().equals(getAddress().getHostAddress()))
+			return;
+		if (nameServer == null) {
+			System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
+			return;
+		}
+		try {
+			int newNodeHash = nameServer.getShortHash(message[1]);
+			System.out.println("New node joined with hash " + newNodeHash);
+
+			// requiem for 3 hours of my life i'll never get back
+			/*
+			 * if (newNodeHash > hash){ if (newNodeHash > nextNodeHash){ if
+			 * (nextNodeHash <= hash){ nextNodeHash = newNodeHash;
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
+			 * hash + " " + hash); } } else { nextNodeHash = newNodeHash;
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
+			 * hash + " " + hash); } } else { if (newNodeHash <
+			 * previousNodeHash){ if (previousNodeHash >= hash) {
+			 * previousNodeHash = newNodeHash; udp.sendMessage(sender,
+			 * udpClientPort, Protocol.SET_NODES, hash + " " + hash); } }
+			 * else { previousNodeHash = newNodeHash; } }
+			 */
+
+			/*
+			 * if (previousNodeHash == hash && nextNodeHash == hash){
+			 * System.out.println("Finally, someone to talk to!");
+			 * previousNodeHash = newNodeHash; nextNodeHash = newNodeHash;
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
+			 * hash + " " + hash); } else if (newNodeHash < nextNodeHash &&
+			 * newNodeHash > hash){
+			 * System.out.println("It's between me and the next node!");
+			 * nextNodeHash = newNodeHash; udp.sendMessage(sender,
+			 * udpClientPort, Protocol.SET_NODES, hash + " " +
+			 * nextNodeHash); } else if (nextNodeHash < hash && newNodeHash
+			 * < nextNodeHash){
+			 * System.out.println("Now he's the first node!"); nextNodeHash
+			 * = newNodeHash; udp.sendMessage(sender, udpClientPort,
+			 * Protocol.SET_NODES, hash + " " + nextNodeHash); } else if
+			 * (newNodeHash > previousNodeHash & newNodeHash < hash) {
+			 * System.out.println("It's between me and the previous node!");
+			 * previousNodeHash = newNodeHash; } else if (previousNodeHash >
+			 * hash && newNodeHash > previousNodeHash) {
+			 * System.out.println("Now he's the last node!");
+			 * previousNodeHash = newNodeHash; }
+			 */
+
+			if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
+				System.out.println("It's between me and the next node!");
+				udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
+				nextNodeHash = newNodeHash;
+			}
+			if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (newNodeHash < hash || newNodeHash > previousNodeHash))) {
+				System.out.println("It's between me and the previous node!");
+				previousNodeHash = newNodeHash;
+			}
+
+		} catch (IOException e) {
+			System.err.println("RMI name lookup failed: " + e.getMessage());
+		}
 	}
 
 	/**
