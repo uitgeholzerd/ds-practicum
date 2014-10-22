@@ -3,13 +3,8 @@ package be.uantwerpen.ds.ns;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.net.SocketPermission;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 
 /**
  * @author seb

@@ -4,10 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.SocketException;
-import java.net.UnknownHostException;
 
-import be.uantwerpen.ds.ns.client.Client;
 
 public class MulticastHandler implements Runnable {
 	private static final String multicastAddress = "225.6.7.8";

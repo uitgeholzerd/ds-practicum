@@ -9,9 +9,10 @@ import be.uantwerpen.ds.ns.server.NameServer;
 public class NameServerTest {
 	public static void main(String[] args) throws Exception {
 		NameServer ns = new NameServer();
-		boolean failed = false;
-		boolean test = false;
 
+/*
+ * 		boolean failed = false;
+		boolean test = false;
 		// Test toevoegen
 		test = ns.registerNode("aaa123", "localhost");
 		if (!test) {
@@ -83,6 +84,10 @@ public class NameServerTest {
 		}
 
 		// Test leave
+		 * 
+		 * 
+		 * 
+		 */
 		// read commands from stdio
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String input = null;

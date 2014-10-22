@@ -2,9 +2,7 @@ package be.uantwerpen.ds.ns.client;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.Socket;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -77,12 +75,8 @@ public class Client implements PacketListener {
 					}
 				}
 			}, 3 * 1000);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-			String ex = e1.toString();
-			// cfh = new ConnectionFailureHandler(name, hash, ex,
-			// udpClientPort);
+		} catch (IOException e) {
+			System.err.println("Failed to connect: " + e.getMessage());
 		}
 	}
 
@@ -195,12 +189,8 @@ public class Client implements PacketListener {
 					previousNodeHash = newNodeHash;
 				}
 
-			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-				String ex = e1.toString();
-				// cfh = new ConnectionFailureHandler(name, hash, ex,
-				// udpClientPort);
+			} catch (IOException e) {
+System.err.println("RMI name lookup failed: " + e.getMessage());
 			}
 			break;
 
@@ -209,8 +199,8 @@ public class Client implements PacketListener {
 			// the number of nodes
 			try {
 				Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
-				String[] list = registry.list();
 				/*
+				 * String[] list = registry.list();
 				 * for (String string : list) { System.out.println(string); }
 				 */
 				nameServer = (INameServer) registry.lookup(message[1]);
@@ -225,8 +215,7 @@ public class Client implements PacketListener {
 				}
 
 			} catch (RemoteException | NotBoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+System.err.println("RMI setup failed: " +e.getMessage());
 			}
 			// If this is the only client in the system, it is its own
 			// neighbours. Else wait for answer from neighbour (= do nothing)
@@ -276,8 +265,10 @@ public class Client implements PacketListener {
 	}
 
 	/**
-	 * Remediates a failed node, updates its neighbours and the server. 
-	 * @param nodeName Name of the failed node
+	 * Remediates a failed node, updates its neighbours and the server.
+	 * 
+	 * @param nodeName
+	 *            Name of the failed node
 	 */
 	private void nodeFailed(String nodeName) {
 		try {

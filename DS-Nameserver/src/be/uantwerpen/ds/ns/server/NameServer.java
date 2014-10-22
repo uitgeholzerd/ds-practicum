@@ -38,13 +38,28 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private static final int udpServerPort = 2345;
 	
 	private SortedMap<Integer, String> nodeMap;
+	@SuppressWarnings("unused")
 	private MulticastHandler group;
 	private DatagramHandler udp;
 
-	@SuppressWarnings("unchecked")
+
 	public NameServer() throws RemoteException {
 		super();
-		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>()) ;
+		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>());
+		
+		loadMap();
+		rmiBind();
+		
+		//join multicast group and receive messages
+		group = new MulticastHandler(this);
+		
+		//set up UDP socket and receive messages
+		udp = new DatagramHandler(udpServerPort, this);
+		System.out.println("Server started on " + getAddress());
+	}
+
+	@SuppressWarnings("unchecked")
+	private void loadMap() {
 		XMLDecoder decoder = null;
 		try {
 			decoder = new XMLDecoder(new BufferedInputStream(new FileInputStream(fileLocation)));
@@ -56,14 +71,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 				decoder.close();
 			}
 		}
-		rmiBind();
-		
-		//join multicast group and receive messages
-		group = new MulticastHandler(this);
-		
-		//set up UDP socket and receive messages
-		udp = new DatagramHandler(udpServerPort, this);
-		System.out.println("Server started on " + getAddress());
+		System.out.println("Loaded " + nodeMap.keySet().size() + " nodes from " + fileLocation);
 	}
 	
 	/**
