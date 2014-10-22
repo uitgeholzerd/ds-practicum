@@ -31,9 +31,9 @@ public class ClientTest {
 			if (command.isEmpty()) {
 				break;
 			} else if (command.equals("leave")) {
-				client.shutdown();
-			} else if (command.equals("connect")) {
-				client.connectToNetwork();
+				client.disconnect();
+			} else if (command.equals("join")) {
+				client.connect();
 			} else if (command.equals("nodes")) {
 				System.out.println(client.getNodes());
 			} else if (command.equals("ping")) {
@@ -44,7 +44,9 @@ public class ClientTest {
 							.println("Failed to send ping: " + e.getMessage());
 				}
 			} else if (command.equals("lookup")) {
-					System.out.println(client.lookupNode(cmd[0]));
+				System.out.println(client.lookupNode(cmd[0]));
+			} else if (command.equals("id")) {
+				System.out.println(client.getName()+"/"+client.getAddress());
 			} else if (command.equals("pingall")) {
 				try {
 					client.pingGroup();

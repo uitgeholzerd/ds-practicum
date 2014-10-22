@@ -38,14 +38,14 @@ public class Client implements PacketListener {
 
 	public Client() {
 		replyTimer = new Timer();
-		connectToNetwork();
+		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
 	}
 
 	/**
 	 * Joins the multicast group, sends a discovery message and starts listening for replies.
 	 */
-	public void connectToNetwork() {
+	public void connect() {
 		// set up UDP socket and receive messages
 		System.out.println("Connecting to network...");
 		udp = new DatagramHandler(udpClientPort, this);
@@ -53,8 +53,8 @@ public class Client implements PacketListener {
 		//join multicast group
 		group = new MulticastHandler(this);
 		try {
-			name = getAddress().getHostName();
-			group.sendMessage(Protocol.DISCOVER, name + " " + getAddress().getHostAddress());
+			setName(getAddress().getHostName());
+			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
 			
 			//DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
 			replyTimer.schedule(new TimerTask() {
@@ -103,6 +103,7 @@ public class Client implements PacketListener {
 				int newNodeHash = nameServer.getShortHash(message[1]);
 				System.out.println("New node joined with hash " + newNodeHash);
 				
+				//requiem for 3 hours of my life i'll never get back
 				/*if (newNodeHash > hash){
 					if (newNodeHash > nextNodeHash){
 						if (nextNodeHash <= hash){
@@ -174,9 +175,9 @@ public class Client implements PacketListener {
 				}*/
 				nameServer = (INameServer) registry.lookup(message[1]);
 				//test if correctly registered
-				String registeredAddress = nameServer.lookupNode(name);
+				String registeredAddress = nameServer.lookupNode(getName());
 				String localAddress = getAddress().getHostAddress();
-				hash = nameServer.getShortHash(name);
+				hash = nameServer.getShortHash(getName());
 				if (registeredAddress.equals(localAddress)){
 					System.out.println(message[1] +" self-test success: registered as ["+ hash + "]=" + registeredAddress);
 				} else {
@@ -250,7 +251,7 @@ public class Client implements PacketListener {
 	 * 
 	 * @throws IOException
 	 */
-	public void shutdown() {
+	public void disconnect() {
 		try {
 			// Make previous node and next node neighbours
 			String prevNodeIp = nameServer.lookupNodeByHash(previousNodeHash);
@@ -262,7 +263,7 @@ public class Client implements PacketListener {
 			udp.sendMessage(nextNode, udpClientPort, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
 			
 			//Unregister the node on the namserver
-			nameServer.unregisterNode(name);
+			nameServer.unregisterNode(getName());
 			
 			// Close connections
 			udp.closeClient();
@@ -335,5 +336,13 @@ public class Client implements PacketListener {
 	}
 	public String getNodes(){
 		return "Previous: " + previousNodeHash + "\nLocal: "+ hash+ "\nNext: "+ nextNodeHash;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	private void setName(String name) {
+		this.name = name;
 	}
 }
