@@ -5,7 +5,6 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-
 public class MulticastHandler implements Runnable {
 	private static final String multicastAddress = "225.6.7.8";
 	private static final int multicastPort = 5678;
@@ -27,7 +26,7 @@ public class MulticastHandler implements Runnable {
 			System.err.println("Failed to open multicast socket: " + e.getMessage());
 			throw e;
 		}
-		
+
 		isRunning = true;
 		listenThread = new Thread(this);
 		listenThread.setName("MulticastHandler");
@@ -44,22 +43,23 @@ public class MulticastHandler implements Runnable {
 				socket.receive(inPacket);
 			} catch (IOException e) {
 				if (isRunning)
-					System.err.println("Failed to receive multicast packet: "
-							+ e.getMessage());
+					System.err.println("Failed to receive multicast packet: " + e.getMessage());
 			}
-			//System.out.println("Multicast: " + inPacket + " from " + inPacket.getAddress().getHostAddress());
+			// System.out.println("Multicast: " + inPacket + " from " +
+			// inPacket.getAddress().getHostAddress());
 			if (inPacket != null && inPacket.getAddress() != null) {
 				// Prevent sender from receiving its own broadcast
-				// TODO: Actually, if we do this in the Client or not at all we can run server & client on one machine.
-				//if (!inPacket.getAddress().equals(listener.getAddress())) {
-					String msg = new String(inBuffer, 0, inPacket.getLength());
-					listener.packetReceived(inPacket.getAddress(), msg);
-				//} else // for debugging
+				// TODO: Actually, if we do this in the Client or not at all we
+				// can run server & client on one machine.
+				// if (!inPacket.getAddress().equals(listener.getAddress())) {
+				String msg = new String(inBuffer, 0, inPacket.getLength());
+				listener.packetReceived(inPacket.getAddress(), msg);
+				// } else // for debugging
 				{
-				//	System.out.println("(discarded local multicast)");
+					// System.out.println("(discarded local multicast)");
 				}
 			}
-			
+
 		}
 		System.out.println("Multicast socket closed ");
 	}
@@ -77,11 +77,9 @@ public class MulticastHandler implements Runnable {
 		// prepare packet & send to existing socket
 		// TODO: this might not work on the same socket used for listening
 		String message = command + " " + data;
-		DatagramPacket outPacket = new DatagramPacket(message.getBytes(),
-				message.getBytes().length,
-				InetAddress.getByName(multicastAddress), multicastPort);
+		DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(multicastAddress), multicastPort);
 		socket.send(outPacket);
-		System.out.println("Sent multicast "+outPacket+"[" + message + "]");
+		System.out.println("Sent multicast " + outPacket + "[" + message + "]");
 	}
 
 	/**
@@ -92,8 +90,7 @@ public class MulticastHandler implements Runnable {
 		try {
 			socket.leaveGroup(InetAddress.getByName(multicastAddress));
 		} catch (IOException e) {
-			System.err.println("Failed to leave multicast group: "
-					+ e.getMessage());
+			System.err.println("Failed to leave multicast group: " + e.getMessage());
 		}
 
 		socket.close();

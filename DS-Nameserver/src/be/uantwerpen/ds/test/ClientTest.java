@@ -22,8 +22,7 @@ public class ClientTest {
 				System.out.print(">");
 				input = br.readLine();
 			} catch (IOException ioe) {
-				System.err.println("IO error trying to read command: "
-						+ ioe.getMessage());
+				System.err.println("IO error trying to read command: " + ioe.getMessage());
 				System.exit(1);
 			}
 			String[] cmd = input.split(" ");
@@ -38,24 +37,22 @@ public class ClientTest {
 				System.out.println(client.getNodes());
 			} else if (command.equals("ping")) {
 				try {
-					if (cmd[1] == null ) {
+					if (cmd[1] == null) {
 						System.err.println("");
 					}
 					client.ping(cmd[1]);
 				} catch (IOException e) {
-					System.err
-							.println("Failed to send ping: " + e.getMessage());
+					System.err.println("Failed to send ping: " + e.getMessage());
 				}
 			} else if (command.equals("lookup")) {
 				System.out.println(client.lookupNode(cmd[0]));
 			} else if (command.equals("id")) {
-				System.out.println(client.getName()+" ["+client.getAddress()+"]");
+				System.out.println(client.getName() + " [" + client.getAddress() + "]");
 			} else if (command.equals("pingall")) {
 				try {
 					client.pingGroup();
 				} catch (IOException e) {
-					System.err.println("Failed to send multicast ping: "
-							+ e.getMessage());
+					System.err.println("Failed to send multicast ping: " + e.getMessage());
 				}
 			} else if (command.equals("quit")) {
 				client.disconnect();

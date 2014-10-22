@@ -167,7 +167,7 @@ public class Client implements PacketListener {
 			receivedPings.add(message[1]);
 			break;
 		default:
-			System.err.println("Command not found");
+			System.err.println("Command not found: " + message[0]);
 			break;
 		}
 
@@ -233,37 +233,35 @@ public class Client implements PacketListener {
 			/*
 			 * if (newNodeHash > hash){ if (newNodeHash > nextNodeHash){ if
 			 * (nextNodeHash <= hash){ nextNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
-			 * hash + " " + hash); } } else { nextNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
-			 * hash + " " + hash); } } else { if (newNodeHash <
-			 * previousNodeHash){ if (previousNodeHash >= hash) {
-			 * previousNodeHash = newNodeHash; udp.sendMessage(sender,
-			 * udpClientPort, Protocol.SET_NODES, hash + " " + hash); } }
-			 * else { previousNodeHash = newNodeHash; } }
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
+			 * " " + hash); } } else { nextNodeHash = newNodeHash;
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
+			 * " " + hash); } } else { if (newNodeHash < previousNodeHash){ if
+			 * (previousNodeHash >= hash) { previousNodeHash = newNodeHash;
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
+			 * " " + hash); } } else { previousNodeHash = newNodeHash; } }
 			 */
 
 			/*
 			 * if (previousNodeHash == hash && nextNodeHash == hash){
 			 * System.out.println("Finally, someone to talk to!");
 			 * previousNodeHash = newNodeHash; nextNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
-			 * hash + " " + hash); } else if (newNodeHash < nextNodeHash &&
-			 * newNodeHash > hash){
+			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
+			 * " " + hash); } else if (newNodeHash < nextNodeHash && newNodeHash
+			 * > hash){
 			 * System.out.println("It's between me and the next node!");
 			 * nextNodeHash = newNodeHash; udp.sendMessage(sender,
-			 * udpClientPort, Protocol.SET_NODES, hash + " " +
-			 * nextNodeHash); } else if (nextNodeHash < hash && newNodeHash
-			 * < nextNodeHash){
-			 * System.out.println("Now he's the first node!"); nextNodeHash
-			 * = newNodeHash; udp.sendMessage(sender, udpClientPort,
+			 * udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash); }
+			 * else if (nextNodeHash < hash && newNodeHash < nextNodeHash){
+			 * System.out.println("Now he's the first node!"); nextNodeHash =
+			 * newNodeHash; udp.sendMessage(sender, udpClientPort,
 			 * Protocol.SET_NODES, hash + " " + nextNodeHash); } else if
 			 * (newNodeHash > previousNodeHash & newNodeHash < hash) {
 			 * System.out.println("It's between me and the previous node!");
 			 * previousNodeHash = newNodeHash; } else if (previousNodeHash >
 			 * hash && newNodeHash > previousNodeHash) {
-			 * System.out.println("Now he's the last node!");
-			 * previousNodeHash = newNodeHash; }
+			 * System.out.println("Now he's the last node!"); previousNodeHash =
+			 * newNodeHash; }
 			 */
 
 			if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
