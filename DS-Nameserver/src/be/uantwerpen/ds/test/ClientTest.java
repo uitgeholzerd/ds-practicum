@@ -28,7 +28,9 @@ public class ClientTest {
 			}
 			String[] cmd = input.split(" ");
 			String command = cmd[0];
-			if (command.equals("leave")) {
+			if (command.isEmpty()) {
+				break;
+			} else if (command.equals("leave")) {
 				client.shutdown();
 
 			} else if (command.equals("connect")) {

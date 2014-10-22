@@ -39,7 +39,7 @@ public class Client implements PacketListener {
 	public Client() {
 		replyTimer = new Timer();
 		connectToNetwork();
-		System.out.println("Client started on " + getAddress());
+		System.out.println("Client started on " + getAddress().getHostName());
 	}
 
 	/**
@@ -59,9 +59,10 @@ public class Client implements PacketListener {
 			replyTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					if (nameServer == null)
+					if (nameServer == null){
 						System.err.println("Connect to RMI server failed: Connection timed out.");
 						System.exit(1);
+					}
 				}
 			}, 3 * 1000);
 		} catch (IOException e1) {
@@ -85,7 +86,7 @@ public class Client implements PacketListener {
 	 */
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
-		System.out.println("Received message from " + sender + ": " + data);
+		System.out.println("Received message from " + sender.getHostAddress() + ": " + data);
 		String[] message = data.split(" ");
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
@@ -113,13 +114,19 @@ public class Client implements PacketListener {
 			try {
 				Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
 				String[] list = registry.list();
-				for (String string : list) {
+/*				for (String string : list) {
 					System.out.println(string);
-				}
+				}*/
 				nameServer = (INameServer) registry.lookup(message[1]);
-				//test if it works
-				System.out.println("Self-test: registered as "+ nameServer.lookupNode(name));
-				System.out.println("NameServer bound to " + message[1]);
+				//test if correctly registered
+				String registeredAddress = nameServer.lookupNode(name);
+				String localAddress = getAddress().getHostAddress();
+				if (registeredAddress.equals(localAddress)){
+					System.out.println(message[1] +" self-test success: registered as "+ registeredAddress);
+				} else {
+					System.err.println(message[1] +" self-test failed: registered as "+ registeredAddress + ", should be " + localAddress);
+				}
+				
 			} catch (RemoteException | NotBoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
