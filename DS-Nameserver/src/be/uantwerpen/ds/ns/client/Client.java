@@ -35,7 +35,15 @@ public class Client implements PacketListener {
 	private InetAddress serverAddress;
 	private Timer replyTimer;
 	private ArrayList<String> receivedPings;
+	
+	public String getName() {
+		return name;
+	}
 
+	private void setName(String name) {
+		this.name = name;
+	}
+	
 	public Client() {
 		replyTimer = new Timer();
 		receivedPings = new ArrayList<String>(); 
@@ -74,16 +82,38 @@ public class Client implements PacketListener {
 			String ex = e1.toString();
 			//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
 		}
-
-
-	}
-	public String getName() {
-		return name;
 	}
 
-	private void setName(String name) {
-		this.name = name;
+	/**
+	 * This method is used to shutdown the node. It will update its neighbour node, inform the nameserver and close all connections
+	 * 
+	 * @throws IOException
+	 */
+	public void disconnect() {
+		try {
+			// Make previous node and next node neighbours
+			String prevNodeIp = nameServer.lookupNodeByHash(previousNodeHash);
+			InetAddress prevNode = InetAddress.getByName(prevNodeIp);
+			udp.sendMessage(prevNode, udpClientPort, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
+			
+			String nextNodeIp = nameServer.lookupNodeByHash(nextNodeHash);
+			InetAddress nextNode = InetAddress.getByName(nextNodeIp);
+			udp.sendMessage(nextNode, udpClientPort, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
+			
+			//Unregister the node on the nameserver
+			nameServer.unregisterNode(getName());
+			
+			// Close connections
+			udp.closeClient();
+			group.closeClient();
+			System.out.println("Disconnected from network");
+			// Shutdown the program - disabled for testing (also, there's a command for that)
+			//System.exit(0);
+		} catch (IOException e) {
+			System.err.println("Shutdown failed: " + e.getMessage());
+		}
 	}
+
 	/**
 	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
 	 * different actions
@@ -254,36 +284,6 @@ public class Client implements PacketListener {
 		return address;
 	}
 
-	/**
-	 * This method is used to shutdown the node. It will update its neighbour node, inform the nameserver and close all connections
-	 * 
-	 * @throws IOException
-	 */
-	public void disconnect() {
-		try {
-			// Make previous node and next node neighbours
-			String prevNodeIp = nameServer.lookupNodeByHash(previousNodeHash);
-			InetAddress prevNode = InetAddress.getByName(prevNodeIp);
-			udp.sendMessage(prevNode, udpClientPort, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
-			
-			String nextNodeIp = nameServer.lookupNodeByHash(nextNodeHash);
-			InetAddress nextNode = InetAddress.getByName(nextNodeIp);
-			udp.sendMessage(nextNode, udpClientPort, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
-			
-			//Unregister the node on the namserver
-			nameServer.unregisterNode(getName());
-			
-			// Close connections
-			udp.closeClient();
-			group.closeClient();
-			System.out.println("Disconnected from network");
-			// Shutdown the program - disabled for testing (also, there's a command for that)
-			//System.exit(0);
-		} catch (IOException e) {
-			System.err.println("Shutdown failed: " + e.getMessage());
-			e.printStackTrace();
-		}
-	}
 
 	/**
 	 * Sends a PING message to another client
