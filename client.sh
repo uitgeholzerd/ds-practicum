@@ -1,2 +1,4 @@
-bash update.sh
-java -classpath DS-Nameserver/bin/ be.uantwerpen.ds.test.ClientTest
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+bash "$DIR/update.sh" 
+java -classpath "$DIR/DS-Nameserver/bin/" be.uantwerpen.ds.test.ClientTest

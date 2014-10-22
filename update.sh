@@ -1,8 +1,9 @@
-#!/bin/sh
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo Getting latest version...
+cd "$DIR/DS-Nameserver"
 git pull ds master
-cd DS-Nameserver
-mkdir bin
+mkdir "$DIR/DS-Nameserver/bin" 2> /dev/null
 echo Compiling...
-javac -d bin/ src/be/uantwerpen/ds/ns/*.java src/be/uantwerpen/ds/ns/client/*.java src/be/uantwerpen/ds/ns/server/*.java src/be/uantwerpen/ds/test/*.java 
+javac -d $DIR/DS-Nameserver/bin/ $DIR/DS-Nameserver/src/be/uantwerpen/ds/ns/*.java $DIR/DS-Nameserver/src/be/uantwerpen/ds/ns/client/*.java $DIR/DS-Nameserver/src/be/uantwerpen/ds/ns/server/*.java $DIR/DS-Nameserver/src/be/uantwerpen/ds/test/*.java
 
