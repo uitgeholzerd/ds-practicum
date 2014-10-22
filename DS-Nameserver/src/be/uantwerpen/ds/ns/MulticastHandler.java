@@ -17,15 +17,15 @@ public class MulticastHandler implements Runnable {
 	private Thread listenThread;
 	private boolean isRunning;
 
-	public MulticastHandler(PacketListener listener) {
+	public MulticastHandler(PacketListener listener) throws IOException {
 		this.listener = listener;
 		try {
 			socket = new MulticastSocket(multicastPort);
 			socket.setInterface(listener.getAddress());
 			socket.joinGroup(InetAddress.getByName(multicastAddress));
 		} catch (IOException e) {
-			System.err.println("Failed to open multicast socket: "
-					+ e.getMessage());
+			System.err.println("Failed to open multicast socket: " + e.getMessage());
+			throw e;
 		}
 		
 		isRunning = true;
