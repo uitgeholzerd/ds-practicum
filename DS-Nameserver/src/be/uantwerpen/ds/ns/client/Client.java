@@ -121,6 +121,7 @@ public class Client implements PacketListener {
 				serverAddress = sender;
 				// Try to bind the NameServer
 				nameServer = (INameServer) Naming.lookup(message[1]);
+				System.out.println("NameServer bound to " + message[1]);
 			} catch (MalformedURLException | RemoteException
 					| NotBoundException e) {
 				// TODO Auto-generated catch block
@@ -349,5 +350,16 @@ public class Client implements PacketListener {
 			return;
 		}
 		group.sendMessage(Protocol.PING, "");
+	}
+	
+	public String lookupNode(String name){
+		String result = "";
+		try {
+			result = nameServer.lookupNode(name);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
 	}
 }

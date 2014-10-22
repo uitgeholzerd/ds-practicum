@@ -40,6 +40,7 @@ public class DatagramHandler implements Runnable {
 		} catch (SocketException/* | UnknownHostException*/ e) {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
 		}
+		isRunning = true;
 		listenThread = new Thread(this);
 		listenThread.setName("DatagramHandler");
 		listenThread.start();
@@ -68,6 +69,7 @@ public class DatagramHandler implements Runnable {
 				listener.packetReceived(inPacket.getAddress(), msg);
 			}
 		}
+		System.out.println("UDP socket closed ");
 	}
 
 	/**
