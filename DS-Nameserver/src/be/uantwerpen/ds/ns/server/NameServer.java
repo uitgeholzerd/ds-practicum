@@ -239,8 +239,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		switch (command) {
 		case DISCOVER:
 			// Register the node and send it the address of the nameserver + the number of clients in the system
-			String nodeName = message[1].split("/")[0];
-			String nodeIp = message[2].split("/")[0];
+			String nodeName = message[1];
+			String nodeIp = message[2];
 			registerNode(nodeName, nodeIp);
 			
 			try {
@@ -251,21 +251,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			break;
-			
-		case LEAVE:
-			//TODO nog nodig?
-			
-		case FAIL:
-			//TODO nog nodig?
-//			String dataReturn = lookupNeighbours(Integer.parseInt(message[1]));
-//			try {
-//				udp.sendMessage(sender, Client.udpClientPort, Protocol.ID_ACK, dataReturn);
-//			}
-//			 catch (IOException e) {
-//				e.printStackTrace();
-//			}
-			
 			break;
 
 		default:

@@ -38,8 +38,8 @@ public class ConnectionFailureHandler{
 				ipNextNode = nameServer.lookupNode(neighbours[1]);
 				
 				// Send the previous node of the failed node to the next node of the failed note and vice versa
-				udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-				udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+				udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+				udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 				
 				nameServer.unregisterNode(failedNodeName);
 			} catch (IOException e) {
