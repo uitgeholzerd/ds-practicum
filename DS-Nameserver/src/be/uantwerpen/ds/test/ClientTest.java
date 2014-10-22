@@ -19,11 +19,14 @@ public class ClientTest {
 		String input = null;
 		while (true) {
 			try {
+				Thread.sleep(500);
 				System.out.print(">");
 				input = br.readLine();
 			} catch (IOException ioe) {
 				System.err.println("IO error trying to read command: " + ioe.getMessage());
 				System.exit(1);
+			} catch (InterruptedException e) {
+				System.err.println("Thread interrupted: " + e.getMessage());
 			}
 			String[] cmd = input.split(" ");
 			String command = cmd[0];
@@ -63,11 +66,6 @@ public class ClientTest {
 				System.exit(1);
 			} else {
 				System.err.println("Say what?!");
-			}
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				System.err.println("Thread interrupted: " + e.getMessage());
 			}
 		}
 
