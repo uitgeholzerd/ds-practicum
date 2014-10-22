@@ -15,7 +15,7 @@ echo alias "ds-client=$DIR/client.sh" >> ~/.bashrc
 echo alias "ds-server=$DIR/server.sh" >> ~/.bashrc
 
 cd $DIR
-git remote add https://github.com/uitgeholzerd/ds-practicum.git
+git remote add ds https://github.com/uitgeholzerd/ds-practicum.git
 OLD=$(hostname)
 NEW=$1
 
