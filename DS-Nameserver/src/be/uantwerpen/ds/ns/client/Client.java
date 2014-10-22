@@ -276,4 +276,7 @@ public class Client implements PacketListener {
 		}
 		return result;
 	}
+	public String getNodes(){
+		return "Previous" + previousNodeHash + "\nLocal: "+ hash+ "\nNext: "+ nextNodeHash;
+	}
 }

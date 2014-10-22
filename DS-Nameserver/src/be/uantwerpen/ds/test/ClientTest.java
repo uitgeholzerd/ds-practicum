@@ -32,9 +32,10 @@ public class ClientTest {
 				break;
 			} else if (command.equals("leave")) {
 				client.shutdown();
-
 			} else if (command.equals("connect")) {
 				client.connectToNetwork();
+			} else if (command.equals("nodes")) {
+				System.out.println(client.getNodes());
 			} else if (command.equals("ping")) {
 				try {
 					client.ping(cmd[0]);
