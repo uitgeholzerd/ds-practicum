@@ -69,6 +69,10 @@ public class Client implements PacketListener {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			String ex = e1.toString();
+<<<<<<< HEAD
+=======
+			//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
+>>>>>>> f90a09c27af8f3a45a571b2b8e3a93885b8566cb
 		}
 
 
@@ -109,6 +113,10 @@ public class Client implements PacketListener {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 				String ex = e1.toString();
+<<<<<<< HEAD
+=======
+				//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
+>>>>>>> f90a09c27af8f3a45a571b2b8e3a93885b8566cb
 			}
 			break;
 
