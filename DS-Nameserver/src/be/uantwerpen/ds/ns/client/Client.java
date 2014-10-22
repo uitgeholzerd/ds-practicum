@@ -32,10 +32,9 @@ public class Client implements PacketListener {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private InetAddress serverAddress;
 	private Timer replyTimer;
 	private ArrayList<String> receivedPings;
-	
+
 	public String getName() {
 		return name;
 	}
@@ -43,34 +42,36 @@ public class Client implements PacketListener {
 	private void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public Client() {
 		replyTimer = new Timer();
-		receivedPings = new ArrayList<String>(); 
+		receivedPings = new ArrayList<String>();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
-		
+
 	}
 
 	/**
-	 * Joins the multicast group, sends a discovery message and starts listening for replies.
+	 * Joins the multicast group, sends a discovery message and starts listening
+	 * for replies.
 	 */
 	public void connect() {
 		// set up UDP socket and receive messages
 		System.out.println("Connecting to network...");
 		udp = new DatagramHandler(udpClientPort, this);
-		
-		//join multicast group
+
+		// join multicast group
 		group = new MulticastHandler(this);
 		try {
 			setName(getAddress().getHostName());
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
-			
-			//DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
+
+			// DISCOVER_ACK reply should set nameServer, if this doesn't happen
+			// the connection failed
 			replyTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					if (nameServer == null){
+					if (nameServer == null) {
 						System.err.println("Connect to RMI server failed: Connection timed out.");
 						System.exit(1);
 					}
@@ -80,12 +81,14 @@ public class Client implements PacketListener {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 			String ex = e1.toString();
-			//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
+			// cfh = new ConnectionFailureHandler(name, hash, ex,
+			// udpClientPort);
 		}
 	}
 
 	/**
-	 * This method is used to shutdown the node. It will update its neighbour node, inform the nameserver and close all connections
+	 * This method is used to shutdown the node. It will update its neighbour
+	 * node, inform the nameserver and close all connections
 	 * 
 	 * @throws IOException
 	 */
@@ -95,28 +98,30 @@ public class Client implements PacketListener {
 			String prevNodeIp = nameServer.lookupNodeByHash(previousNodeHash);
 			InetAddress prevNode = InetAddress.getByName(prevNodeIp);
 			udp.sendMessage(prevNode, udpClientPort, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
-			
+
 			String nextNodeIp = nameServer.lookupNodeByHash(nextNodeHash);
 			InetAddress nextNode = InetAddress.getByName(nextNodeIp);
 			udp.sendMessage(nextNode, udpClientPort, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
-			
-			//Unregister the node on the nameserver
+
+			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
-			
+
 			// Close connections
 			udp.closeClient();
 			group.closeClient();
 			System.out.println("Disconnected from network");
-			// Shutdown the program - disabled for testing (also, there's a command for that)
-			//System.exit(0);
+			// Shutdown the program - disabled for testing (also, there's a
+			// command for that)
+			// System.exit(0);
 		} catch (IOException e) {
 			System.err.println("Shutdown failed: " + e.getMessage());
 		}
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
-	 * different actions
+	 * This method is triggered when a package is sent to this client (uni- or
+	 * multicast) Depending on the command contained in the message, the client
+	 * will perform different actions
 	 * 
 	 * @param address
 	 *            IP of the sender
@@ -130,104 +135,101 @@ public class Client implements PacketListener {
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
 		case DISCOVER:
-			// The client received a discover-message from a new host and will recalculate its neighbours if needed
+			// The client received a discover-message from a new host and will
+			// recalculate its neighbours if needed
 			// disregard if it's myself
-			if (sender.getHostAddress().equals(getAddress().getHostAddress())) return;
-			if (nameServer == null ) {
+			if (sender.getHostAddress().equals(getAddress().getHostAddress()))
+				return;
+			if (nameServer == null) {
 				System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
 				return;
 			}
 			try {
 				int newNodeHash = nameServer.getShortHash(message[1]);
 				System.out.println("New node joined with hash " + newNodeHash);
-				
-				//requiem for 3 hours of my life i'll never get back
-				/*if (newNodeHash > hash){
-					if (newNodeHash > nextNodeHash){
-						if (nextNodeHash <= hash){
-							nextNodeHash = newNodeHash;
-							udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + hash);
-						}
-					} else {
-						nextNodeHash = newNodeHash;
-						udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + hash);
-					}
-				} else {
-					if (newNodeHash < previousNodeHash){
-						if (previousNodeHash >= hash) {
-							previousNodeHash = newNodeHash;
-							udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + hash);
-						}
-					} else {
-						previousNodeHash = newNodeHash;
-					}
-				}*/
-				
-				/*if (previousNodeHash == hash && nextNodeHash == hash){
-					System.out.println("Finally, someone to talk to!");
-					previousNodeHash = newNodeHash;
-					nextNodeHash = newNodeHash;
-					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + hash);
-				} else if (newNodeHash < nextNodeHash && newNodeHash > hash){
+
+				// requiem for 3 hours of my life i'll never get back
+				/*
+				 * if (newNodeHash > hash){ if (newNodeHash > nextNodeHash){ if
+				 * (nextNodeHash <= hash){ nextNodeHash = newNodeHash;
+				 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
+				 * hash + " " + hash); } } else { nextNodeHash = newNodeHash;
+				 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
+				 * hash + " " + hash); } } else { if (newNodeHash <
+				 * previousNodeHash){ if (previousNodeHash >= hash) {
+				 * previousNodeHash = newNodeHash; udp.sendMessage(sender,
+				 * udpClientPort, Protocol.SET_NODES, hash + " " + hash); } }
+				 * else { previousNodeHash = newNodeHash; } }
+				 */
+
+				/*
+				 * if (previousNodeHash == hash && nextNodeHash == hash){
+				 * System.out.println("Finally, someone to talk to!");
+				 * previousNodeHash = newNodeHash; nextNodeHash = newNodeHash;
+				 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES,
+				 * hash + " " + hash); } else if (newNodeHash < nextNodeHash &&
+				 * newNodeHash > hash){
+				 * System.out.println("It's between me and the next node!");
+				 * nextNodeHash = newNodeHash; udp.sendMessage(sender,
+				 * udpClientPort, Protocol.SET_NODES, hash + " " +
+				 * nextNodeHash); } else if (nextNodeHash < hash && newNodeHash
+				 * < nextNodeHash){
+				 * System.out.println("Now he's the first node!"); nextNodeHash
+				 * = newNodeHash; udp.sendMessage(sender, udpClientPort,
+				 * Protocol.SET_NODES, hash + " " + nextNodeHash); } else if
+				 * (newNodeHash > previousNodeHash & newNodeHash < hash) {
+				 * System.out.println("It's between me and the previous node!");
+				 * previousNodeHash = newNodeHash; } else if (previousNodeHash >
+				 * hash && newNodeHash > previousNodeHash) {
+				 * System.out.println("Now he's the last node!");
+				 * previousNodeHash = newNodeHash; }
+				 */
+
+				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
 					System.out.println("It's between me and the next node!");
-					nextNodeHash = newNodeHash;
 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
-				} else if (nextNodeHash < hash && newNodeHash < nextNodeHash){
-					System.out.println("Now he's the first node!");
 					nextNodeHash = newNodeHash;
-					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
-				} else if (newNodeHash > previousNodeHash & newNodeHash < hash) {
+				}
+				if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (newNodeHash < hash || newNodeHash > previousNodeHash))) {
 					System.out.println("It's between me and the previous node!");
 					previousNodeHash = newNodeHash;
-				} else if (previousNodeHash > hash &&  newNodeHash > previousNodeHash) {
-					System.out.println("Now he's the last node!");
-					previousNodeHash = newNodeHash;
-				}*/
-				
-				
-				if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
- 					System.out.println("It's between me and the next node!");
- 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
- 					nextNodeHash = newNodeHash;
- 				}
-				if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && ( newNodeHash < hash || newNodeHash > previousNodeHash))) {
- 					System.out.println("It's between me and the previous node!");
- 					previousNodeHash = newNodeHash;
- 				}
-				
+				}
+
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 				String ex = e1.toString();
-				//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
+				// cfh = new ConnectionFailureHandler(name, hash, ex,
+				// udpClientPort);
 			}
 			break;
 
 		case DISCOVER_ACK:
-			// Server confirmed registration and answers with its location and the number of nodes
+			// Server confirmed registration and answers with its location and
+			// the number of nodes
 			try {
 				Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
 				String[] list = registry.list();
-/*				for (String string : list) {
-					System.out.println(string);
-				}*/
+				/*
+				 * for (String string : list) { System.out.println(string); }
+				 */
 				nameServer = (INameServer) registry.lookup(message[1]);
-				//test if correctly registered
+				// test if correctly registered
 				String registeredAddress = nameServer.lookupNode(getName());
 				String localAddress = getAddress().getHostAddress();
 				hash = nameServer.getShortHash(getName());
-				if (registeredAddress.equals(localAddress)){
-					System.out.println(message[1] +" self-test success: registered as "+ hash + " [" + registeredAddress +"]");
+				if (registeredAddress.equals(localAddress)) {
+					System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
 				} else {
-					System.err.println(message[1] +" self-test failed: registered as "+ hash + " ["+ registeredAddress + "], should be " + localAddress);
+					System.err.println(message[1] + " self-test failed: registered as " + hash + " [" + registeredAddress + "], should be " + localAddress);
 				}
-				
-				
+
 			} catch (RemoteException | NotBoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
+			// If this is the only client in the system, it is its own
+			// neighbours. Else wait for answer from neighbour (= do nothing)
 			if (Integer.parseInt(message[2]) == 1) {
 				nextNodeHash = hash;
 				previousNodeHash = hash;
@@ -235,18 +237,21 @@ public class Client implements PacketListener {
 			break;
 
 		case SET_NODES:
-			// Another client received the discover message and provides this client with its neighbours
+			// Another client received the discover message and provides this
+			// client with its neighbours
 			previousNodeHash = Integer.parseInt(message[1]);
 			nextNodeHash = Integer.parseInt(message[2]);
 			break;
 
 		case SET_PREVNODE:
-			// Another client encountered a failed node and provides this client with its new previous node
+			// Another client encountered a failed node and provides this client
+			// with its new previous node
 			previousNodeHash = Integer.parseInt(message[1]);
 			break;
 
 		case SET_NEXTNODE:
-			// Another client received the fail message and will provide this client with its next node
+			// Another client received the fail message and will provide this
+			// client with its next node
 			nextNodeHash = Integer.parseInt(message[1]);
 			break;
 
@@ -270,20 +275,27 @@ public class Client implements PacketListener {
 
 	}
 
-	@Override
-	public InetAddress getAddress() {
-		InetAddress address = null;
+	/**
+	 * Remediates a failed node, updates its neighbours and the server. 
+	 * @param nodeName Name of the failed node
+	 */
+	private void nodeFailed(String nodeName) {
 		try {
-			Socket s = new Socket("8.8.8.8", 53);
-			address = s.getLocalAddress();
-			s.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return address;
-	}
+			String ipPrevNode, ipNextNode;
+			String[] neighbours = nameServer.lookupNeighbours(nodeName);
+			ipPrevNode = nameServer.lookupNode(neighbours[0]);
+			ipNextNode = nameServer.lookupNode(neighbours[1]);
 
+			// Send the previous node of the failed node to the next node of the
+			// failed note and vice versa
+			udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+			udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+
+			nameServer.unregisterNode(nodeName);
+		} catch (IOException e) {
+			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
+		}
+	}
 
 	/**
 	 * Sends a PING message to another client
@@ -331,26 +343,23 @@ public class Client implements PacketListener {
 		}
 		group.sendMessage(Protocol.PING, "");
 	}
-	
-	private void nodeFailed(String nodeName){
-			try {
-				String ipPrevNode, ipNextNode;
-				String[] neighbours = nameServer.lookupNeighbours(nodeName);
-				ipPrevNode = nameServer.lookupNode(neighbours[0]);
-				ipNextNode = nameServer.lookupNode(neighbours[1]);
-				
-				// Send the previous node of the failed node to the next node of the failed note and vice versa
-				udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-				udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
-				
-				nameServer.unregisterNode(nodeName);
-			} catch (IOException e) {
-				System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
-			}
+
+	@Override
+	public InetAddress getAddress() {
+		InetAddress address = null;
+		try {
+			Socket s = new Socket("8.8.8.8", 53);
+			address = s.getLocalAddress();
+			s.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return address;
 	}
-	
-	//TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public String lookupNode(String name){
+
+	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	public String lookupNode(String name) {
 		String result = "";
 		try {
 			result = nameServer.lookupNode(name);
@@ -360,9 +369,9 @@ public class Client implements PacketListener {
 		}
 		return result;
 	}
-	public String getNodes(){
-		return "Previous: " + previousNodeHash + "\nLocal: "+ hash+ "\nNext: "+ nextNodeHash;
-	}
 
+	public String getNodes() {
+		return "Previous: " + previousNodeHash + "\nLocal: " + hash + "\nNext: " + nextNodeHash;
+	}
 
 }
