@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
@@ -63,6 +64,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		
 		//set up UDP socket and receive messages
 		udp = new DatagramHandler(udpServerPort, this);
+		System.out.println("Server started on " + getAddress());
 	}
 	
 	/**
@@ -102,22 +104,31 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	/**
-	 * Retrieve the address of the node the given name
+	 * Retrieve the address of the node given its name
 	 * 
 	 * @param	name	The name of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNode(String name) {
 		int hash = getShortHash(name);
+		return lookupNodeByHash(hash);
+	}
+
+	/**
+	 * Retrieve the address of the node given its hash
+	 * @param hash The hash of the node
+	 * @return The address of the node, returns an empty string if the node was not found
+	 */
+	public String lookupNodeByHash(int hash) {
 		if (!nodeMap.containsKey(hash)) {
-			return nodeMap.get(getShortHash(name));
+			return nodeMap.get(hash);
 		}
 		else {
 			return "";
 		}
 	}
 
-	@Override
+
 	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
 		boolean success;
@@ -178,20 +189,23 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		String previousNode, nextNode;
 		int index = 0;
 		
+		// Interate over the map until the node is found
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
 			if (entry.getKey() == hash) {
 				break;
 			}
 			index++;
 		}
-		
+
+		// The previous node in the map is its previous neighbour (cyclic)
 		if (index == 0) {
 			previousNode = (String) nodeMap.values().toArray()[nodeMap.size() - 1];
 		}
 		else {
 			previousNode = (String) nodeMap.values().toArray()[index - 1];
 		}
-		
+
+		// The next node in the map is its next neighbour (cyclic)
 		if (index == nodeMap.size() - 1) {
 			nextNode = (String) nodeMap.values().toArray()[0];
 		}
@@ -229,7 +243,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			
 			try {
 				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, InetAddress.getLocalHost() + "/NameServer" + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "//" + getAddress().getHostAddress() + "/NameServer" + " " + nodeMap.size());
 			}
 			 catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -238,9 +252,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			break;
 			
 		case LEAVE:
-			unregisterNode(message[1]);
-			System.out.println("CLIENT LEFT.");
-			break;
+			//TODO nog nodig?
 			
 		case FAIL:
 			//TODO nog nodig?
@@ -265,8 +277,10 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	public InetAddress getAddress() {
 		InetAddress address = null;
 		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
+			Socket s = new Socket("8.8.8.8", 53);
+			address = s.getLocalAddress();
+			s.close();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

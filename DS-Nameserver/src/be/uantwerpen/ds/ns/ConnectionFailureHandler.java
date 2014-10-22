@@ -27,6 +27,7 @@ public class ConnectionFailureHandler{
 	 * 
 	 * @param failedNodeName The name of the failed node
 	 */
+	//TODO static maken
 	public void fixFailure(String failedNodeName) {
 		String[] neighbours = nameServer.lookupNeighbours(failedNodeName);
 		

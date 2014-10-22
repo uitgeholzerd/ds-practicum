@@ -10,8 +10,13 @@ public interface INameServer extends Remote {
 	 * @return	The location (IP) at which the node can be found if it exists, else returns null
 	 * @throws	RemoteException
 	 */
+	String lookupNodeByHash(int hash) throws RemoteException;
+	/**
+	 * @param hash	The hash of the node
+	 * @return	The location (IP) at which the node can be found if it exists, else returns null
+	 * @throws	RemoteException
+	 */
 	String lookupNode(String name) throws RemoteException;
-	
 	/**
 	 * Removes the node from the name server's map
 	 * 
@@ -41,7 +46,7 @@ public interface INameServer extends Remote {
 	 * Searches the neighbours of the given node
 	 * 
 	 * @param name The name of the node of whos the neighbours are being looked up
-	 * @return An array containing the names of previous and the next node
+	 * @return An array containing the names of previous and the next nodes
 	 */
 	String[] lookupNeighbours(String name) throws RemoteException;
 }
