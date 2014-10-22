@@ -46,7 +46,7 @@ public class ClientTest {
 			} else if (command.equals("lookup")) {
 				System.out.println(client.lookupNode(cmd[0]));
 			} else if (command.equals("id")) {
-				System.out.println(client.getName()+"/"+client.getAddress());
+				System.out.println(client.getName()+" ["+client.getAddress()+"]");
 			} else if (command.equals("pingall")) {
 				try {
 					client.pingGroup();
