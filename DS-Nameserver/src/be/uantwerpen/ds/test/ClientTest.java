@@ -28,7 +28,7 @@ public class ClientTest {
 			}
 			String[] cmd = input.split(" ");
 			String command = cmd[0];
-			if (command.isEmpty()) {
+			if (command == null) {
 				break;
 			} else if (command.equals("leave")) {
 				client.disconnect();
@@ -38,7 +38,10 @@ public class ClientTest {
 				System.out.println(client.getNodes());
 			} else if (command.equals("ping")) {
 				try {
-					client.ping(cmd[0]);
+					if (cmd[1] == null ) {
+						System.err.println("");
+					}
+					client.ping(cmd[1]);
 				} catch (IOException e) {
 					System.err
 							.println("Failed to send ping: " + e.getMessage());
@@ -58,12 +61,12 @@ public class ClientTest {
 				client.disconnect();
 				System.exit(0);
 			} else if (command.equals("fail")) {
-				System.exit(0);
+				System.exit(1);
 			} else {
 				System.err.println("Unknown command.");
 			}
 			try {
-				Thread.sleep(100);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				System.err.println("Thread interrupted: " + e.getMessage());
 			}
