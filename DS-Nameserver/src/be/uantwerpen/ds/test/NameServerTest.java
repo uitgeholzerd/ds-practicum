@@ -99,12 +99,15 @@ public class NameServerTest {
 			if (command.isEmpty()) {
 				break;
 			} else if (command.equals("dump")) {
-				System.out.println(ns.dumpMap());
+				System.out.println("Nodes in map:"+ ns.dumpMap());
 			} else if (command.equals("clear")) {
 				ns.clearMap();
+				System.out.println("Map cleared");
 			} else if (command.equals("save")) {
 				ns.saveMap();
+				System.out.println("Map saved");
 			} else if (command.equals("quit")) {
+				System.out.println("Bye.");
 				System.exit(0);
 			} else {
 				System.err.println("Unknown command.");

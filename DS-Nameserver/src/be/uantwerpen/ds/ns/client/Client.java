@@ -47,6 +47,7 @@ public class Client implements PacketListener {
 	 */
 	public void connectToNetwork() {
 		// set up UDP socket and receive messages
+		System.out.println("Connecting to network...");
 		udp = new DatagramHandler(udpClientPort, this);
 		
 		//join multicast group
@@ -210,9 +211,9 @@ public class Client implements PacketListener {
 			// Close connections
 			udp.closeClient();
 			group.closeClient();
-			
-			// Shutdown the program
-			System.exit(0);
+			System.out.println("Disconnected from network");
+			// Shutdown the program - disabled for testing (also, there's a command for that)
+			//System.exit(0);
 		} catch (IOException e) {
 			System.err.println("Shutdown failed: " + e.getMessage());
 			e.printStackTrace();
