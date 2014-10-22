@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
@@ -63,6 +64,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		
 		//set up UDP socket and receive messages
 		udp = new DatagramHandler(udpServerPort, this);
+		System.out.println("Server started on " + getAddress());
 	}
 	
 	/**
@@ -87,6 +89,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param	address	The address at which the node can be found
 	 * @return	True if the node was added, false if the name already exists and the node was not added
 	 */
+	//TODO de enige reden dat deze methode public is, is voor de tests
 	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
 		boolean success;
@@ -101,48 +104,33 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	/**
-	 * Retrieve the address of the node the given name
+	 * Retrieve the address of the node given its name
 	 * 
 	 * @param	name	The name of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNode(String name) {
 		int hash = getShortHash(name);
+		return lookupNodeByHash(hash);
+	}
+
+	/**
+	 * Retrieve the address of the node given its hash
+	 * @param hash The hash of the node
+	 * @return The address of the node, returns an empty string if the node was not found
+	 */
+	public String lookupNodeByHash(int hash) {
 		if (!nodeMap.containsKey(hash)) {
-			return nodeMap.get(getShortHash(name));
+			return nodeMap.get(hash);
 		}
 		else {
 			return "";
 		}
 	}
 
-	/**
-	 * Removes a node from the name server's map
-	 * 
-	 * @param name	The name of the node
-	 * @return	True if the node was removed, false if the node didn't exist
-	 */
+
 	public boolean unregisterNode(String name) {
 		int hash = getShortHash(name);
-		boolean success;
-
-		if (nodeMap.containsKey(hash)) {
-			nodeMap.remove(hash);
-			success = true;
-		} else {
-			success = false;
-		}
-		saveMap();
-		return success;
-	}
-	
-	/**
-	 * Removes a node from the name server's map
-	 * 
-	 * @param hash	The hash of the node
-	 * @return boolean	True if the node was removed, false if the node didn't exist
-	 */
-	public boolean unregisterNode(int hash) {
 		boolean success;
 
 		if (nodeMap.containsKey(hash)) {
@@ -175,11 +163,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 	}
 
-	/**
-	 * Retrieve the address of the node that stores the file with the given name
-	 * 
-	 * @return The address at which the file can be found
-	 */
+	@Override
 	public String getFilelocation(String filename) {
 		int hash = getShortHash(filename);
 		String location = null;
@@ -199,10 +183,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return location;
 	}
 	
-	/**
-	 * @param name The name of the node of who the neighbours are being looked up
-	 * @return An array containing the names of previous and the next node
-	 */
+	@Override
 	public String[] lookupNeighbours(String name) {
 		int hash = getShortHash(name);
 		String previousNode, nextNode;
@@ -232,13 +213,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return new String[]{previousNode, nextNode};
 	}
 
-
-	/**
-	 * Generates a short hash based on the input object
-	 * 
-	 * @return Number between 0 and 32768
-	 */
-	// TODO: maybe this should be in a shared class instead of using RMI
+	@Override
 	public int getShortHash(Object o) {
 		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 	}
@@ -250,6 +225,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param address	IP of the sender
 	 * @param port		Data containing the command and a message
 	 */
+	@Override
 	public void packetReceived(InetAddress sender, String data) {
 		System.out.println("Received message from " + sender + ": " + data);
 		String[] message = data.split(" ");
@@ -264,7 +240,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			
 			try {
 				//TODO should be old size but that doesn't make sense? could just subtract 1...
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, InetAddress.getLocalHost() + "/NameServer" + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "//" + getAddress().getHostAddress() + "/NameServer" + " " + nodeMap.size());
 			}
 			 catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -300,8 +276,10 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	public InetAddress getAddress() {
 		InetAddress address = null;
 		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
+			Socket s = new Socket("8.8.8.8", 53);
+			address = s.getLocalAddress();
+			s.close();
+		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

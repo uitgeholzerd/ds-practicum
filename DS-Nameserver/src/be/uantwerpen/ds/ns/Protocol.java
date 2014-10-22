@@ -11,5 +11,7 @@ public enum Protocol {
 	ACTION_FAILED,
 	FAIL,
 	PREVNODE,
-	NEXTNODE
+	NEXTNODE,
+	PING,
+	PING_ACK
 }

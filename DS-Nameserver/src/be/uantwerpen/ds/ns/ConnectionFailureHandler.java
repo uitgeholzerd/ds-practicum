@@ -2,7 +2,6 @@ package be.uantwerpen.ds.ns;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 import be.uantwerpen.ds.ns.client.Client;
 import be.uantwerpen.ds.ns.server.NameServer;
@@ -12,22 +11,22 @@ import be.uantwerpen.ds.ns.server.NameServer;
  *
  */
 
-public class ConnectionFailureHandler implements PacketListener{
+public class ConnectionFailureHandler{
 
 	private NameServer nameServer;
 	private DatagramHandler udp;
 
-	/**
-	 * @param failingID		The hash of the id which caused the connection failure
-	 * @param clientHash	The hash of client
-	 * @param message		To know which error has occurred
-	 * @param port			Port for receiving and sending messages
-	 */
 	public ConnectionFailureHandler(NameServer nameServer, DatagramHandler udp){
 		this.nameServer = nameServer;
 		this.udp = udp;
 	}
 	
+	
+	/**
+	 * This method removes the failed node from the network by informing its previous neighbours and the nameserver
+	 * 
+	 * @param failedNodeName The name of the failed node
+	 */
 	public void fixFailure(String failedNodeName) {
 		String[] neighbours = nameServer.lookupNeighbours(failedNodeName);
 		
@@ -49,29 +48,4 @@ public class ConnectionFailureHandler implements PacketListener{
 	}
 	
 	
-	
-	/**
-	 * This method is triggered when a package is sent to this class (unicast)
-	 * Depending on the command contained in the message, the handler will perform different actions
-	 * 
-	 * @param address	IP of the sender
-	 * @param port		Data containing the command and a message
-	 */
-	
-	@Override
-	public void packetReceived(InetAddress sendToID, String message) {
-
-	}
-	
-	@Override
-	public InetAddress getAddress() {
-		InetAddress address = null;
-		try {
-			address = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return address;
-	}
 }
