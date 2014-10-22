@@ -28,8 +28,8 @@ public class ClientTest {
 			}
 			String[] cmd = input.split(" ");
 			String command = cmd[0];
-			if (command == null) {
-				break;
+			if (command == null || command.isEmpty()) {
+				continue;
 			} else if (command.equals("leave")) {
 				client.disconnect();
 			} else if (command.equals("join")) {

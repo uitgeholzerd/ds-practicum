@@ -38,8 +38,10 @@ public class Client implements PacketListener {
 
 	public Client() {
 		replyTimer = new Timer();
+		receivedPings = new ArrayList<String>(); 
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
+		
 	}
 
 	/**
