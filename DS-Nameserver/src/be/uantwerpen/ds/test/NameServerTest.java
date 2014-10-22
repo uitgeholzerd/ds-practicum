@@ -99,7 +99,7 @@ public class NameServerTest {
 			if (command.isEmpty()) {
 				break;
 			} else if (command.equals("dump")) {
-				System.out.println("Nodes in map:"+ ns.dumpMap());
+				System.out.println("Nodes in map:\n"+ ns.dumpMap());
 			} else if (command.equals("clear")) {
 				ns.clearMap();
 				System.out.println("Map cleared");
