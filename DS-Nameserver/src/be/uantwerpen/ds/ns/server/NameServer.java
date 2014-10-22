@@ -96,7 +96,9 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		if (!nodeMap.containsKey(hash)) {
 			nodeMap.put(hash, address);
 			success = true;
+			System.out.println("Added node " + name + "/" + address + " with hash " + hash);
 		} else {
+			System.out.println("Node already exists: " + hash);
 			success = false;
 		}
 		saveMap();
@@ -120,7 +122,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNodeByHash(int hash) {
-		if (!nodeMap.containsKey(hash)) {
+		if (nodeMap.containsKey(hash)) {
 			return nodeMap.get(hash);
 		}
 		else {

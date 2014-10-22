@@ -7,6 +7,9 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
+import java.net.SocketPermission;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 
 /**
  * @author seb
@@ -30,10 +33,12 @@ public class DatagramHandler implements Runnable {
 		this.listener = listener;
 		try {
 			// TODO: convince linux to bind on ipv4
-			socket = new DatagramSocket(new InetSocketAddress((Inet4Address)listener.getAddress(), listenPort));
-		} catch (SocketException e) {
+			//socket = new DatagramSocket(new InetSocketAddress(InetAddress.getByName("0.0.0.0"), listenPort));
+			socket = new DatagramSocket(listenPort);
+		} catch (SocketException/* | UnknownHostException*/ e) {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
 		}
+		isRunning = true;
 		listenThread = new Thread(this);
 		listenThread.setName("DatagramHandler");
 		listenThread.start();
@@ -47,7 +52,7 @@ public class DatagramHandler implements Runnable {
 		}
 		buffer = new byte[1024];
 		// Listen for UDP datagrams
-		System.err.println("UDP socket listening on port " + socket.getLocalPort());
+		System.out.println("UDP socket listening on port " + socket.getLocalPort());
 		while (isRunning) {
 			inPacket = new DatagramPacket(buffer, buffer.length);
 			try {
@@ -62,6 +67,7 @@ public class DatagramHandler implements Runnable {
 				listener.packetReceived(inPacket.getAddress(), msg);
 			}
 		}
+		System.out.println("UDP socket closed ");
 	}
 
 	/**

@@ -42,11 +42,15 @@ public class Client implements PacketListener {
 	 * Joins the multicast group, sends a discovery message and starts listening for replies.
 	 */
 	public void connectToNetwork() {
+		// set up UDP socket and receive messages
+		udp = new DatagramHandler(udpClientPort, this);
+		//join multicast group
 		group = new MulticastHandler(this);
 		try {
 			name = getAddress().getHostName();
-			group.sendMessage(Protocol.DISCOVER, name + " " + getAddress());
-			// DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
+			group.sendMessage(Protocol.DISCOVER,
+					name + " " + getAddress().getHostAddress());
+			//DISCOVER_ACK reply should set nameServer, if this doesn't happen the connection failed
 			replyTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
@@ -59,8 +63,7 @@ public class Client implements PacketListener {
 			e1.printStackTrace();
 		}
 
-		// set up UDP socket and receive messages
-		udp = new DatagramHandler(udpClientPort, this);
+
 	}
 
 	/**
@@ -82,8 +85,10 @@ public class Client implements PacketListener {
 		case DISCOVER:
 			// The client received a discover-message from a new host and will
 			// recalculate its neighbours if needed
+			if (nameServer == null ) return;
 			try {
-				int newNodeHash = nameServer.getShortHash(message[1].split("/")[0]);
+				int newNodeHash = nameServer
+						.getShortHash(message[1]);
 				if (hash < newNodeHash && newNodeHash < nextNodeHash) {
 					udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
 					nextNodeHash = newNodeHash;
@@ -101,7 +106,9 @@ public class Client implements PacketListener {
 			// the number of nodes
 			try {
 				nameServer = (INameServer) Naming.lookup(message[1]);
-			} catch (MalformedURLException | RemoteException | NotBoundException e) {
+				System.out.println("NameServer bound to " + message[1]);
+			} catch (MalformedURLException | RemoteException
+					| NotBoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -318,5 +325,16 @@ public class Client implements PacketListener {
 			return;
 		}
 		group.sendMessage(Protocol.PING, "");
+	}
+	
+	public String lookupNode(String name){
+		String result = "";
+		try {
+			result = nameServer.lookupNode(name);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
 	}
 }

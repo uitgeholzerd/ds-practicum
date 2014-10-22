@@ -18,6 +18,10 @@
    <string>www.google.com</string>
   </void>
   <void method="put">
+   <int>22096</int>
+   <string></string>
+  </void>
+  <void method="put">
    <int>22637</int>
    <string>localhost</string>
   </void>
