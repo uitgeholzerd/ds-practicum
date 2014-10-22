@@ -64,14 +64,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		try {
 			decoder = new XMLDecoder(new BufferedInputStream(new FileInputStream(fileLocation)));
 			nodeMap = (TreeMap<Integer, String>) decoder.readObject();
+			System.out.println("Loaded " + nodeMap.keySet().size() + " nodes from " + fileLocation);
 		} catch (Exception e) {
-			System.err.println("Warning: The TreeMap file could not be found or parsed. Starting name server with empty TreeMap");
+			System.out.println("Warning: The TreeMap file could not be found or parsed. Starting name server with empty TreeMap");
 		} finally {
 			if (decoder != null) {
 				decoder.close();
 			}
 		}
-		System.out.println("Loaded " + nodeMap.keySet().size() + " nodes from " + fileLocation);
 	}
 	
 	/**
