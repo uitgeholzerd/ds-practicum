@@ -107,7 +107,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 
 	/**
 	 * Retrieve the address of the node given its name
-	 * 
 	 * @param	name	The name of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */

@@ -12,6 +12,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import be.uantwerpen.ds.ns.ConnectionFailureHandler;
 import be.uantwerpen.ds.ns.DatagramHandler;
 import be.uantwerpen.ds.ns.INameServer;
 import be.uantwerpen.ds.ns.MulticastHandler;
@@ -26,9 +27,11 @@ public class Client implements PacketListener {
 	private DatagramHandler udp;
 	private INameServer nameServer;
 	private String name;
+
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
+	private InetAddress serverAddress;
 	private Timer replyTimer;
 	private ArrayList<String> receivedPings;
 
@@ -63,6 +66,8 @@ public class Client implements PacketListener {
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			String ex = e1.toString();
+			//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
 		}
 
 
@@ -98,6 +103,8 @@ public class Client implements PacketListener {
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
+				String ex = e1.toString();
+				//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
 			}
 			break;
 
@@ -105,6 +112,8 @@ public class Client implements PacketListener {
 			// Server confirmed registration and answers with its location and the number of nodes
 			try {
 				nameServer = (INameServer) Naming.lookup(message[1]);
+				//test if it works
+				System.out.println("Self-test: registered as "+ nameServer.lookupNode(name));
 				System.out.println("NameServer bound to " + message[1]);
 			} catch (MalformedURLException | RemoteException
 					| NotBoundException e) {
