@@ -1,3 +1,4 @@
+#!/bin/bash
 if [ "$(id -u)" != "0" ]; then
  echo "Are you root?" 
  exit 1;
@@ -7,12 +8,11 @@ then
  echo Usage: $0 newname
  exit 1
 fi
-add-apt-repository ppa:webubd8team/java
-apt-get-update
-apt-get install oracle-jdk7-installer
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-echo 'alias ds-client=~/ds-practicum/client.sh' > ~/.bashrc
-echo 'alias ds-server=~/ds-practicum/server.sh' > ~/.bashrc
+
+echo alias "ds-client=$DIR/client.sh" >> ~/.bashrc
+echo alias "ds-server=$DIR/server.sh" >> ~/.bashrc
 
 OLD=$(hostname)
 NEW=$1
