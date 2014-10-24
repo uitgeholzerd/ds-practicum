@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.ns.server;
+package be.uantwerpen.ds.system_y.server;
 
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
@@ -19,12 +19,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import be.uantwerpen.ds.ns.DatagramHandler;
-import be.uantwerpen.ds.ns.INameServer;
-import be.uantwerpen.ds.ns.MulticastHandler;
-import be.uantwerpen.ds.ns.PacketListener;
-import be.uantwerpen.ds.ns.Protocol;
-import be.uantwerpen.ds.ns.client.Client;
+import be.uantwerpen.ds.system_y.DatagramHandler;
+import be.uantwerpen.ds.system_y.INameServer;
+import be.uantwerpen.ds.system_y.MulticastHandler;
+import be.uantwerpen.ds.system_y.PacketListener;
+import be.uantwerpen.ds.system_y.Protocol;
+import be.uantwerpen.ds.system_y.client.Client;
 
 public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener {
 
@@ -55,16 +55,19 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 
 			// set up UDP socket and receive messages
 			udp = new DatagramHandler(udpServerPort, this);
+
+			System.out.println("Server started on " + getAddress());
 		} catch (IOException e) {
 			System.err.println("Server set-up failed: " + e.getMessage());
 			udp.closeClient();
 			group.closeClient();
-			udp = null;
-			group = null;
 		}
-		System.out.println("Server started on " + getAddress());
 	}
 
+	/**
+	 * Loads the current map of nodes from the the hard disk
+	 * 
+	 */
 	@SuppressWarnings("unchecked")
 	private void loadMap() {
 		XMLDecoder decoder = null;
@@ -119,12 +122,9 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Adds a node to the name server's map
 	 * 
-	 * @param name
-	 *            The name of the node
-	 * @param address
-	 *            The address at which the node can be found
-	 * @return True if the node was added, false if the name already exists and
-	 *         the node was not added
+	 * @param name The name of the node
+	 * @param address The address at which the node can be found
+	 * @return True if the node was added, false if the name already exists and the node was not added
 	 */
 	// TODO de enige reden dat deze methode public is, is voor de tests
 	public boolean registerNode(String name, String address) {
@@ -161,10 +161,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Retrieve the address of the node given its name
 	 * 
-	 * @param name
-	 *            The name of the node
-	 * @return The address of the node, returns an empty string if the node was
-	 *         not found
+	 * @param name The name of the node
+	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNode(String name) {
 		int hash = getShortHash(name);
@@ -174,10 +172,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	/**
 	 * Retrieve the address of the node given its hash
 	 * 
-	 * @param hash
-	 *            The hash of the node
-	 * @return The address of the node, returns an empty string if the node was
-	 *         not found
+	 * @param hash The hash of the node
+	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	public String lookupNodeByHash(int hash) {
 		if (nodeMap.containsKey(hash)) {
@@ -241,14 +237,11 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this server (uni- or
-	 * multicast) Depending on the command contained in the message, the server
-	 * will perform different actions
+	 * This method is triggered when a package is sent to this server (uni- or multicast) Depending on the command contained in the message, the server will perform
+	 * different actions
 	 * 
-	 * @param address
-	 *            IP of the sender
-	 * @param port
-	 *            Data containing the command and a message
+	 * @param address IP of the sender
+	 * @param port Data containing the command and a message
 	 */
 
 	@Override
@@ -259,8 +252,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 
 		switch (command) {
 		case DISCOVER:
-			// Register the node and send it the address of the nameserver + the
-			// number of clients in the system
+			// Register the node and send it the address of the nameserver + the number of clients in the system
 			String nodeName = message[1];
 			String nodeIp = message[2];
 			registerNode(nodeName, nodeIp);
@@ -306,6 +298,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return result;
 	}
 
+	// TODO waarvoor nodig?
 	public void clearMap() {
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>());
 	}

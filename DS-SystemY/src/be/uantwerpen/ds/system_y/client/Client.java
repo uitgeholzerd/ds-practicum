@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.ns.client;
+package be.uantwerpen.ds.system_y.client;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -12,11 +12,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-import be.uantwerpen.ds.ns.DatagramHandler;
-import be.uantwerpen.ds.ns.INameServer;
-import be.uantwerpen.ds.ns.MulticastHandler;
-import be.uantwerpen.ds.ns.PacketListener;
-import be.uantwerpen.ds.ns.Protocol;
+import be.uantwerpen.ds.system_y.DatagramHandler;
+import be.uantwerpen.ds.system_y.INameServer;
+import be.uantwerpen.ds.system_y.MulticastHandler;
+import be.uantwerpen.ds.system_y.PacketListener;
+import be.uantwerpen.ds.system_y.Protocol;
 
 public class Client implements PacketListener {
 
@@ -32,6 +32,14 @@ public class Client implements PacketListener {
 	private int nextNodeHash;
 	private Timer replyTimer;
 	private ArrayList<String> receivedPings;
+	
+	public Client() {
+		replyTimer = new Timer();
+		receivedPings = new ArrayList<String>();
+		connect();
+		System.out.println("Client started on " + getAddress().getHostName());
+
+	}
 
 	public String getName() {
 		return name;
@@ -41,17 +49,8 @@ public class Client implements PacketListener {
 		this.name = name;
 	}
 
-	public Client() {
-		replyTimer = new Timer();
-		receivedPings = new ArrayList<String>();
-		connect();
-		System.out.println("Client started on " + getAddress().getHostName());
-
-	}
-
 	/**
-	 * Joins the multicast group, sends a discovery message and starts listening
-	 * for replies.
+	 * Joins the multicast group, sends a discovery message and starts listening for replies.
 	 */
 	public void connect() {
 		try {
@@ -63,14 +62,13 @@ public class Client implements PacketListener {
 			setName(getAddress().getHostName());
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
 
-			// DISCOVER_ACK reply should set nameServer, if this doesn't happen
-			// the connection failed
+			// If the namesever isn't set after a certain period, assume the connection has failed
+			//TODO kan dit zomaar? NS is mss niet bereikbaar, maar ander nodes hebben DISCOVER bericht mss al wel ontvangen
 			replyTimer.schedule(new TimerTask() {
 				@Override
 				public void run() {
 					if (nameServer == null) {
 						System.err.println("Connect to RMI server failed: Connection timed out.");
-						System.exit(1);
 					}
 				}
 			}, 3 * 1000);
@@ -85,8 +83,7 @@ public class Client implements PacketListener {
 	}
 
 	/**
-	 * This method is used to shutdown the node. It will update its neighbour
-	 * node, inform the nameserver and close all connections
+	 * This method is used to shutdown the node. It will update its neighbour node, inform the nameserver and close all connections
 	 * 
 	 * @throws IOException
 	 */
@@ -118,14 +115,11 @@ public class Client implements PacketListener {
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this client (uni- or
-	 * multicast) Depending on the command contained in the message, the client
-	 * will perform different actions
+	 * This method is triggered when a package is sent to this client (uni- or multicast)
+	 * Depending on the command contained in the message, the client will perform different actions
 	 * 
-	 * @param address
-	 *            IP of the sender
-	 * @param port
-	 *            Data containing the command and a message
+	 * @param address IP of the sender
+	 * @param port Data containing the command and a message
 	 */
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
@@ -142,21 +136,18 @@ public class Client implements PacketListener {
 			break;
 
 		case SET_NODES:
-			// Another client received the discover message and provides this
-			// client with its neighbours
+			// Another client received the discover message and provides this client with its neighbours
 			previousNodeHash = Integer.parseInt(message[1]);
 			nextNodeHash = Integer.parseInt(message[2]);
 			break;
 
 		case SET_PREVNODE:
-			// Another client encountered a failed node and provides this client
-			// with its new previous node
+			// Another client encountered a failed node and provides this client with its new previous node
 			previousNodeHash = Integer.parseInt(message[1]);
 			break;
 
 		case SET_NEXTNODE:
-			// Another client received the fail message and will provide this
-			// client with its next node
+			// Another client received the fail message and will provide this client with its next node
 			nextNodeHash = Integer.parseInt(message[1]);
 			break;
 
@@ -185,8 +176,7 @@ public class Client implements PacketListener {
 	}
 
 	private void processDISCOVER_ACK(InetAddress sender, String[] message) {
-		// Server confirmed registration and answers with its location and
-		// the number of nodes
+		// Server confirmed registration and answers with its location and the number of nodes
 		try {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
 			/*
@@ -207,8 +197,7 @@ public class Client implements PacketListener {
 		} catch (RemoteException | NotBoundException e) {
 			System.err.println("RMI setup failed: " + e.getMessage());
 		}
-		// If this is the only client in the system, it is its own
-		// neighbours. Else wait for answer from neighbour (= do nothing)
+		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		if (Integer.parseInt(message[2]) == 1) {
 			nextNodeHash = hash;
 			previousNodeHash = hash;
@@ -216,9 +205,8 @@ public class Client implements PacketListener {
 	}
 
 	private void processDISCOVER(InetAddress sender, String[] message) {
-		// The client received a discover-message from a new host and will
-		// recalculate its neighbours if needed
-		// disregard if it's myself
+		// The client received a discover-message from a new host and will recalculate its neighbours if needed
+		// Disregard the message if it came from the current node
 		if (sender.getHostAddress().equals(getAddress().getHostAddress()))
 			return;
 		if (nameServer == null) {
@@ -264,12 +252,12 @@ public class Client implements PacketListener {
 			 * newNodeHash; }
 			 */
 
-			if ((newNodeHash < nextNodeHash && newNodeHash > hash) || nextNodeHash == hash || (nextNodeHash < hash && (newNodeHash > hash || newNodeHash < nextNodeHash))) {
+			if ((hash < newNodeHash && newNodeHash < nextNodeHash) || nextNodeHash == hash || (nextNodeHash < hash && (hash < newNodeHash || newNodeHash < nextNodeHash))) {
 				System.out.println("It's between me and the next node!");
 				udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
 				nextNodeHash = newNodeHash;
 			}
-			if ((newNodeHash > previousNodeHash & newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (newNodeHash < hash || newNodeHash > previousNodeHash))) {
+			if ((previousNodeHash < newNodeHash && newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (hash > newNodeHash || newNodeHash > previousNodeHash))) {
 				System.out.println("It's between me and the previous node!");
 				previousNodeHash = newNodeHash;
 			}
@@ -282,18 +270,16 @@ public class Client implements PacketListener {
 	/**
 	 * Remediates a failed node, updates its neighbours and the server.
 	 * 
-	 * @param nodeName
-	 *            Name of the failed node
+	 * @param nodeName Name of the failed node
 	 */
+	//TODO beter naam verzinnen
 	private void nodeFailed(String nodeName) {
 		try {
-			String ipPrevNode, ipNextNode;
 			String[] neighbours = nameServer.lookupNeighbours(nodeName);
-			ipPrevNode = nameServer.lookupNode(neighbours[0]);
-			ipNextNode = nameServer.lookupNode(neighbours[1]);
+			String ipPrevNode = nameServer.lookupNode(neighbours[0]);
+			String ipNextNode = nameServer.lookupNode(neighbours[1]);
 
-			// Send the previous node of the failed node to the next node of the
-			// failed note and vice versa
+			// Send the previous node of the failed node to the next node of the failed note and vice versa
 			udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
 			udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
@@ -306,8 +292,7 @@ public class Client implements PacketListener {
 	/**
 	 * Sends a PING message to another client
 	 * 
-	 * @param name
-	 *            The host to ping
+	 * @param name The host to ping
 	 * @throws IOException
 	 */
 	public void ping(final String name) throws IOException {

@@ -1,10 +1,10 @@
-package be.uantwerpen.ds.test;
+package be.uantwerpen.ds.system_y.test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import be.uantwerpen.ds.ns.client.Client;
+import be.uantwerpen.ds.system_y.client.Client;
 
 public class ClientTest {
 

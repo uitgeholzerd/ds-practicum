@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.test;
+package be.uantwerpen.ds.system_y.test;
 
 import java.net.InetAddress;
 import java.net.Socket;

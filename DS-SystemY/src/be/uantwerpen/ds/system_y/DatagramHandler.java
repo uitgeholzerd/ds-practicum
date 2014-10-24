@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.ns;
+package be.uantwerpen.ds.system_y;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

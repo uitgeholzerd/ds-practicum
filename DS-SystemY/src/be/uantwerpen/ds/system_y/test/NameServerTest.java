@@ -1,10 +1,10 @@
-package be.uantwerpen.ds.test;
+package be.uantwerpen.ds.system_y.test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import be.uantwerpen.ds.ns.server.NameServer;
+import be.uantwerpen.ds.system_y.server.NameServer;
 
 public class NameServerTest {
 	public static void main(String[] args) throws Exception {

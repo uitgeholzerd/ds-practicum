@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.ns;
+package be.uantwerpen.ds.system_y;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -6,8 +6,8 @@ import java.rmi.RemoteException;
 public interface INameServer extends Remote {
 
 	/**
-	 * @param name
-	 *            The name of the node
+	 * @param hash
+	 *            The hash of the node
 	 * @return The location (IP) at which the node can be found if it exists,
 	 *         else returns null
 	 * @throws RemoteException
@@ -15,8 +15,8 @@ public interface INameServer extends Remote {
 	String lookupNodeByHash(int hash) throws RemoteException;
 
 	/**
-	 * @param hash
-	 *            The hash of the node
+	 * @param name
+	 *            The name of the node
 	 * @return The location (IP) at which the node can be found if it exists,
 	 *         else returns null
 	 * @throws RemoteException
