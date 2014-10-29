@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.system_y;
+package be.uantwerpen.ds.system_y.connection;
 
 import java.net.InetAddress;
 

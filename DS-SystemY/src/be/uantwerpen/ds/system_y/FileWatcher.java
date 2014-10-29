@@ -66,8 +66,7 @@ public class FileWatcher implements Runnable {
 					Date now = new Date();
 					System.out.println(kind.toString() + ": " + filepath + " - " + now.toString());
 					if (client != null) {
-						// string in geplaatst voor geen error, client heeft string nodig als param
-						client.newFilesFound("");
+						client.newFileFound(filepath.toFile().getName());
 					}
 				}
 
