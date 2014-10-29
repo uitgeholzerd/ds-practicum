@@ -77,8 +77,8 @@ public class NameServerTest {
 			}
 			String[] cmd = input.split(" ");
 			String command = cmd[0];
-			if (command.isEmpty()) {
-				break;
+			if (command == null || command.isEmpty()) {
+				continue;
 			} else if (command.equals("dump")) {
 				System.out.println("Nodes in map:\n" + ns.dumpMap());
 			} else if (command.equals("clear")) {

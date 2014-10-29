@@ -8,19 +8,18 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import be.uantwerpen.ds.system_y.PacketListener;
-
 public class TCPHandler implements Runnable{
 	private static int serverPort = 23456;
 	
-	Socket sendSocket;
-	ServerSocket listenSocket; 
+	private Socket sendSocket;
+	private ServerSocket listenSocket; 
 	private Thread listenThread;
-	
+	private FileReceiver listener;
 	int port;
 	
-	public TCPHandler(int port, PacketListener listener) {
+	public TCPHandler(int port, FileReceiver listener) {
 		this.port = port;
+		this.listener = listener;
 		try {
 			this.listenSocket = new ServerSocket(serverPort);
 			listenThread = new Thread(this);
@@ -41,7 +40,7 @@ public class TCPHandler implements Runnable{
 		while (true) {
 			try {
 				connectionSocket = listenSocket.accept();
-				connection = new TCPConnection(connectionSocket);
+				connection = new TCPConnection(connectionSocket, listener);
 				(new Thread(connection)).start();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
