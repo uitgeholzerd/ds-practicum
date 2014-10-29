@@ -23,7 +23,7 @@ import be.uantwerpen.ds.system_y.server.INameServer;
 public class Client implements PacketListener {
 
 	public static final int udpClientPort = 3456;
-	public static final int tcpClientPort = 1234;
+	public static final int tcpClientPort = 4567;
 	private static final String fileLocation = "C:\\";
 
 	private MulticastHandler group;
@@ -276,8 +276,7 @@ public class Client implements PacketListener {
 	 * 
 	 * @param nodeName Name of the failed node
 	 */
-	//TODO beter naam verzinnen
-	private void nodeFailed(String nodeName) {
+	private void removeFailedNode(String nodeName) {
 		try {
 			String[] neighbours = nameServer.lookupNeighbours(nodeName);
 			String ipPrevNode = nameServer.lookupNode(neighbours[0]);
@@ -320,7 +319,7 @@ public class Client implements PacketListener {
 					System.out.println("Ping reply from " + name);
 				} else {
 					System.err.println("Ping timeout from " + name);
-					nodeFailed(name);
+					removeFailedNode(name);
 				}
 			}
 		}, 3 * 1000);
