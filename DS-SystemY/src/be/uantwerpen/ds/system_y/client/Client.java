@@ -29,7 +29,7 @@ public class Client implements PacketListener, FileReceiver {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
-	private static final String FILE_LOCATION = "./files/";
+	private static final String FILE_LOCATION = "files/";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -57,9 +57,9 @@ public class Client implements PacketListener, FileReceiver {
 		if (!Files.exists(filedir)){
 			try {
 				Files.createDirectories(filedir);
+				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
 			} catch (IOException e) {
-			System.err.println("Failed to create directory for files.");
-				e.printStackTrace();
+			System.err.println("Failed to create directory " + filedir.toAbsolutePath() +": " + e.getMessage());
 			}
 			
 		}
