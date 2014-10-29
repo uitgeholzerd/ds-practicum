@@ -15,10 +15,10 @@ import java.util.UUID;
 
 import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.INameServer;
-import be.uantwerpen.ds.system_y.PacketListener;
 import be.uantwerpen.ds.system_y.Protocol;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
+import be.uantwerpen.ds.system_y.connection.PacketListener;
 
 public class Client implements PacketListener {
 

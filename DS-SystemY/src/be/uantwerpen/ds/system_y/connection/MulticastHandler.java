@@ -5,7 +5,6 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-import be.uantwerpen.ds.system_y.PacketListener;
 import be.uantwerpen.ds.system_y.Protocol;
 
 public class MulticastHandler implements Runnable {

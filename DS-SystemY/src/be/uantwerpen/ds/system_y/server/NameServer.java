@@ -20,11 +20,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import be.uantwerpen.ds.system_y.INameServer;
-import be.uantwerpen.ds.system_y.PacketListener;
 import be.uantwerpen.ds.system_y.Protocol;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
+import be.uantwerpen.ds.system_y.connection.PacketListener;
 
 public class NameServer extends UnicastRemoteObject implements INameServer, PacketListener {
 
