@@ -124,7 +124,6 @@ public class Client implements PacketListener, FileReceiver {
 				
 			}
 			String location = nameServer.getFilelocation(filename);
-			String nodeLocation = newFilesFound(filename);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -391,13 +390,17 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	//TODO
-	public String newFilesFound(String fileName) {
-		String[] nodes;
-		String newFileLocation="";
+	public int newFilesFound(String fileName) {
+		String fileLocation="";
+		int newFileLocation=0;
 		
 		try {
-			nodes = nameServer.lookupNeighbours(fileName);
-			newFileLocation = nodes[0];
+			fileLocation = nameServer.getFilelocation(fileName);
+			newFileLocation = nameServer.getShortHash(fileLocation);
+			if(fileLocation==name){
+				//TODO naar vorige node sturen
+				newFileLocation= previousNodeHash;
+			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
