@@ -6,8 +6,8 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 
 public class MulticastHandler implements Runnable {
-	private static final String multicastAddress = "225.6.7.8";
-	private static final int multicastPort = 5678;
+	private static final String MULTICAST_ADDRESS = "225.6.7.8";
+	private static final int MULTICAST_PORT = 5678;
 
 	private MulticastSocket socket;
 	private DatagramPacket inPacket;
@@ -19,9 +19,9 @@ public class MulticastHandler implements Runnable {
 	public MulticastHandler(PacketListener listener) throws IOException {
 		this.listener = listener;
 		try {
-			socket = new MulticastSocket(multicastPort);
+			socket = new MulticastSocket(MULTICAST_PORT);
 			socket.setInterface(listener.getAddress());
-			socket.joinGroup(InetAddress.getByName(multicastAddress));
+			socket.joinGroup(InetAddress.getByName(MULTICAST_ADDRESS));
 		} catch (IOException e) {
 			System.err.println("Failed to open multicast socket: " + e.getMessage());
 			throw e;
@@ -77,7 +77,7 @@ public class MulticastHandler implements Runnable {
 		// prepare packet & send to existing socket
 		// TODO: this might not work on the same socket used for listening
 		String message = command + " " + data;
-		DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(multicastAddress), multicastPort);
+		DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(MULTICAST_ADDRESS), MULTICAST_PORT);
 		socket.send(outPacket);
 		System.out.println("Sent multicast " + outPacket + "[" + message + "]");
 	}
@@ -88,7 +88,7 @@ public class MulticastHandler implements Runnable {
 	public void closeClient() {
 		isRunning = false;
 		try {
-			socket.leaveGroup(InetAddress.getByName(multicastAddress));
+			socket.leaveGroup(InetAddress.getByName(MULTICAST_ADDRESS));
 		} catch (IOException e) {
 			System.err.println("Failed to leave multicast group: " + e.getMessage());
 		}

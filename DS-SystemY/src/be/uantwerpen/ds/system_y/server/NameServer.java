@@ -255,7 +255,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			registerNode(nodeName, nodeIp);
 
 			try {
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "NameServer" + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.UDP_CLIENT_PORT, Protocol.DISCOVER_ACK, "NameServer" + " " + nodeMap.size());
 			} catch (IOException e) {
 				System.err.println("Failed to respond to client DISCOVER: " + e.getMessage());
 			}

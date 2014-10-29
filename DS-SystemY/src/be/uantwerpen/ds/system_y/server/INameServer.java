@@ -6,19 +6,19 @@ import java.rmi.RemoteException;
 public interface INameServer extends Remote {
 
 	/**
-	 * @param hash
-	 *            The hash of the node
-	 * @return The location (IP) at which the node can be found if it exists,
-	 *         else returns null
+	 * Get the location of a node by its hash
+	 * 
+	 * @param hash The hash of the node
+	 * @return The location (IP) at which the node can be found if it exists, else returns null
 	 * @throws RemoteException
 	 */
 	String lookupNodeByHash(int hash) throws RemoteException;
 
 	/**
-	 * @param name
-	 *            The name of the node
-	 * @return The location (IP) at which the node can be found if it exists,
-	 *         else returns null
+	 * Get the location of a node by its hash
+	 * 
+	 * @param name The name of the node
+	 * @return The location (IP) at which the node can be found if it exists, else returns null
 	 * @throws RemoteException
 	 */
 	String lookupNode(String name) throws RemoteException;
@@ -26,17 +26,14 @@ public interface INameServer extends Remote {
 	/**
 	 * Removes the node from the name server's map
 	 * 
-	 * @param name
-	 *            The name of the node
+	 * @param name The name of the node
 	 * @return True if the node was removed, false if the node doesn't exist
 	 */
 	boolean unregisterNode(String name) throws RemoteException;
 
 	/**
-	 * @param filename
-	 *            The name of the file
-	 * @return The location (IP) at which the file can be found if it exists,
-	 *         else returns null
+	 * @param filename The name of the file
+	 * @return The location (IP) at which the file can be found if it exists, else returns null
 	 * @throws RemoteException
 	 */
 	String getFilelocation(String filename) throws RemoteException;
@@ -44,8 +41,7 @@ public interface INameServer extends Remote {
 	/**
 	 * Return a hash between 0 and 32768 of the object
 	 * 
-	 * @param o
-	 *            The object that should be hashed
+	 * @param o The object that should be hashed
 	 * @return The hash of the object
 	 * @throws RemoteException
 	 */
@@ -54,9 +50,7 @@ public interface INameServer extends Remote {
 	/**
 	 * Searches the neighbours of the given node
 	 * 
-	 * @param name
-	 *            The name of the node of whos the neighbours are being looked
-	 *            up
+	 * @param name The name of the node of whos the neighbours are being looked up
 	 * @return An array containing the names of previous and the next nodes
 	 */
 	String[] lookupNeighbours(String name) throws RemoteException;

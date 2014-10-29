@@ -22,9 +22,9 @@ import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client implements PacketListener {
 
-	public static final int udpClientPort = 3456;
-	public static final int tcpClientPort = 4567;
-	private static final String fileLocation = "C:\\";
+	public static final int UDP_CLIENT_PORT = 3456;
+	public static final int TCP_CLIENT_PORT = 4567;
+	private static final String FILE_LOCATION = "C:\\";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -63,7 +63,7 @@ public class Client implements PacketListener {
 		try {
 			// set up UDP socket and receive messages
 			System.out.println("Connecting to network...");
-			udp = new DatagramHandler(udpClientPort, this);
+			udp = new DatagramHandler(UDP_CLIENT_PORT, this);
 			// join multicast group
 			group = new MulticastHandler(this);
 			setName(getAddress().getHostName());
@@ -82,10 +82,9 @@ public class Client implements PacketListener {
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask()
 		      {
-		        public void run()
-		        {
-					localFiles.addAll(scanFiles(fileLocation));
-					//TODO process files
+				@Override
+		        public void run() {
+					scanFiles(FILE_LOCATION);
 		        }
 		      }, 4 * 1000, 60 * 1000);
 		} catch (IOException e) {
@@ -95,20 +94,21 @@ public class Client implements PacketListener {
 			udp = null;
 			group = null;
 			nameServer = null;
+			e.printStackTrace();
 		}
 	}
 	
-	public ArrayList<String> scanFiles(String path) {
-		ArrayList<String> results = new ArrayList<String>();
+	public void scanFiles(String path) {
 		File[] files = new File(path).listFiles();
 		//If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
 		    if (file.isFile()) {
-		        results.add(file.getName());
+		        boolean newFile = localFiles.add(file.getName());
+		        if (newFile) {
+					newFileFound(file.getName());
+				}
 		    }
 		}
-		
-		return results;
 	}
 	
 	public void processFile(String filename) {
@@ -135,17 +135,18 @@ public class Client implements PacketListener {
 			// Make previous node and next node neighbours
 			String prevNodeIp = nameServer.lookupNodeByHash(previousNodeHash);
 			InetAddress prevNode = InetAddress.getByName(prevNodeIp);
-			udp.sendMessage(prevNode, udpClientPort, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
+			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
 
 			String nextNodeIp = nameServer.lookupNodeByHash(nextNodeHash);
 			InetAddress nextNode = InetAddress.getByName(nextNodeIp);
-			udp.sendMessage(nextNode, udpClientPort, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
+			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
 
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
 
 		} catch (IOException e) {
 			System.err.println("Disconnect failed: " + e.getMessage());
+			e.printStackTrace();
 		} finally {
 			// Close connections
 			udp.closeClient();
@@ -211,9 +212,10 @@ public class Client implements PacketListener {
 		// Respond to other client's ping
 		if (udp != null) {
 			try {
-				udp.sendMessage(sender, udpClientPort, Protocol.PING_ACK, message[1]);
+				udp.sendMessage(sender, UDP_CLIENT_PORT, Protocol.PING_ACK, message[1]);
 			} catch (IOException e) {
 				System.err.println("Failed to respond to ping from " + sender.getAddress() + ": " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 	}
@@ -235,6 +237,7 @@ public class Client implements PacketListener {
 
 		} catch (RemoteException | NotBoundException e) {
 			System.err.println("RMI setup failed: " + e.getMessage());
+			e.printStackTrace();
 		}
 		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		if (Integer.parseInt(message[2]) == 1) {
@@ -258,7 +261,7 @@ public class Client implements PacketListener {
 
 			if ((hash < newNodeHash && newNodeHash < nextNodeHash) || nextNodeHash == hash || (nextNodeHash < hash && (hash < newNodeHash || newNodeHash < nextNodeHash))) {
 				System.out.println("It's between me and the next node!");
-				udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash);
+				udp.sendMessage(sender, UDP_CLIENT_PORT, Protocol.SET_NODES, hash + " " + nextNodeHash);
 				nextNodeHash = newNodeHash;
 			}
 			if ((previousNodeHash < newNodeHash && newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (hash > newNodeHash || newNodeHash > previousNodeHash))) {
@@ -268,6 +271,7 @@ public class Client implements PacketListener {
 
 		} catch (IOException e) {
 			System.err.println("RMI name lookup failed: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -283,12 +287,13 @@ public class Client implements PacketListener {
 			String ipNextNode = nameServer.lookupNode(neighbours[1]);
 
 			// Send the previous node of the failed node to the next node of the failed note and vice versa
-			udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.udpClientPort, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-			udp.sendMessage(InetAddress.getByName(ipNextNode), Client.udpClientPort, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+			udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+			udp.sendMessage(InetAddress.getByName(ipNextNode), Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
 			nameServer.unregisterNode(nodeName);
 		} catch (IOException e) {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -311,7 +316,7 @@ public class Client implements PacketListener {
 		}
 
 		final String uuid = UUID.randomUUID().toString();
-		udp.sendMessage(host, udpClientPort, Protocol.PING, uuid);
+		udp.sendMessage(host, UDP_CLIENT_PORT, Protocol.PING, uuid);
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
