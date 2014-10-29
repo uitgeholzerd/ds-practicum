@@ -41,6 +41,7 @@ public class TCPConnection implements Runnable {
 			}
 			fos.flush();
 			client.fileReceived(fileHash, fileName);
+			System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

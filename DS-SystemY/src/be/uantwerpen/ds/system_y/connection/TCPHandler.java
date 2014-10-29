@@ -61,6 +61,7 @@ public class TCPHandler implements Runnable{
 	 * @param filehash	Hash of the file
 	 */
 	public void sendFile(InetAddress address, String filename, int filehash) {
+		System.out.println("Sending file " + filename);
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		

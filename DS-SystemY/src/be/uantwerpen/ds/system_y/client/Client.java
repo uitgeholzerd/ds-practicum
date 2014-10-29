@@ -124,7 +124,7 @@ public class Client implements PacketListener, FileReceiver {
 				
 			}
 			String location = nameServer.getFilelocation(filename);
-			String nodeLocation = newFilesFound(filename);
+			String nodeLocation = newFileFound(filename);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -298,20 +298,7 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 		}
 	}
-	public void sendFile(String client, FileRecord file){
-		try {
-			InetAddress host = InetAddress.getByName(nameServer.lookupNode(client));
-			tcp.sendFile(host, file.getFileName(), file.getFileHash());
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-	}
+
 	/**
 	 * Sends a PING message to another client
 	 * 
@@ -390,8 +377,23 @@ public class Client implements PacketListener, FileReceiver {
 		return "Previous: " + previousNodeHash + "\nLocal: " + hash + "\nNext: " + nextNodeHash;
 	}
 	
+	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	public void sendFileTest(String client, String file){
+		try {
+			InetAddress host = InetAddress.getByName(nameServer.lookupNode(client));
+			tcp.sendFile(host, file, nameServer.getShortHash(file));
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
 	//TODO
-	public String newFilesFound(String fileName) {
+	public String newFileFound(String fileName) {
 		String[] nodes;
 		String newFileLocation="";
 		
