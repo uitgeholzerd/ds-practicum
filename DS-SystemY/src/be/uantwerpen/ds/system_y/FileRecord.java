@@ -2,7 +2,6 @@ package be.uantwerpen.ds.system_y;
 
 import java.util.ArrayList;
 
-import be.uantwerpen.ds.system_y.client.Client;
 
 public class FileRecord {
 	private String fileName;
