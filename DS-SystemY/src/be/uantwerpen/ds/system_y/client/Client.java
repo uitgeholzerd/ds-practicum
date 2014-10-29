@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -17,16 +18,20 @@ import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.INameServer;
 import be.uantwerpen.ds.system_y.Protocol;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
+import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
+import be.uantwerpen.ds.system_y.connection.TCPHandler;
 
-public class Client implements PacketListener {
+public class Client implements PacketListener, FileReceiver {
 
 	public static final int udpClientPort = 3456;
-	private static final String fileLocation = "C:\\";
+	public static final int tcpClientPort = 4567;
+	private static final String fileLocation = "./files/";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
+	private TCPHandler tcp;
 	private INameServer nameServer;
 	private Timer timer;
 	
@@ -77,7 +82,7 @@ public class Client implements PacketListener {
 					}
 				}
 			}, 3 * 1000);
-			
+			tcp = new TCPHandler(tcpClientPort, this);
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask()
 		      {
@@ -291,7 +296,20 @@ public class Client implements PacketListener {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 		}
 	}
-
+	public void sendFile(String client, String filename){
+		try {
+			InetAddress host = InetAddress.getByName(nameServer.lookupNode(filename));
+			
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
 	/**
 	 * Sends a PING message to another client
 	 * 
@@ -372,6 +390,12 @@ public class Client implements PacketListener {
 	
 	//TODO
 	public void newFileFound(String filename) {
+		
+	}
+
+	@Override
+	public void fileReceived(int hash, String name) {
+		// TODO Auto-generated method stub
 		
 	}
 
