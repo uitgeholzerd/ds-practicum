@@ -42,6 +42,7 @@ public class Client implements PacketListener {
 		timer = new Timer();
 		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
+		localFiles = new ArrayList<String>();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
 
@@ -111,12 +112,14 @@ public class Client implements PacketListener {
 	}
 	
 	public void processFile(String filename) {
+		
 		try {
 			int filehash = nameServer.getShortHash(filename);
 			if(true) {
 				
 			}
 			String location = nameServer.getFilelocation(filename);
+			String nodeLocation = newFilesFound(filename);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -371,8 +374,17 @@ public class Client implements PacketListener {
 	}
 	
 	//TODO
-	public void newFilesFound() {
+	public String newFilesFound(String fileName) {
+		String[] nodes;
+		String newFileLocation="";
 		
+		try {
+			nodes = nameServer.lookupNeighbours(fileName);
+			newFileLocation = nodes[0];
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return newFileLocation;
 	}
-
 }
