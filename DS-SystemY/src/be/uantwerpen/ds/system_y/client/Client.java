@@ -211,8 +211,13 @@ public class Client implements PacketListener, FileReceiver {
 
 	}
 
+	/**
+	 * Respond to other client's ping
+	 * 
+	 * @param sender
+	 * @param message
+	 */
 	private void processPING(InetAddress sender, String[] message) {
-		// Respond to other client's ping
 		if (udp != null) {
 			try {
 				udp.sendMessage(sender, UDP_CLIENT_PORT, Protocol.PING_ACK, message[1]);
@@ -222,38 +227,19 @@ public class Client implements PacketListener, FileReceiver {
 			}
 		}
 	}
-
-	private void processDISCOVER_ACK(InetAddress sender, String[] message) {
-		// Server confirmed registration and answers with its location and the number of nodes
-		try {
-			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
-			nameServer = (INameServer) registry.lookup(message[1]);
-
-			InetAddress registeredAddress = nameServer.lookupNode(getName());
-			InetAddress localAddress = getAddress();
-			hash = nameServer.getShortHash(getName());
-			if (registeredAddress.equals(localAddress)) {
-				System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
-			} else {
-				System.err.println(message[1] + " self-test failed: registered as " + hash + " [" + registeredAddress + "], should be " + localAddress);
-			}
-
-		} catch (RemoteException | NotBoundException e) {
-			System.err.println("RMI setup failed: " + e.getMessage());
-			e.printStackTrace();
-		}
-		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
-		if (Integer.parseInt(message[2]) == 1) {
-			nextNodeHash = hash;
-			previousNodeHash = hash;
-		}
-	}
-
+	
+	/**
+	 * The client received a discover-message from a new host and will recalculate its neighbours if needed
+	 * Disregard the message if it came from the current node
+	 * 
+	 * @param sender Host that sent the message
+	 * @param message Message cotaining the data
+	 */
 	private void processDISCOVER(InetAddress sender, String[] message) {
-		// The client received a discover-message from a new host and will recalculate its neighbours if needed
-		// Disregard the message if it came from the current node
-		if (sender.getHostAddress().equals(getAddress().getHostAddress()))
+		// 
+		if (sender.getHostAddress().equals(getAddress().getHostAddress())) {
 			return;
+		}
 		if (nameServer == null) {
 			System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
 			return;
@@ -279,6 +265,37 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
+	 * Server confirmed registration and answers with its location and the number of nodes
+	 * 
+	 * @param sender Host that sent the message
+	 * @param message Message cotaining the data
+	 */
+	private void processDISCOVER_ACK(InetAddress sender, String[] message) {
+		try {
+			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
+			nameServer = (INameServer) registry.lookup(message[1]);
+
+			InetAddress registeredAddress = nameServer.lookupNode(getName());
+			InetAddress localAddress = getAddress();
+			hash = nameServer.getShortHash(getName());
+			if (registeredAddress.equals(localAddress)) {
+				System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
+			} else {
+				System.err.println(message[1] + " self-test failed: registered as " + hash + " [" + registeredAddress + "], should be " + localAddress);
+			}
+
+		} catch (RemoteException | NotBoundException e) {
+			System.err.println("RMI setup failed: " + e.getMessage());
+			e.printStackTrace();
+		}
+		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
+		if (Integer.parseInt(message[2]) == 1) {
+			nextNodeHash = hash;
+			previousNodeHash = hash;
+		}
+	}
+
+	/**
 	 * Remediates a failed node, updates its neighbours and the server.
 	 * 
 	 * @param nodeName Name of the failed node
@@ -299,6 +316,7 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
+	
 	public void sendFile(String client, FileRecord file){
 		try {
 			InetAddress host = nameServer.lookupNode(client);

@@ -56,7 +56,6 @@ public class DatagramHandler implements Runnable {
 				if (isRunning)
 					System.err.println("Failed to receive UDP datagram: " + e.getMessage());
 			}
-			// System.out.println("Datagram: " + inPacket);
 			if (inPacket != null && inPacket.getAddress() != null) {
 				String msg = new String(buffer, 0, inPacket.getLength());
 				listener.packetReceived(inPacket.getAddress(), msg);
@@ -68,14 +67,10 @@ public class DatagramHandler implements Runnable {
 	/**
 	 * Sends a message via UDP
 	 * 
-	 * @param address
-	 *            Remote address
-	 * @param port
-	 *            Remote port
-	 * @param command
-	 *            A command from the Protocol enum
-	 * @param message
-	 *            The message to send
+	 * @param address Remote address
+	 * @param port Remote port
+	 * @param command A command from the Protocol enum
+	 * @param message The message to send
 	 * @throws IOException
 	 */
 	public void sendMessage(InetAddress address, int port, Protocol command, String data) throws IOException {
