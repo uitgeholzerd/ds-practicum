@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import be.uantwerpen.ds.system_y.Protocol;
+
 
 public class TCPHandler implements Runnable{
 	private int port;

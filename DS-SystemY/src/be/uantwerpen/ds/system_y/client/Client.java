@@ -19,7 +19,9 @@ import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
+import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
+import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client implements PacketListener, FileReceiver {
 
