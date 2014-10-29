@@ -6,31 +6,32 @@ import be.uantwerpen.ds.system_y.client.Client;
 
 public class FileRecord {
 	private String fileName;
-	private String fileHash;
-	private ArrayList<Client> nodes;
+	private int fileHash;
+	private ArrayList<String> nodes;
 	
-	public FileRecord(String fileName, String fileHash) {
+	public FileRecord(String fileName, int fileHash) {
 		this.fileName = fileName;
 		this.fileHash = fileHash;
+		this.nodes = new ArrayList<String>();
 	}
 	
 	public String getFileName() {
 		return fileName;
 	}
 
-	public String getFileHash() {
+	public int getFileHash() {
 		return fileHash;
 	}
 
-	public boolean addNode(Client node) {
+	public boolean addNode(String node) {
 		return nodes.add(node);
 	}
 	
-	public boolean removeNode(Client node) {
+	public boolean removeNode(String node) {
 		return nodes.remove(node);
 	}
 	
-	public ArrayList<Client> getNodes() {
+	public ArrayList<String> getNodes() {
 		return nodes;
 	}
 
