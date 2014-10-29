@@ -373,12 +373,9 @@ public class Client implements PacketListener, FileReceiver {
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public void sendFileTest(String client, String file){
 		try {
-			InetAddress host = InetAddress.getByName(nameServer.lookupNode(client));
+			InetAddress host = nameServer.lookupNode(client);
 			tcp.sendFile(host, file, nameServer.getShortHash(file));
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
+		}  catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
