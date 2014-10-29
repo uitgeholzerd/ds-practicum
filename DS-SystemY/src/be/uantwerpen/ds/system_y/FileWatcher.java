@@ -66,7 +66,7 @@ public class FileWatcher implements Runnable {
 					Date now = new Date();
 					System.out.println(kind.toString() + ": " + filepath + " - " + now.toString());
 					if (client != null) {
-						client.newFileFound(filepath.toFile().getName());
+						client.newFileFound(filepath.toFile());
 					}
 				}
 

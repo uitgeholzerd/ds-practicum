@@ -55,22 +55,21 @@ public class TCPHandler implements Runnable{
 	 * Send a file to the address per 1024 bytes
 	 * 
 	 * @param address	Address of the receiver
-	 * @param filename	Name of the file
+	 * @param file	Name of the file
 	 * @param filehash	Hash of the file
 	 */
-	public void sendFile(InetAddress address, String filename, int filehash) {
-		System.out.println("Sending file " + filename);
+	public void sendFile(InetAddress address, File file, int filehash) {
+		System.out.println("Sending file " + file);
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		
 		try {
 			sendSocket = new Socket(address, port);
-			File file = new File(filename);
 			fis = new FileInputStream(file);
 			byte[] fileByteArray = new byte[1024];
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			
-			out.writeUTF(filename);
+			out.writeUTF(file.getName());
 			out.writeInt(filehash);
 			
 			int count;

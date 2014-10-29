@@ -29,7 +29,7 @@ public class Client implements PacketListener, FileReceiver {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
-	private static final String FILE_LOCATION = "./files/";
+	private static final String FILE_LOCATION = "files/";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -57,11 +57,13 @@ public class Client implements PacketListener, FileReceiver {
 		if (!Files.exists(filedir)){
 			try {
 				Files.createDirectories(filedir);
+				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
 			} catch (IOException e) {
-			System.err.println("Failed to create directory for files.");
-				e.printStackTrace();
+			System.err.println("Failed to create directory " + filedir.toAbsolutePath() +": " + e.getMessage());
 			}
 			
+		} else {
+			System.out.println("Storing files in " + filedir.toAbsolutePath());
 		}
 	}
 
@@ -122,7 +124,7 @@ public class Client implements PacketListener, FileReceiver {
 		    if (file.isFile()) {
 		    	boolean newFile = localFiles.add(file.getName());
 		    	if(newFile){
-		    		newFileFound(file.getName());
+		    		newFileFound(file);
 		    	}
 		    }
 		}
@@ -315,17 +317,7 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 	
-	public void sendFile(String client, FileRecord file){
-		try {
-			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, file.getFileName(), file.getFileHash());
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
-	}
+
 	/**
 	 * Sends a PING message to another client
 	 * 
@@ -402,10 +394,10 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public void sendFileTest(String client, String file){
+	public void sendFileTest(String client, String fileName){
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, file, nameServer.getShortHash(file));
+			tcp.sendFile(host, new File(filedir.toFile(), fileName), nameServer.getShortHash(fileName));
 		}  catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -413,13 +405,14 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	//TODO
-	public void newFileFound(String fileName) {
+	public void newFileFound(File file) {
+		InetAddress[] nodes;
 		InetAddress fileLocation = null;
 		int newFileLocation;
 		FileRecord fr;
 		
 		try {
-			fileLocation = nameServer.getFilelocation(fileName);
+			fileLocation = nameServer.getFilelocation(file.getName());
 			newFileLocation = nameServer.getShortHash(fileLocation);
 			if(newFileLocation==hash){
 				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
@@ -427,7 +420,7 @@ public class Client implements PacketListener, FileReceiver {
 				ownedFiles.add(fr);
 				fr.addNode(fileLocation);
 			}
-			tcp.sendFile(fileLocation, fileName, newFileLocation);
+			tcp.sendFile(fileLocation, file, newFileLocation);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
