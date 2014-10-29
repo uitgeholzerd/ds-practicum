@@ -414,15 +414,18 @@ public class Client implements PacketListener, FileReceiver {
 	
 	//TODO
 	public void newFileFound(String fileName) {
-		InetAddress[] nodes;
 		InetAddress fileLocation = null;
 		int newFileLocation;
+		FileRecord fr;
 		
 		try {
 			fileLocation = nameServer.getFilelocation(fileName);
 			newFileLocation = nameServer.getShortHash(fileLocation);
 			if(newFileLocation==hash){
 				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
+				fr = new FileRecord(fileName, newFileLocation);
+				ownedFiles.add(fr);
+				fr.addNode(fileLocation);
 			}
 			tcp.sendFile(fileLocation, fileName, newFileLocation);
 		} catch (RemoteException e) {
@@ -436,4 +439,25 @@ public class Client implements PacketListener, FileReceiver {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	//TODO
+		public void moveFilesToPrev() {
+			InetAddress fileLocation = null;
+			int newFileLocation;
+			FileRecord fr;
+			String fileName="";
+			
+			try {
+
+				for (int i=0;i<localFiles.size();i++){
+					fileName=localFiles.get(i);
+					fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
+					newFileLocation = nameServer.getShortHash(fileLocation);
+					tcp.sendFile(fileLocation, fileName, newFileLocation);
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 }
