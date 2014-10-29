@@ -1,10 +1,13 @@
-package be.uantwerpen.ds.system_y;
+package be.uantwerpen.ds.system_y.connection;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+
+import be.uantwerpen.ds.system_y.PacketListener;
+import be.uantwerpen.ds.system_y.Protocol;
 
 /**
  * @author seb

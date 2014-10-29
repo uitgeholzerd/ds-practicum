@@ -1,9 +1,12 @@
-package be.uantwerpen.ds.system_y;
+package be.uantwerpen.ds.system_y.connection;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+
+import be.uantwerpen.ds.system_y.PacketListener;
+import be.uantwerpen.ds.system_y.Protocol;
 
 public class MulticastHandler implements Runnable {
 	private static final String multicastAddress = "225.6.7.8";
