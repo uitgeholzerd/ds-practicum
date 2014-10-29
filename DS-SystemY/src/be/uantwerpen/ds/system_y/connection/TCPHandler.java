@@ -55,8 +55,6 @@ public class TCPHandler implements Runnable{
 	 * Send a file to the address per 1024 bytes
 	 * 
 	 * @param address	Address of the receiver
-	 * @param port		Port to which the file should be sent
-	 * @param command	
 	 * @param filename	Name of the file
 	 * @param filehash	Hash of the file
 	 */

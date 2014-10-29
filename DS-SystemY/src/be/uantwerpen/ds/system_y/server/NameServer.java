@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -163,7 +164,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param name The name of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
-	public String lookupNode(String name) {
+	public InetAddress lookupNode(String name) {
 		int hash = getShortHash(name);
 		return lookupNodeByHash(hash);
 	}
@@ -174,16 +175,21 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param hash The hash of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
-	public String lookupNodeByHash(int hash) {
+	public InetAddress lookupNodeByHash(int hash) {
 		if (nodeMap.containsKey(hash)) {
-			return nodeMap.get(hash);
+			try {
+				return InetAddress.getByName(nodeMap.get(hash));
+			} catch (UnknownHostException e) {
+				System.err.println("NameServer - Host not found");
+				return null;
+			}
 		} else {
-			return "";
+			return null;
 		}
 	}
 
 	@Override
-	public String getFilelocation(String filename) {
+	public InetAddress getFilelocation(String filename) {
 		int hash = getShortHash(filename);
 		String location = null;
 
@@ -199,11 +205,16 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 				}
 			}
 		}
-		return location;
+		try {
+			return InetAddress.getByName(location);
+		} catch (UnknownHostException e) {
+			System.err.println("NameServer - Host not found");
+			return null;
+		}
 	}
 
 	@Override
-	public String[] lookupNeighbours(String name) {
+	public InetAddress[] lookupNeighbours(String name) {
 		int hash = getShortHash(name);
 		String previousNode, nextNode;
 		int index = 0;
@@ -230,7 +241,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			nextNode = (String) nodeMap.values().toArray()[index + 1];
 		}
 
-		return new String[] { previousNode, nextNode };
+		try {
+			InetAddress prev =  InetAddress.getByName(previousNode);
+			InetAddress next =  InetAddress.getByName(nextNode);
+			return new InetAddress[] {prev, next};
+		} catch (UnknownHostException e) {
+			System.err.println("NameServer - Host not found");
+			return null;
+		}
 	}
 
 	/**
@@ -255,7 +273,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 			registerNode(nodeName, nodeIp);
 
 			try {
-				udp.sendMessage(sender, Client.udpClientPort, Protocol.DISCOVER_ACK, "NameServer" + " " + nodeMap.size());
+				udp.sendMessage(sender, Client.UDP_CLIENT_PORT, Protocol.DISCOVER_ACK, "NameServer" + " " + nodeMap.size());
 			} catch (IOException e) {
 				System.err.println("Failed to respond to client DISCOVER: " + e.getMessage());
 			}
