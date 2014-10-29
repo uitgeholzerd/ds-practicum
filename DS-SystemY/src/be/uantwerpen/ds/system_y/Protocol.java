@@ -9,7 +9,7 @@ public enum Protocol {
 	SET_NODES,
 	SET_PREVNODE,
 	SET_NEXTNODE,
-	FAIL,
+	FILE_TRANSFER,
 	PING,
 	PING_ACK
 }

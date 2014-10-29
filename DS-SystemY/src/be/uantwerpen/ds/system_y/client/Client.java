@@ -1,5 +1,6 @@
 package be.uantwerpen.ds.system_y.client;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -13,6 +14,7 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import be.uantwerpen.ds.system_y.DatagramHandler;
+import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.INameServer;
 import be.uantwerpen.ds.system_y.MulticastHandler;
 import be.uantwerpen.ds.system_y.PacketListener;
@@ -21,20 +23,24 @@ import be.uantwerpen.ds.system_y.Protocol;
 public class Client implements PacketListener {
 
 	public static final int udpClientPort = 3456;
+	private static final String fileLocation = "C:\\";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
 	private INameServer nameServer;
+	private Timer timer;
+	
 	private String name;
-
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private Timer replyTimer;
+	private ArrayList<String> localFiles;
+	private ArrayList<FileRecord> ownedFiles;
 	private ArrayList<String> receivedPings;
 	
 	public Client() {
-		replyTimer = new Timer();
+		timer = new Timer();
+		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
@@ -63,8 +69,7 @@ public class Client implements PacketListener {
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
 
 			// If the namesever isn't set after a certain period, assume the connection has failed
-			//TODO kan dit zomaar? NS is mss niet bereikbaar, maar ander nodes hebben DISCOVER bericht mss al wel ontvangen
-			replyTimer.schedule(new TimerTask() {
+			timer.schedule(new TimerTask() {
 				@Override
 				public void run() {
 					if (nameServer == null) {
@@ -72,6 +77,16 @@ public class Client implements PacketListener {
 					}
 				}
 			}, 3 * 1000);
+			
+			// After 4 seconds, scan for files. Repeat this task every 60 seconds
+			timer.scheduleAtFixedRate(new TimerTask()
+		      {
+		        public void run()
+		        {
+					localFiles.addAll(scanFiles(fileLocation));
+					//TODO process files
+		        }
+		      }, 4 * 1000, 60 * 1000);
 		} catch (IOException e) {
 			System.err.println("Connect failed: " + e.getMessage());
 			udp.closeClient();
@@ -81,9 +96,36 @@ public class Client implements PacketListener {
 			nameServer = null;
 		}
 	}
+	
+	public ArrayList<String> scanFiles(String path) {
+		ArrayList<String> results = new ArrayList<String>();
+		File[] files = new File(path).listFiles();
+		//If the path is not a directory, then listFiles() returns null.
+		for (File file : files) {
+		    if (file.isFile()) {
+		        results.add(file.getName());
+		    }
+		}
+		
+		return results;
+	}
+	
+	public void processFile(String filename) {
+		try {
+			int filehash = nameServer.getShortHash(filename);
+			if(true) {
+				
+			}
+			String location = nameServer.getFilelocation(filename);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 
 	/**
-	 * This method is used to shutdown the node. It will update its neighbour node, inform the nameserver and close all connections
+	 * This method is used to disconnect the node. It will update its neighbour node, inform the nameserver and close all connections
 	 * 
 	 * @throws IOException
 	 */
@@ -179,12 +221,8 @@ public class Client implements PacketListener {
 		// Server confirmed registration and answers with its location and the number of nodes
 		try {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
-			/*
-			 * String[] list = registry.list(); for (String string : list) {
-			 * System.out.println(string); }
-			 */
 			nameServer = (INameServer) registry.lookup(message[1]);
-			// test if correctly registered
+
 			String registeredAddress = nameServer.lookupNode(getName());
 			String localAddress = getAddress().getHostAddress();
 			hash = nameServer.getShortHash(getName());
@@ -216,41 +254,6 @@ public class Client implements PacketListener {
 		try {
 			int newNodeHash = nameServer.getShortHash(message[1]);
 			System.out.println("New node joined with hash " + newNodeHash);
-
-			// requiem for 3 hours of my life i'll never get back
-			/*
-			 * if (newNodeHash > hash){ if (newNodeHash > nextNodeHash){ if
-			 * (nextNodeHash <= hash){ nextNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
-			 * " " + hash); } } else { nextNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
-			 * " " + hash); } } else { if (newNodeHash < previousNodeHash){ if
-			 * (previousNodeHash >= hash) { previousNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
-			 * " " + hash); } } else { previousNodeHash = newNodeHash; } }
-			 */
-
-			/*
-			 * if (previousNodeHash == hash && nextNodeHash == hash){
-			 * System.out.println("Finally, someone to talk to!");
-			 * previousNodeHash = newNodeHash; nextNodeHash = newNodeHash;
-			 * udp.sendMessage(sender, udpClientPort, Protocol.SET_NODES, hash +
-			 * " " + hash); } else if (newNodeHash < nextNodeHash && newNodeHash
-			 * > hash){
-			 * System.out.println("It's between me and the next node!");
-			 * nextNodeHash = newNodeHash; udp.sendMessage(sender,
-			 * udpClientPort, Protocol.SET_NODES, hash + " " + nextNodeHash); }
-			 * else if (nextNodeHash < hash && newNodeHash < nextNodeHash){
-			 * System.out.println("Now he's the first node!"); nextNodeHash =
-			 * newNodeHash; udp.sendMessage(sender, udpClientPort,
-			 * Protocol.SET_NODES, hash + " " + nextNodeHash); } else if
-			 * (newNodeHash > previousNodeHash & newNodeHash < hash) {
-			 * System.out.println("It's between me and the previous node!");
-			 * previousNodeHash = newNodeHash; } else if (previousNodeHash >
-			 * hash && newNodeHash > previousNodeHash) {
-			 * System.out.println("Now he's the last node!"); previousNodeHash =
-			 * newNodeHash; }
-			 */
 
 			if ((hash < newNodeHash && newNodeHash < nextNodeHash) || nextNodeHash == hash || (nextNodeHash < hash && (hash < newNodeHash || newNodeHash < nextNodeHash))) {
 				System.out.println("It's between me and the next node!");
@@ -309,7 +312,7 @@ public class Client implements PacketListener {
 
 		final String uuid = UUID.randomUUID().toString();
 		udp.sendMessage(host, udpClientPort, Protocol.PING, uuid);
-		replyTimer.schedule(new TimerTask() {
+		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				if (receivedPings.remove(uuid)) {
@@ -362,8 +365,14 @@ public class Client implements PacketListener {
 		return result;
 	}
 
+	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public String getNodes() {
 		return "Previous: " + previousNodeHash + "\nLocal: " + hash + "\nNext: " + nextNodeHash;
+	}
+	
+	//TODO
+	public void newFilesFound() {
+		
 	}
 
 }

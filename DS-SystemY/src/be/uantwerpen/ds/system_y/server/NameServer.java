@@ -188,13 +188,11 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		int hash = getShortHash(filename);
 		String location = null;
 
-		// If the hash of the file is lower than the hash of the first node, the
-		// file can be found on the last node
+		// If the hash of the file is lower than the hash of the first node, the file can be found on the last node
 		if (hash < nodeMap.firstKey()) {
 			location = nodeMap.get(nodeMap.lastKey());
 		}
-		// Else iterate over the map until the biggest node hash lower than the
-		// file hash is found
+		// Else iterate over the map until the biggest node hash lower than the file hash is found
 		else {
 			for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
 				if (entry.getKey() < hash) {
