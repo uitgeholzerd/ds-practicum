@@ -41,14 +41,21 @@ public class ClientTest {
 			} else if (command.equals("ping")) {
 				try {
 					if (cmd[1] == null) {
-						System.err.println("");
+						System.err.println("Need 1 argument to ping.");
+					} else { 
+						client.ping(cmd[1]);
 					}
-					client.ping(cmd[1]);
 				} catch (IOException e) {
 					System.err.println("Failed to send ping: " + e.getMessage());
 				}
 			} else if (command.equals("lookup")) {
 				System.out.println(client.lookupNode(cmd[0]));
+			} else if (command.equals("send")) {
+				if (cmd[2] == null) {
+					System.err.println("Need 2 arguments to send.");
+				} else { 
+					client.sendFileTest(cmd[1], cmd[2]);
+				}
 			} else if (command.equals("id")) {
 				System.out.println(client.getName() + " [" + client.getAddress() + "]");
 			} else if (command.equals("pingall")) {
