@@ -120,10 +120,10 @@ public class Client implements PacketListener, FileReceiver {
 		//If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
 		    if (file.isFile()) {
-		        boolean newFile = localFiles.add(file.getName());
-		        if (newFile) {
-					newFileFound(file.getName());
-				}
+		    	boolean newFile = localFiles.add(file.getName());
+		    	if(newFile){
+		    		newFileFound(file.getName());
+		    	}
 		    }
 		}
 	}
@@ -413,18 +413,22 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	//TODO
-	public InetAddress newFileFound(String fileName) {
+	public void newFileFound(String fileName) {
 		InetAddress[] nodes;
-		InetAddress newFileLocation= null;
+		InetAddress fileLocation = null;
+		int newFileLocation;
 		
 		try {
-			nodes = nameServer.lookupNeighbours(fileName);
-			newFileLocation = nodes[0];
+			fileLocation = nameServer.getFilelocation(fileName);
+			newFileLocation = nameServer.getShortHash(fileLocation);
+			if(newFileLocation==hash){
+				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
+			}
+			tcp.sendFile(fileLocation, fileName, newFileLocation);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return newFileLocation;
 	}
 
 	@Override
