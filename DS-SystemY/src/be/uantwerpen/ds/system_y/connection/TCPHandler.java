@@ -9,7 +9,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 import be.uantwerpen.ds.system_y.PacketListener;
-import be.uantwerpen.ds.system_y.Protocol;
 
 public class TCPHandler implements Runnable{
 	private static int serverPort = 23456;

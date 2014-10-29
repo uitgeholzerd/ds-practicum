@@ -14,15 +14,16 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import be.uantwerpen.ds.system_y.FileRecord;
-import be.uantwerpen.ds.system_y.INameServer;
 import be.uantwerpen.ds.system_y.PacketListener;
-import be.uantwerpen.ds.system_y.Protocol;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
+import be.uantwerpen.ds.system_y.connection.Protocol;
+import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client implements PacketListener {
 
 	public static final int udpClientPort = 3456;
+	public static final int tcpClientPort = 1234;
 	private static final String fileLocation = "C:\\";
 
 	private MulticastHandler group;

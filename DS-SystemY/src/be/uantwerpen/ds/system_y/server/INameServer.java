@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.system_y;
+package be.uantwerpen.ds.system_y.server;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

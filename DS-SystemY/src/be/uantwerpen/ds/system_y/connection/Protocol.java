@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.system_y;
+package be.uantwerpen.ds.system_y.connection;
 
 /**
  * The protocol used for commands between nodes/server
