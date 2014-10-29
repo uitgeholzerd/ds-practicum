@@ -3,6 +3,7 @@ package be.uantwerpen.ds.system_y.test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 
 import be.uantwerpen.ds.system_y.client.Client;
 
@@ -58,6 +59,8 @@ public class ClientTest {
 				}
 			} else if (command.equals("id")) {
 				System.out.println(client.getName() + " [" + client.getAddress() + "]");
+			} else if (command.equals("pwd")) {
+				System.out.println(Paths.get("./").toAbsolutePath());
 			} else if (command.equals("pingall")) {
 				try {
 					client.pingGroup();
