@@ -243,7 +243,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 
 		try {
 			InetAddress prev =  InetAddress.getByName(previousNode);
-			InetAddress next =  InetAddress.getByName(previousNode);
+			InetAddress next =  InetAddress.getByName(nextNode);
 			return new InetAddress[] {prev, next};
 		} catch (UnknownHostException e) {
 			System.err.println("NameServer - Host not found");

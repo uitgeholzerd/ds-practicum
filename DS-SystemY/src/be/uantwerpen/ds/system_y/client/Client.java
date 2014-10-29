@@ -379,9 +379,8 @@ public class Client implements PacketListener, FileReceiver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
+	
 	//TODO
 	public InetAddress newFileFound(String fileName) {
 		InetAddress[] nodes;
