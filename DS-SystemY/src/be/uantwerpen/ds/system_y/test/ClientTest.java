@@ -60,7 +60,7 @@ public class ClientTest {
 			} else if (command.equals("id")) {
 				System.out.println(client.getName() + " [" + client.getAddress() + "]");
 			} else if (command.equals("pwd")) {
-				System.out.println(Paths.get("./").toAbsolutePath());
+				System.out.println(Paths.get("").toAbsolutePath());
 			} else if (command.equals("pingall")) {
 				try {
 					client.pingGroup();

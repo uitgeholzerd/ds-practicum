@@ -62,6 +62,8 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Failed to create directory " + filedir.toAbsolutePath() +": " + e.getMessage());
 			}
 			
+		} else {
+			System.out.println("Storing files in " + filedir.toAbsolutePath());
 		}
 	}
 
