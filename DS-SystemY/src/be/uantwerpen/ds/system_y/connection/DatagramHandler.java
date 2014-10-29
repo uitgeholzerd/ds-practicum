@@ -6,8 +6,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-import be.uantwerpen.ds.system_y.Protocol;
-
 /**
  * @author seb
  *

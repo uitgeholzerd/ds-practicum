@@ -5,8 +5,6 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-import be.uantwerpen.ds.system_y.Protocol;
-
 public class MulticastHandler implements Runnable {
 	private static final String multicastAddress = "225.6.7.8";
 	private static final int multicastPort = 5678;
