@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -15,19 +16,22 @@ import java.util.UUID;
 
 import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
+import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
+import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class Client implements PacketListener {
+public class Client implements PacketListener, FileReceiver {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
-	private static final String FILE_LOCATION = "C:\\";
+	private static final String FILE_LOCATION = "./files/";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
+	private TCPHandler tcp;
 	private INameServer nameServer;
 	private Timer timer;
 	
@@ -43,6 +47,7 @@ public class Client implements PacketListener {
 		timer = new Timer();
 		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
+		localFiles = new ArrayList<String>();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
 
@@ -78,7 +83,7 @@ public class Client implements PacketListener {
 					}
 				}
 			}, 3 * 1000);
-			
+			tcp = new TCPHandler(tcpClientPort, this);
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask()
 		      {
@@ -112,12 +117,14 @@ public class Client implements PacketListener {
 	}
 	
 	public void processFile(String filename) {
+		
 		try {
 			int filehash = nameServer.getShortHash(filename);
 			if(true) {
 				
 			}
 			String location = nameServer.getFilelocation(filename);
+			String nodeLocation = newFilesFound(filename);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -296,7 +303,20 @@ public class Client implements PacketListener {
 			e.printStackTrace();
 		}
 	}
-
+	public void sendFile(String client, FileRecord file){
+		try {
+			InetAddress host = InetAddress.getByName(nameServer.lookupNode(client));
+			tcp.sendFile(host, file.getFileName(), file.getFileHash());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
 	/**
 	 * Sends a PING message to another client
 	 * 
@@ -376,8 +396,23 @@ public class Client implements PacketListener {
 	}
 	
 	//TODO
-	public void newFileFound(String filename) {
+	public String newFilesFound(String fileName) {
+		String[] nodes;
+		String newFileLocation="";
 		
+		try {
+			nodes = nameServer.lookupNeighbours(fileName);
+			newFileLocation = nodes[0];
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return newFileLocation;
 	}
 
+	@Override
+	public void fileReceived(int hash, String name) {
+		// TODO Auto-generated method stub
+		
+	}
 }

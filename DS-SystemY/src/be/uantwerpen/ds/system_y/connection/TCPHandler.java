@@ -8,8 +8,10 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+
+
 public class TCPHandler implements Runnable{
-	int port;
+	private int port;
 	private Socket sendSocket;
 	private ServerSocket listenSocket; 
 	private Thread listenThread;
@@ -23,6 +25,7 @@ public class TCPHandler implements Runnable{
 			listenThread = new Thread(this);
 			listenThread.setName("TCPHandler");
 			listenThread.start();
+			
 		} catch (IOException e) {
 			System.err.println("Error while initializing TCPHandler socket");
 			e.printStackTrace();
