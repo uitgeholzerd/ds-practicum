@@ -25,6 +25,7 @@ public class TCPHandler implements Runnable{
 			listenThread = new Thread(this);
 			listenThread.setName("TCPHandler");
 			listenThread.start();
+			
 		} catch (IOException e) {
 			System.err.println("Error while initializing TCPHandler socket");
 			e.printStackTrace();
@@ -59,7 +60,7 @@ public class TCPHandler implements Runnable{
 	 * @param filename	Name of the file
 	 * @param filehash	Hash of the file
 	 */
-	public void sendFile(InetAddress address, Protocol command, String filename, int filehash) {
+	public void sendFile(InetAddress address, String filename, int filehash) {
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		

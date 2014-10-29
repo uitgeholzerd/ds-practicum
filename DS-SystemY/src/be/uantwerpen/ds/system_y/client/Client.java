@@ -295,10 +295,10 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 		}
 	}
-	public void sendFile(String client, String filename){
+	public void sendFile(String client, FileRecord file){
 		try {
-			InetAddress host = InetAddress.getByName(nameServer.lookupNode(filename));
-			
+			InetAddress host = InetAddress.getByName(nameServer.lookupNode(client));
+			tcp.sendFile(host, file.getFileName(), file.getFileHash());
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
