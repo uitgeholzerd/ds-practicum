@@ -1,5 +1,6 @@
 package be.uantwerpen.ds.system_y.server;
 
+import java.net.InetAddress;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -12,7 +13,7 @@ public interface INameServer extends Remote {
 	 * @return The location (IP) at which the node can be found if it exists, else returns null
 	 * @throws RemoteException
 	 */
-	String lookupNodeByHash(int hash) throws RemoteException;
+	InetAddress lookupNodeByHash(int hash) throws RemoteException;
 
 	/**
 	 * Get the location of a node by its hash
@@ -21,7 +22,7 @@ public interface INameServer extends Remote {
 	 * @return The location (IP) at which the node can be found if it exists, else returns null
 	 * @throws RemoteException
 	 */
-	String lookupNode(String name) throws RemoteException;
+	InetAddress lookupNode(String name) throws RemoteException;
 
 	/**
 	 * Removes the node from the name server's map
@@ -36,7 +37,7 @@ public interface INameServer extends Remote {
 	 * @return The location (IP) at which the file can be found if it exists, else returns null
 	 * @throws RemoteException
 	 */
-	String getFilelocation(String filename) throws RemoteException;
+	InetAddress getFilelocation(String filename) throws RemoteException;
 
 	/**
 	 * Return a hash between 0 and 32768 of the object
@@ -53,5 +54,5 @@ public interface INameServer extends Remote {
 	 * @param name The name of the node of whos the neighbours are being looked up
 	 * @return An array containing the names of previous and the next nodes
 	 */
-	String[] lookupNeighbours(String name) throws RemoteException;
+	InetAddress[] lookupNeighbours(String name) throws RemoteException;
 }

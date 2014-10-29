@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -83,7 +82,7 @@ public class Client implements PacketListener, FileReceiver {
 					}
 				}
 			}, 3 * 1000);
-			tcp = new TCPHandler(tcpClientPort, this);
+			tcp = new TCPHandler(TCP_CLIENT_PORT, this);
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask()
 		      {
@@ -115,22 +114,6 @@ public class Client implements PacketListener, FileReceiver {
 		    }
 		}
 	}
-	
-	public void processFile(String filename) {
-		
-		try {
-			int filehash = nameServer.getShortHash(filename);
-			if(true) {
-				
-			}
-			String location = nameServer.getFilelocation(filename);
-			String nodeLocation = newFilesFound(filename);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
 
 	/**
 	 * This method is used to disconnect the node. It will update its neighbour node, inform the nameserver and close all connections
@@ -140,12 +123,10 @@ public class Client implements PacketListener, FileReceiver {
 	public void disconnect() {
 		try {
 			// Make previous node and next node neighbours
-			String prevNodeIp = nameServer.lookupNodeByHash(previousNodeHash);
-			InetAddress prevNode = InetAddress.getByName(prevNodeIp);
+			InetAddress prevNode = nameServer.lookupNodeByHash(previousNodeHash);
 			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
 
-			String nextNodeIp = nameServer.lookupNodeByHash(nextNodeHash);
-			InetAddress nextNode = InetAddress.getByName(nextNodeIp);
+			InetAddress nextNode = nameServer.lookupNodeByHash(nextNodeHash);
 			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
 
 			// Unregister the node on the nameserver
@@ -233,8 +214,8 @@ public class Client implements PacketListener, FileReceiver {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
 			nameServer = (INameServer) registry.lookup(message[1]);
 
-			String registeredAddress = nameServer.lookupNode(getName());
-			String localAddress = getAddress().getHostAddress();
+			InetAddress registeredAddress = nameServer.lookupNode(getName());
+			InetAddress localAddress = getAddress();
 			hash = nameServer.getShortHash(getName());
 			if (registeredAddress.equals(localAddress)) {
 				System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
@@ -289,13 +270,13 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	private void removeFailedNode(String nodeName) {
 		try {
-			String[] neighbours = nameServer.lookupNeighbours(nodeName);
-			String ipPrevNode = nameServer.lookupNode(neighbours[0]);
-			String ipNextNode = nameServer.lookupNode(neighbours[1]);
+			InetAddress[] neighbours = nameServer.lookupNeighbours(nodeName);
+			InetAddress prevNodeAddress = neighbours[0];
+			InetAddress nextNodeAddress = neighbours[1];
 
 			// Send the previous node of the failed node to the next node of the failed note and vice versa
-			udp.sendMessage(InetAddress.getByName(ipPrevNode), Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-			udp.sendMessage(InetAddress.getByName(ipNextNode), Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+			udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
 			nameServer.unregisterNode(nodeName);
 		} catch (IOException e) {
@@ -305,11 +286,8 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	public void sendFile(String client, FileRecord file){
 		try {
-			InetAddress host = InetAddress.getByName(nameServer.lookupNode(client));
+			InetAddress host = nameServer.lookupNode(client);
 			tcp.sendFile(host, file.getFileName(), file.getFileHash());
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -326,10 +304,7 @@ public class Client implements PacketListener, FileReceiver {
 	public void ping(final String name) throws IOException {
 		if (nameServer == null)
 			throw new IOException("Not connected to RMI server");
-		String ip = nameServer.lookupNode(name);
-		if (ip.isEmpty())
-			throw new IOException("Host " + name + " not found by server");
-		InetAddress host = InetAddress.getByName(ip);
+		InetAddress host = nameServer.lookupNode(name);
 		if (udp == null) {
 			System.err.println("Can't ping if not connected!");
 			return;
@@ -380,14 +355,14 @@ public class Client implements PacketListener, FileReceiver {
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public String lookupNode(String name) {
-		String result = "";
+		InetAddress result = null;
 		try {
 			result = nameServer.lookupNode(name);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return result;
+		return result.getHostAddress();
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
@@ -396,9 +371,9 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	//TODO
-	public String newFilesFound(String fileName) {
-		String[] nodes;
-		String newFileLocation="";
+	public InetAddress newFileFound(String fileName) {
+		InetAddress[] nodes;
+		InetAddress newFileLocation= null;
 		
 		try {
 			nodes = nameServer.lookupNeighbours(fileName);
