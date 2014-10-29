@@ -371,7 +371,7 @@ public class Client implements PacketListener {
 	}
 	
 	//TODO
-	public void newFilesFound() {
+	public void newFileFound(String filename) {
 		
 	}
 
