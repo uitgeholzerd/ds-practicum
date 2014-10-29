@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -41,6 +44,7 @@ public class Client implements PacketListener, FileReceiver {
 	private ArrayList<String> localFiles;
 	private ArrayList<FileRecord> ownedFiles;
 	private ArrayList<String> receivedPings;
+	private Path filedir;
 	
 	public Client() {
 		timer = new Timer();
@@ -49,7 +53,16 @@ public class Client implements PacketListener, FileReceiver {
 		localFiles = new ArrayList<String>();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
-
+		filedir = Paths.get(FILE_LOCATION);
+		if (!Files.exists(filedir)){
+			try {
+				Files.createDirectories(filedir);
+			} catch (IOException e) {
+			System.err.println("Failed to create directory for files.");
+				e.printStackTrace();
+			}
+			
+		}
 	}
 
 	public String getName() {
@@ -103,7 +116,7 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	public void scanFiles(String path) {
-		File[] files = new File(path).listFiles();
+		File[] files = Paths.get(path).toFile().listFiles();
 		//If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
 		    if (file.isFile()) {
