@@ -15,8 +15,6 @@ import java.util.TimerTask;
 import java.util.UUID;
 
 import be.uantwerpen.ds.system_y.FileRecord;
-import be.uantwerpen.ds.system_y.INameServer;
-import be.uantwerpen.ds.system_y.Protocol;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
@@ -280,8 +278,7 @@ public class Client implements PacketListener, FileReceiver {
 	 * 
 	 * @param nodeName Name of the failed node
 	 */
-	//TODO beter naam verzinnen
-	private void nodeFailed(String nodeName) {
+	private void removeFailedNode(String nodeName) {
 		try {
 			String[] neighbours = nameServer.lookupNeighbours(nodeName);
 			String ipPrevNode = nameServer.lookupNode(neighbours[0]);
@@ -337,7 +334,7 @@ public class Client implements PacketListener, FileReceiver {
 					System.out.println("Ping reply from " + name);
 				} else {
 					System.err.println("Ping timeout from " + name);
-					nodeFailed(name);
+					removeFailedNode(name);
 				}
 			}
 		}, 3 * 1000);

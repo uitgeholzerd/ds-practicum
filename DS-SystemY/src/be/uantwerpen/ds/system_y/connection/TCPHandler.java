@@ -11,24 +11,22 @@ import java.net.Socket;
 import be.uantwerpen.ds.system_y.Protocol;
 
 public class TCPHandler implements Runnable{
-	private static int serverPort = 23456;
-	
+	private int port;
 	private Socket sendSocket;
 	private ServerSocket listenSocket; 
 	private Thread listenThread;
 	private FileReceiver listener;
-	int port;
 	
 	public TCPHandler(int port, FileReceiver listener) {
 		this.port = port;
 		this.listener = listener;
 		try {
-			this.listenSocket = new ServerSocket(serverPort);
+			this.listenSocket = new ServerSocket(port);
 			listenThread = new Thread(this);
 			listenThread.setName("TCPHandler");
 			listenThread.start();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while initializing TCPHandler socket");
 			e.printStackTrace();
 		}
 		
@@ -45,37 +43,59 @@ public class TCPHandler implements Runnable{
 				connection = new TCPConnection(connectionSocket, listener);
 				(new Thread(connection)).start();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				System.err.println("Error while listening for connections in TCPHandler");
 				e.printStackTrace();
 			}
 		}
 		
 	}
 	
-	public boolean sendFile(InetAddress address, int port, Protocol command, String filename, int filehash){
+	/**
+	 * Send a file to the address per 1024 bytes
+	 * 
+	 * @param address	Address of the receiver
+	 * @param port		Port to which the file should be sent
+	 * @param command	
+	 * @param filename	Name of the file
+	 * @param filehash	Hash of the file
+	 */
+	public void sendFile(InetAddress address, Protocol command, String filename, int filehash) {
+		FileInputStream fis = null;
+		DataOutputStream out = null;
+		
 		try {
 			sendSocket = new Socket(address, port);
 			File file = new File(filename);
-			FileInputStream fis = new FileInputStream(file);
+			fis = new FileInputStream(file);
 			byte[] fileByteArray = new byte[1024];
-			DataOutputStream out = new DataOutputStream(sendSocket.getOutputStream());
+			out = new DataOutputStream(sendSocket.getOutputStream());
 			
 			out.writeUTF(filename);
 			out.writeInt(filehash);
 			
 			int count;
+			// While there are bytes available, write then to the outputstream
 			while ((count = fis.read(fileByteArray)) >= 0) {
 				out.write(fileByteArray, 0, count);
 			}
 			
-			fis.close();
-			out.close();
-			sendSocket.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while sending file in TCPHandler");
 			e.printStackTrace();
+		} finally {
+			try {
+				if (fis != null) {
+					fis.close();
+				}
+				if (out != null) {
+					out.close();
+				}
+				sendSocket.close();
+			} catch (IOException e) {
+				System.err.println("Error while closing TCPHandler resources");
+				e.printStackTrace();
+			}
 		}
-		return true;
 	}
 
 }

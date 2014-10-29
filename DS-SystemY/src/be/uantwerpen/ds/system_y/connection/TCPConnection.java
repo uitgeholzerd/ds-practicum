@@ -1,17 +1,14 @@
 package be.uantwerpen.ds.system_y.connection;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
 
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
-	private DataOutputStream out;
 	private Thread connectionThread;
 	private FileReceiver client;
 	
@@ -20,8 +17,8 @@ public class TCPConnection implements Runnable {
 		this.client = client;
 		try {
 			in = new DataInputStream(clientSocket.getInputStream());
-			out = new DataOutputStream(clientSocket.getOutputStream());
 			connectionThread = new Thread(this);
+			connectionThread.start();
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -49,26 +46,15 @@ public class TCPConnection implements Runnable {
 			e.printStackTrace();
 		} finally {
 			try {
-				if (fos != null){
+				if (fos != null) {
 					fos.close();
 				}
+				in.close();
+				clientSocket.close();
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			try {
-				in.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				clientSocket.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
 		}
 		
 	}
