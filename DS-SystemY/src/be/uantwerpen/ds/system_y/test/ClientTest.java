@@ -44,7 +44,7 @@ public class ClientTest {
 					if (cmd[1] == null) {
 						System.err.println("Need 1 argument to ping.");
 					} else { 
-						client.ping(cmd[1]);
+						client.pingNode(cmd[1]);
 					}
 				} catch (IOException e) {
 					System.err.println("Failed to send ping: " + e.getMessage());

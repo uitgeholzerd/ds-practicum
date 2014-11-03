@@ -26,7 +26,8 @@ public class Client implements PacketListener, FileReceiver {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
-	private static final String FILE_LOCATION = "./files/";
+	private static final String LOCAL_FILE_PATH = "./files/";
+	private static final String OWNED_FILE_PATH = "./files/owedn";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -88,7 +89,7 @@ public class Client implements PacketListener, FileReceiver {
 		      {
 				@Override
 		        public void run() {
-					scanFiles(FILE_LOCATION);
+					scanFiles(LOCAL_FILE_PATH);
 		        }
 		      }, 4 * 1000, 60 * 1000);
 		} catch (IOException e) {
@@ -310,19 +311,40 @@ public class Client implements PacketListener, FileReceiver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+	}
+
+	@Override
+	public void fileReceived(int fileHash, String fileName) {
+		InetAddress fileOwner;
+		try {
+			fileOwner = nameServer.getFilelocation(fileName);
+			// Check if this node is the owner of the file
+			if (this.getAddress().equals(fileOwner)) {
+				FileRecord record = new FileRecord(fileName, fileHash);
+				//TODO
+				//record.addNode(node)
+				ownedFiles.add(record);
+			}
+			else {
+				localFiles.add(fileName);
+			}
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
+	
 	/**
 	 * Sends a PING message to another client
 	 * 
-	 * @param name The host to ping
+	 * @param nodeName The host to ping
 	 * @throws IOException
 	 */
-	public void ping(final String name) throws IOException {
+	public void pingNode(final String nodeName) throws IOException {
 		if (nameServer == null)
 			throw new IOException("Not connected to RMI server");
-		InetAddress host = nameServer.lookupNode(name);
+		InetAddress host = nameServer.lookupNode(nodeName);
 		if (udp == null) {
 			System.err.println("Can't ping if not connected!");
 			return;
@@ -334,10 +356,10 @@ public class Client implements PacketListener, FileReceiver {
 			@Override
 			public void run() {
 				if (receivedPings.remove(uuid)) {
-					System.out.println("Ping reply from " + name);
+					System.out.println("Ping reply from " + nodeName);
 				} else {
-					System.err.println("Ping timeout from " + name);
-					removeFailedNode(name);
+					System.err.println("Ping timeout from " + nodeName);
+					removeFailedNode(nodeName);
 				}
 			}
 		}, 3 * 1000);
@@ -412,11 +434,5 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 		return newFileLocation;
-	}
-
-	@Override
-	public void fileReceived(int hash, String name) {
-		// TODO Auto-generated method stub
-		
 	}
 }
