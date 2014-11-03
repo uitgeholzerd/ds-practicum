@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -26,8 +29,8 @@ public class Client implements PacketListener, FileReceiver {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
-	private static final String LOCAL_FILE_PATH = "./files/";
-	private static final String OWNED_FILE_PATH = "./files/owedn";
+	private static final String LOCAL_FILE_PATH = "files/";
+	private static final String OWNED_FILE_PATH = "files/owedn";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -42,6 +45,7 @@ public class Client implements PacketListener, FileReceiver {
 	private ArrayList<String> localFiles;
 	private ArrayList<FileRecord> ownedFiles;
 	private ArrayList<String> receivedPings;
+	private Path filedir;
 	
 	public Client() {
 		timer = new Timer();
@@ -50,7 +54,18 @@ public class Client implements PacketListener, FileReceiver {
 		localFiles = new ArrayList<String>();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
-
+		filedir = Paths.get(FILE_LOCATION);
+		if (!Files.exists(filedir)){
+			try {
+				Files.createDirectories(filedir);
+				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
+			} catch (IOException e) {
+			System.err.println("Failed to create directory " + filedir.toAbsolutePath() +": " + e.getMessage());
+			}
+			
+		} else {
+			System.out.println("Storing files in " + filedir.toAbsolutePath());
+		}
 	}
 
 	public String getName() {
@@ -104,14 +119,14 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	public void scanFiles(String path) {
-		File[] files = new File(path).listFiles();
+		File[] files = Paths.get(path).toFile().listFiles();
 		//If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
 		    if (file.isFile()) {
-		        boolean newFile = localFiles.add(file.getName());
-		        if (newFile) {
-					newFileFound(file.getName());
-				}
+		    	boolean newFile = localFiles.add(file.getName());
+		    	if(newFile){
+		    		newFileFound(file);
+		    	}
 		    }
 		}
 	}
@@ -411,10 +426,10 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public void sendFileTest(String client, String file){
+	public void sendFileTest(String client, String fileName){
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, file, nameServer.getShortHash(file));
+			tcp.sendFile(host, new File(filedir.toFile(), fileName), nameServer.getShortHash(fileName));
 		}  catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -422,17 +437,52 @@ public class Client implements PacketListener, FileReceiver {
 	}
 	
 	//TODO
-	public InetAddress newFileFound(String fileName) {
+	public void newFileFound(File file) {
 		InetAddress[] nodes;
-		InetAddress newFileLocation= null;
+		InetAddress fileLocation = null;
+		int newFileLocation;
+		FileRecord fr;
 		
 		try {
-			nodes = nameServer.lookupNeighbours(fileName);
-			newFileLocation = nodes[0];
+			fileLocation = nameServer.getFilelocation(file.getName());
+			newFileLocation = nameServer.getShortHash(fileLocation);
+			if(newFileLocation==hash){
+				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
+				fr = new FileRecord(fileName, newFileLocation);
+				ownedFiles.add(fr);
+				fr.addNode(fileLocation);
+			}
+			tcp.sendFile(fileLocation, file, newFileLocation);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return newFileLocation;
 	}
+
+	@Override
+	public void fileReceived(int hash, String name) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	//TODO
+		public void moveFilesToPrev() {
+			InetAddress fileLocation = null;
+			int newFileLocation;
+			FileRecord fr;
+			String fileName="";
+			
+			try {
+
+				for (int i=0;i<localFiles.size();i++){
+					fileName=localFiles.get(i);
+					fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
+					newFileLocation = nameServer.getShortHash(fileLocation);
+					tcp.sendFile(fileLocation, fileName, newFileLocation);
+				}
+			} catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 }
