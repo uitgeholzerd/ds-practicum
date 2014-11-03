@@ -19,6 +19,7 @@ import java.util.UUID;
 import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
+import be.uantwerpen.ds.system_y.connection.MessageHandler;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
@@ -30,14 +31,15 @@ public class Client implements PacketListener, FileReceiver {
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
 	private static final String LOCAL_FILE_PATH = "files/";
-	private static final String OWNED_FILE_PATH = "files/owedn";
+	private static final String OWNED_FILE_PATH = "files/owned";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
 	private TCPHandler tcp;
 	private INameServer nameServer;
+	private MessageHandler messageHandler;
 	private Timer timer;
-	
+
 	private String name;
 	private int hash;
 	private int previousNodeHash;
@@ -46,23 +48,24 @@ public class Client implements PacketListener, FileReceiver {
 	private ArrayList<FileRecord> ownedFiles;
 	private ArrayList<String> receivedPings;
 	private Path filedir;
-	
+
 	public Client() {
 		timer = new Timer();
 		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
 		localFiles = new ArrayList<String>();
 		connect();
+		messageHandler = new MessageHandler(this, nameServer, udp,hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
-		filedir = Paths.get(FILE_LOCATION);
-		if (!Files.exists(filedir)){
+		filedir = Paths.get(LOCAL_FILE_PATH);
+		if (!Files.exists(filedir)) {
 			try {
 				Files.createDirectories(filedir);
 				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
 			} catch (IOException e) {
-			System.err.println("Failed to create directory " + filedir.toAbsolutePath() +": " + e.getMessage());
+				System.err.println("Failed to create directory " + filedir.toAbsolutePath() + ": " + e.getMessage());
 			}
-			
+
 		} else {
 			System.out.println("Storing files in " + filedir.toAbsolutePath());
 		}
@@ -100,13 +103,12 @@ public class Client implements PacketListener, FileReceiver {
 			}, 3 * 1000);
 			tcp = new TCPHandler(TCP_CLIENT_PORT, this);
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
-			timer.scheduleAtFixedRate(new TimerTask()
-		      {
+			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
-		        public void run() {
+				public void run() {
 					scanFiles(LOCAL_FILE_PATH);
-		        }
-		      }, 4 * 1000, 60 * 1000);
+				}
+			}, 4 * 1000, 60 * 1000);
 		} catch (IOException e) {
 			System.err.println("Connect failed: " + e.getMessage());
 			udp.closeClient();
@@ -117,17 +119,17 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void scanFiles(String path) {
 		File[] files = Paths.get(path).toFile().listFiles();
-		//If the path is not a directory, then listFiles() returns null.
+		// If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
-		    if (file.isFile()) {
-		    	boolean newFile = localFiles.add(file.getName());
-		    	if(newFile){
-		    		newFileFound(file);
-		    	}
-		    }
+			if (file.isFile()) {
+				boolean newFile = localFiles.add(file.getName());
+				if (newFile) {
+					newFileFound(file);
+				}
+			}
 		}
 	}
 
@@ -163,8 +165,8 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this client (uni- or multicast)
-	 * Depending on the command contained in the message, the client will perform different actions
+	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
+	 * different actions
 	 * 
 	 * @param address IP of the sender
 	 * @param port Data containing the command and a message
@@ -176,11 +178,11 @@ public class Client implements PacketListener, FileReceiver {
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
 		case DISCOVER:
-			processDISCOVER(sender, message);
+			messageHandler.processDISCOVER(sender, message);
 			break;
 
 		case DISCOVER_ACK:
-			processDISCOVER_ACK(sender, message);
+			messageHandler.processDISCOVER_ACK(sender, message);
 			break;
 
 		case SET_NODES:
@@ -200,7 +202,7 @@ public class Client implements PacketListener, FileReceiver {
 			break;
 
 		case PING:
-			processPING(sender, message);
+			messageHandler.processPING(sender, message);
 			break;
 		case PING_ACK:
 			receivedPings.add(message[1]);
@@ -210,90 +212,6 @@ public class Client implements PacketListener, FileReceiver {
 			break;
 		}
 
-	}
-
-	/**
-	 * Respond to other client's ping
-	 * 
-	 * @param sender
-	 * @param message
-	 */
-	private void processPING(InetAddress sender, String[] message) {
-		if (udp != null) {
-			try {
-				udp.sendMessage(sender, UDP_CLIENT_PORT, Protocol.PING_ACK, message[1]);
-			} catch (IOException e) {
-				System.err.println("Failed to respond to ping from " + sender.getAddress() + ": " + e.getMessage());
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	/**
-	 * The client received a discover-message from a new host and will recalculate its neighbours if needed
-	 * Disregard the message if it came from the current node
-	 * 
-	 * @param sender Host that sent the message
-	 * @param message Message cotaining the data
-	 */
-	private void processDISCOVER(InetAddress sender, String[] message) {
-		// 
-		if (sender.getHostAddress().equals(getAddress().getHostAddress())) {
-			return;
-		}
-		if (nameServer == null) {
-			System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
-			return;
-		}
-		try {
-			int newNodeHash = nameServer.getShortHash(message[1]);
-			System.out.println("New node joined with hash " + newNodeHash);
-
-			if ((hash < newNodeHash && newNodeHash < nextNodeHash) || nextNodeHash == hash || (nextNodeHash < hash && (hash < newNodeHash || newNodeHash < nextNodeHash))) {
-				System.out.println("It's between me and the next node!");
-				udp.sendMessage(sender, UDP_CLIENT_PORT, Protocol.SET_NODES, hash + " " + nextNodeHash);
-				nextNodeHash = newNodeHash;
-			}
-			if ((previousNodeHash < newNodeHash && newNodeHash < hash) || previousNodeHash == hash || (previousNodeHash > hash && (hash > newNodeHash || newNodeHash > previousNodeHash))) {
-				System.out.println("It's between me and the previous node!");
-				previousNodeHash = newNodeHash;
-			}
-
-		} catch (IOException e) {
-			System.err.println("RMI name lookup failed: " + e.getMessage());
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Server confirmed registration and answers with its location and the number of nodes
-	 * 
-	 * @param sender Host that sent the message
-	 * @param message Message cotaining the data
-	 */
-	private void processDISCOVER_ACK(InetAddress sender, String[] message) {
-		try {
-			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
-			nameServer = (INameServer) registry.lookup(message[1]);
-
-			InetAddress registeredAddress = nameServer.lookupNode(getName());
-			InetAddress localAddress = getAddress();
-			hash = nameServer.getShortHash(getName());
-			if (registeredAddress.equals(localAddress)) {
-				System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
-			} else {
-				System.err.println(message[1] + " self-test failed: registered as " + hash + " [" + registeredAddress + "], should be " + localAddress);
-			}
-
-		} catch (RemoteException | NotBoundException e) {
-			System.err.println("RMI setup failed: " + e.getMessage());
-			e.printStackTrace();
-		}
-		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
-		if (Integer.parseInt(message[2]) == 1) {
-			nextNodeHash = hash;
-			previousNodeHash = hash;
-		}
 	}
 
 	/**
@@ -317,11 +235,13 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-	
-	public void sendFile(String client, FileRecord file){
+
+	public void sendFile(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, file.getFileName(), file.getFileHash());
+			File file = Paths.get(LOCAL_FILE_PATH + "/" + fileName).toFile();
+			int fileHash = nameServer.getShortHash(fileName);
+			tcp.sendFile(host, file, fileHash);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -329,27 +249,25 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	@Override
-	public void fileReceived(int fileHash, String fileName) {
+	public void fileReceived(String fileName) {
 		InetAddress fileOwner;
 		try {
 			fileOwner = nameServer.getFilelocation(fileName);
+			int fileHash = nameServer.getShortHash(fileName);
 			// Check if this node is the owner of the file
 			if (this.getAddress().equals(fileOwner)) {
 				FileRecord record = new FileRecord(fileName, fileHash);
-				//TODO
-				//record.addNode(node)
 				ownedFiles.add(record);
-			}
-			else {
+			} else {
 				localFiles.add(fileName);
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Sends a PING message to another client
 	 * 
@@ -424,31 +342,31 @@ public class Client implements PacketListener, FileReceiver {
 	public String getNodes() {
 		return "Previous: " + previousNodeHash + "\nLocal: " + hash + "\nNext: " + nextNodeHash;
 	}
-	
+
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public void sendFileTest(String client, String fileName){
+	public void sendFileTest(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
 			tcp.sendFile(host, new File(filedir.toFile(), fileName), nameServer.getShortHash(fileName));
-		}  catch (RemoteException e) {
+		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
-	//TODO
+
+	// TODO
 	public void newFileFound(File file) {
 		InetAddress[] nodes;
 		InetAddress fileLocation = null;
 		int newFileLocation;
 		FileRecord fr;
-		
+
 		try {
 			fileLocation = nameServer.getFilelocation(file.getName());
 			newFileLocation = nameServer.getShortHash(fileLocation);
-			if(newFileLocation==hash){
+			if (newFileLocation == hash) {
 				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
-				fr = new FileRecord(fileName, newFileLocation);
+				fr = new FileRecord(file.getName(), newFileLocation);
 				ownedFiles.add(fr);
 				fr.addNode(fileLocation);
 			}
@@ -459,30 +377,25 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	@Override
-	public void fileReceived(int hash, String name) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	//TODO
-		public void moveFilesToPrev() {
-			InetAddress fileLocation = null;
-			int newFileLocation;
-			FileRecord fr;
-			String fileName="";
-			
-			try {
+	// TODO
+	public void moveFilesToPrev() {
+		InetAddress fileLocation = null;
+		int newFileLocation;
+		FileRecord fr;
+		String fileName = "";
 
-				for (int i=0;i<localFiles.size();i++){
-					fileName=localFiles.get(i);
-					fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
-					newFileLocation = nameServer.getShortHash(fileLocation);
-					tcp.sendFile(fileLocation, fileName, newFileLocation);
-				}
-			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		try {
+			for (int i = 0; i < localFiles.size(); i++) {
+				fileName = localFiles.get(i);
+				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
+				newFileLocation = nameServer.getShortHash(fileLocation);
+				File file = Paths.get(LOCAL_FILE_PATH + "/" + fileName).toFile();
+				// ???
+				//tcp.sendFile(newFileLocation, file, fileLocation);
 			}
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+	}
 }

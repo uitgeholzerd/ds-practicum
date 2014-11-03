@@ -33,6 +33,7 @@ public class TCPConnection implements Runnable {
 			String fileName = in.readUTF();
 			int fileHash = in.readInt();
 			File file = new File(fileName);
+			//TODO naar juiste pad schrijven
 			fos = new FileOutputStream(file);
 			byte[] buffer = new byte[1024];
 			int count;
@@ -40,7 +41,7 @@ public class TCPConnection implements Runnable {
 				fos.write(buffer, 0, count);
 			}
 			fos.flush();
-			client.fileReceived(fileHash, fileName);
+			client.fileReceived(fileName);
 			System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

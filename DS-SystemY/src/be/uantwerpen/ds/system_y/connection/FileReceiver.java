@@ -9,5 +9,5 @@ public interface FileReceiver {
 	 * @param fileHash	Hash of the file
 	 * @param fileName	Name of the file
 	 */
-	void fileReceived(int fileHash, String fileName);
+	void fileReceived(String fileName);
 }
