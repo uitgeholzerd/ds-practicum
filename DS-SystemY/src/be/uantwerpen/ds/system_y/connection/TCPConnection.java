@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import be.uantwerpen.ds.system_y.client.Client;
+
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
@@ -33,7 +35,7 @@ public class TCPConnection implements Runnable {
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
 			String fileName = in.readUTF();
-			File file = new File(fileName);
+			File file = new File(Client.OWNED_FILE_PATH + fileName);
 			//TODO naar juiste pad schrijven
 			fos = new FileOutputStream(file);
 			byte[] buffer = new byte[1024];

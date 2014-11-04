@@ -7,10 +7,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,8 +27,8 @@ public class Client implements PacketListener, FileReceiver {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
-	private static final String LOCAL_FILE_PATH = "files/";
-	private static final String OWNED_FILE_PATH = "files/owned";
+	public static final String LOCAL_FILE_PATH = "files/";
+	public static final String OWNED_FILE_PATH = "files/owned/";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -246,7 +243,7 @@ public class Client implements PacketListener, FileReceiver {
 	public void sendFile(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			File file = Paths.get(LOCAL_FILE_PATH + "/" + fileName).toFile();
+			File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
 			tcp.sendFile(host, file);
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -258,16 +255,16 @@ public class Client implements PacketListener, FileReceiver {
 	public void fileReceived(InetAddress sender, String fileName) {
 		InetAddress fileOwner;
 		try {
-			fileOwner = nameServer.getFilelocation(fileName);
+			localFiles.add(fileName);
+			
 			// If this node is the owner of the file, create a new record for it 
 			// and add the sender to the list of nodes where it is available
+			fileOwner = nameServer.getFilelocation(fileName);
 			if (this.getAddress().equals(fileOwner)) {
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(sender);
 				ownedFiles.add(record);
-			} else {
-				localFiles.add(fileName);
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -361,50 +358,31 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-
-	// TODO
-	/*
-	public void newFileFound(File file) {
-		InetAddress[] nodes;
-		InetAddress fileLocation = null;
-		int newFileLocation;
-		FileRecord record;
-
-		try {
-			fileLocation = nameServer.getFilelocation(file.getName());
-			newFileLocation = nameServer.getShortHash(fileLocation);
-			if (newFileLocation == hash) {
-				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
-				record = new FileRecord(file.getName(), newFileLocation);
-				ownedFiles.add(record);
-				record.addNode(fileLocation);
-			}
-			//tcp.sendFile(fileLocation, file, newFileLocation);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	*/
 	
+	/**
+	 * This method handles new files that are found on the current node by sending them to the right location
+	 * and creating a fileRecord if needed
+	 * 
+	 * @param file	The new file that has been found
+	 */
 	public void newFileFound(File file) {
 		try {
 			String fileName = file.getName();
 			InetAddress fileOwner = nameServer.getFilelocation(fileName);
+			
 			// If the file file is owned by this node, create a new record for it,
 			// send it to its previous neighbour and add that neighbour to the list of available nodes
 			// Else send it the owner
 			if (this.getAddress().equals(fileOwner)) {
-				int fileHash = nameServer.getShortHash(fileName);
-				
-				
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-				
+				tcp.sendFile(previousNode, file);
+
+				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(previousNode);
 				ownedFiles.add(record);
 			} else {
-				localFiles.add(fileName);
+				tcp.sendFile(fileOwner, file);
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
