@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 
 public class TCPConnection implements Runnable {
@@ -29,9 +30,9 @@ public class TCPConnection implements Runnable {
 	@Override
 	public void run() {
 		FileOutputStream fos = null;
+		InetAddress sender = clientSocket.getInetAddress();
 		try {
 			String fileName = in.readUTF();
-			int fileHash = in.readInt();
 			File file = new File(fileName);
 			//TODO naar juiste pad schrijven
 			fos = new FileOutputStream(file);
@@ -41,7 +42,7 @@ public class TCPConnection implements Runnable {
 				fos.write(buffer, 0, count);
 			}
 			fos.flush();
-			client.fileReceived(fileName);
+			client.fileReceived(sender, fileName);
 			System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

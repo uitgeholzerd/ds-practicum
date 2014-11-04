@@ -1,5 +1,7 @@
 package be.uantwerpen.ds.system_y.connection;
 
+import java.net.InetAddress;
+
 public interface FileReceiver {
 	
 	
@@ -9,5 +11,5 @@ public interface FileReceiver {
 	 * @param fileHash	Hash of the file
 	 * @param fileName	Name of the file
 	 */
-	void fileReceived(String fileName);
+	void fileReceived(InetAddress sender, String fileName);
 }

@@ -58,7 +58,7 @@ public class TCPHandler implements Runnable{
 	 * @param file	Name of the file
 	 * @param filehash	Hash of the file
 	 */
-	public void sendFile(InetAddress address, File file, int filehash) {
+	public void sendFile(InetAddress address, File file) {
 		System.out.println("Sending file " + file);
 		FileInputStream fis = null;
 		DataOutputStream out = null;
@@ -70,7 +70,6 @@ public class TCPHandler implements Runnable{
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			
 			out.writeUTF(file.getName());
-			out.writeInt(filehash);
 			
 			int count;
 			// While there are bytes available, write then to the outputstream
