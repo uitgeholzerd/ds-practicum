@@ -170,6 +170,9 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
+		if (sender.getHostAddress().equals(this.getAddress().getHostAddress())) {
+			return;
+		}
 		System.out.println("Received message from " + sender.getHostAddress() + ": " + data);
 		String[] message = data.split(" ");
 		Protocol command = Protocol.valueOf(message[0]);
