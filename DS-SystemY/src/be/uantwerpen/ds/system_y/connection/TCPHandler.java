@@ -70,7 +70,7 @@ public class TCPHandler implements Runnable{
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			
 			out.writeUTF(file.getName());
-			
+			out.flush();
 			int count;
 			// While there are bytes available, write then to the outputstream
 			while ((count = fis.read(fileByteArray)) >= 0) {
