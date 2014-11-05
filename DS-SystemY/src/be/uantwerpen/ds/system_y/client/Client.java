@@ -270,7 +270,6 @@ public class Client implements PacketListener, FileReceiver {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
@@ -392,19 +391,14 @@ public class Client implements PacketListener, FileReceiver {
 
 	// TODO
 	public void moveFilesToPrev() {
-		InetAddress fileLocation = null;
-		int newFileLocation;
-		FileRecord fr;
 		String fileName = "";
 
 		try {
 			for (int i = 0; i < localFiles.size(); i++) {
 				fileName = localFiles.get(i);
-				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
-				newFileLocation = nameServer.getShortHash(fileLocation);
-				File file = Paths.get(LOCAL_FILE_PATH + "/" + fileName).toFile();
-				// ???
-				//tcp.sendFile(newFileLocation, file, fileLocation);
+				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
+				tcp.sendFile(previousNode, file);
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
