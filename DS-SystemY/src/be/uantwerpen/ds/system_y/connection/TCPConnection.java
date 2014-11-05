@@ -42,8 +42,9 @@ public class TCPConnection implements Runnable {
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
 			String fileName = in.readUTF();
+			
 			Path file = Paths.get(Client.OWNED_FILE_PATH + fileName);
-			//TODO naar juiste pad schrijven 
+			/*//TODO naar juiste pad schrijven 
 			OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
 			fos = new BufferedOutputStream(Files.newOutputStream(file, options));
 			byte[] buffer = new byte[1024];
@@ -52,8 +53,8 @@ public class TCPConnection implements Runnable {
 				fos.write(buffer, 0, count);
 			}
 			fos.flush();
-			client.fileReceived(sender, fileName);
-			System.out.println("Received file " + fileName);
+			client.fileReceived(sender, fileName);*/
+			System.out.println("Received file " + fileName); 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
