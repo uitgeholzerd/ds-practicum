@@ -12,13 +12,11 @@ import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class MessageHandler {
 	Client client;
-	INameServer nameServer;
 	DatagramHandler udp;
 	int hash, nextNodeHash, previousNodeHash;
 	
-	public MessageHandler(Client client, INameServer nameServer, DatagramHandler udp, int hash, int nextNodeHash, int previousNodeHash){
+	public MessageHandler(Client client, DatagramHandler udp, int hash, int nextNodeHash, int previousNodeHash){
 		this.client = client;
-		this.nameServer = nameServer;
 		this.udp = udp;
 		this.hash = hash;
 		this.nextNodeHash = nextNodeHash;
@@ -36,12 +34,12 @@ public class MessageHandler {
 		if (sender.getHostAddress().equals(client.getAddress().getHostAddress())) {
 			return;
 		}
-		if (nameServer == null) {
+		if (client.getNameServer() == null) {
 			System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
 			return;
 		}
 		try {
-			int newNodeHash = nameServer.getShortHash(message[1]);
+			int newNodeHash = client.getNameServer().getShortHash(message[1]);
 			System.out.println("New node joined with hash " + newNodeHash);
 
 			if ((hash < newNodeHash && newNodeHash < nextNodeHash) || nextNodeHash == hash
@@ -71,11 +69,11 @@ public class MessageHandler {
 	public void processDISCOVER_ACK(InetAddress sender, String[] message) {
 		try {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
-			nameServer = (INameServer) registry.lookup(message[1]);
+			client.setNameServer((INameServer) registry.lookup(message[1]));
 
-			InetAddress registeredAddress = nameServer.lookupNode(client.getName());
+			InetAddress registeredAddress = client.getNameServer().lookupNode(client.getName());
 			InetAddress localAddress = client.getAddress();
-			hash = nameServer.getShortHash(client.getName());
+			hash = client.getNameServer().getShortHash(client.getName());
 			if (registeredAddress.equals(localAddress)) {
 				System.out.println(message[1] + " self-test success: registered as " + hash + " [" + registeredAddress + "]");
 			} else {
