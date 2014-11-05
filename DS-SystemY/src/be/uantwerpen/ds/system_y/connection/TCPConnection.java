@@ -1,11 +1,18 @@
 package be.uantwerpen.ds.system_y.connection;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import be.uantwerpen.ds.system_y.client.Client;
 
@@ -31,13 +38,13 @@ public class TCPConnection implements Runnable {
 	
 	@Override
 	public void run() {
-		FileOutputStream fos = null;
+		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
 			String fileName = in.readUTF();
-			File file = new File(Client.OWNED_FILE_PATH + fileName);
+			Path file = Paths.get(Client.OWNED_FILE_PATH + fileName);
 			//TODO naar juiste pad schrijven
-			fos = new FileOutputStream(file);
+			fos = new BufferedOutputStream(Files.newOutputStream(file));
 			byte[] buffer = new byte[1024];
 			int count;
 			while ((count = in.read(buffer)) >= 0 ){
