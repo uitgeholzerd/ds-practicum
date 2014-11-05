@@ -43,8 +43,9 @@ public class TCPConnection implements Runnable {
 		try {
 			String fileName = in.readUTF();
 			Path file = Paths.get(Client.OWNED_FILE_PATH + fileName);
-			//TODO naar juiste pad schrijven
-			fos = new BufferedOutputStream(Files.newOutputStream(file));
+			//TODO naar juiste pad schrijven 
+			OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
+			fos = new BufferedOutputStream(Files.newOutputStream(file, options));
 			byte[] buffer = new byte[1024];
 			int count;
 			while ((count = in.read(buffer)) >= 0 ){
