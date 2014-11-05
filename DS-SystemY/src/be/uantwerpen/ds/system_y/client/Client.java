@@ -181,6 +181,9 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
+		if (sender.getHostAddress().equals(this.getAddress().getHostAddress())) {
+			return;
+		}
 		System.out.println("Received message from " + sender.getHostAddress() + ": " + data);
 		String[] message = data.split(" ");
 		Protocol command = Protocol.valueOf(message[0]);
@@ -285,7 +288,6 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
-
 	}
 
 	/**
@@ -428,19 +430,14 @@ public class Client implements PacketListener, FileReceiver {
 
 	// TODO
 	public void moveFilesToPrev() {
-		InetAddress fileLocation = null;
-		int newFileLocation;
-		FileRecord fr;
 		String fileName = "";
 
 		try {
 			for (int i = 0; i < localFiles.size(); i++) {
 				fileName = localFiles.get(i);
-				fileLocation = nameServer.lookupNodeByHash(previousNodeHash);
-				newFileLocation = nameServer.getShortHash(fileLocation);
+				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-				// ???
-				// tcp.sendFile(newFileLocation, file, fileLocation);
+				tcp.sendFile(previousNode, file);
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
