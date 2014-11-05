@@ -33,9 +33,7 @@ public class MessageHandler {
 	 */
 	public void processDISCOVER(InetAddress sender, String[] message) {
 		//
-		if (sender.getHostAddress().equals(client.getAddress().getHostAddress())) {
-			return;
-		}
+
 		if (nameServer == null) {
 			System.err.println("Not connected to RMI server, can't process incoming DISCOVER.");
 			return;
