@@ -71,8 +71,6 @@ public class Client implements PacketListener {
 			String ex = e1.toString();
 			//cfh = new ConnectionFailureHandler(name, hash, ex, udpClientPort);
 		}
-
-
 	}
 
 	/**
