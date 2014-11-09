@@ -54,7 +54,13 @@ public class Client implements PacketListener, FileReceiver {
 		connect();
 		messageHandler = new MessageHandler(this, udp, hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
-		filedir = Paths.get(LOCAL_FILE_PATH);
+		createDirectory(LOCAL_FILE_PATH);
+		createDirectory(OWNED_FILE_PATH);
+		
+	}
+
+	private void createDirectory(String dir) {
+		filedir = Paths.get(dir);
 		if (!Files.exists(filedir)) {
 			try {
 				Files.createDirectories(filedir);

@@ -72,10 +72,12 @@ public class TCPHandler implements Runnable{
 			out.writeUTF(file.getName());
 			out.writeBoolean(receiverIsOwner);
 			
+			out.flush();
+			
 			int count;
 			// While there are bytes available, write then to the outputstream
 			while ((count = fis.read(fileByteArray)) >= 0) {
-				out.write(fileByteArray, 0, count);
+			//	out.write(fileByteArray, 0, count);
 			}
 			
 		} catch (IOException e) {
