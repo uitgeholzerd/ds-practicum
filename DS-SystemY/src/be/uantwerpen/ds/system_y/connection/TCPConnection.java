@@ -35,16 +35,25 @@ public class TCPConnection implements Runnable {
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
 			String fileName = in.readUTF();
-			File file = new File(Client.OWNED_FILE_PATH + fileName);
-			//TODO naar juiste pad schrijven
+			boolean owner = in.readBoolean();
+			File file;
+			
+			if (owner) {
+				file = new File(Client.OWNED_FILE_PATH + fileName);
+			}
+			else {
+				file = new File(Client.LOCAL_FILE_PATH + fileName);
+			}
+			
 			fos = new FileOutputStream(file);
 			byte[] buffer = new byte[1024];
+			
 			int count;
 			while ((count = in.read(buffer)) >= 0 ){
 				fos.write(buffer, 0, count);
 			}
 			fos.flush();
-			client.fileReceived(sender, fileName);
+			client.fileReceived(sender, fileName, owner);
 			System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

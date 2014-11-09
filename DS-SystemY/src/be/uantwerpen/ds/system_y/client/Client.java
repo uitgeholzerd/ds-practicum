@@ -111,6 +111,7 @@ public class Client implements PacketListener, FileReceiver {
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
 				public void run() {
+					System.out.println("Scanning files");
 					scanFiles(LOCAL_FILE_PATH);
 				}
 			}, 4 * 1000, 60 * 1000);
@@ -132,6 +133,7 @@ public class Client implements PacketListener, FileReceiver {
 			if (file.isFile()) {
 				boolean newFile = localFiles.add(file.getName());
 				if (newFile) {
+					System.out.println("File found: " + file.getName());
 					newFileFound(file);
 				}
 			}
@@ -252,33 +254,14 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	/**
-	 * Send a file on the local node to the remote node
-	 * 
-	 * @param client destination client
-	 * @param fileName name of the file
-	 */
-	public void sendFile(String client, String fileName) {
-		try {
-			InetAddress host = nameServer.lookupNode(client);
-			File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-			tcp.sendFile(host, file);
-		} catch (RemoteException e) {
-			System.err.println("Unable to contact nameServer");
-			e.printStackTrace();
-		}
-	}
-
 	@Override
-	public void fileReceived(InetAddress sender, String fileName) {
-		InetAddress fileOwner;
+	public void fileReceived(InetAddress sender, String fileName, boolean isOwner) {
 		try {
 			localFiles.add(fileName);
 
 			// If this node is the owner of the file, create a new record for it
 			// and add the sender to the list of nodes where it is available
-			fileOwner = nameServer.getFilelocation(fileName);
-			if (this.getAddress().equals(fileOwner)) {
+			if (isOwner) {
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(sender);
@@ -305,14 +288,14 @@ public class Client implements PacketListener, FileReceiver {
 			// Else send it the owner
 			if (this.getAddress().equals(fileOwner)) {
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-				tcp.sendFile(previousNode, file);
+				tcp.sendFile(previousNode, file, false);
 
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(previousNode);
 				ownedFiles.add(record);
 			} else {
-				tcp.sendFile(fileOwner, file);
+				tcp.sendFile(fileOwner, file, true);
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
@@ -331,8 +314,8 @@ public class Client implements PacketListener, FileReceiver {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
 				if (!this.getAddress().equals(owner)) {
-					File file = Paths.get(OWNED_FILE_PATH + "/" + fileName).toFile();
-					tcp.sendFile(owner, file);
+					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
+					tcp.sendFile(owner, file, true);
 					ownedFiles.remove(record);
 				}
 			} catch (RemoteException e) {
@@ -421,7 +404,7 @@ public class Client implements PacketListener, FileReceiver {
 	public void sendFileTest(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, new File(filedir.toFile(), fileName));
+			tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
@@ -437,7 +420,7 @@ public class Client implements PacketListener, FileReceiver {
 				fileName = localFiles.get(i);
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-				tcp.sendFile(previousNode, file);
+				tcp.sendFile(previousNode, file, true);
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
