@@ -10,5 +10,6 @@ public enum Protocol {
 	SET_PREVNODE,
 	SET_NEXTNODE,
 	PING,
-	PING_ACK
+	PING_ACK,
+	UPDATE_FILERECORD
 }
