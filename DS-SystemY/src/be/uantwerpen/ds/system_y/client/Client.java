@@ -52,9 +52,15 @@ public class Client implements PacketListener, FileReceiver {
 		receivedPings = new ArrayList<String>();
 		localFiles = new ArrayList<String>();
 		connect();
-		messageHandler = new MessageHandler(this, nameServer, udp, hash, nextNodeHash, previousNodeHash);
+		messageHandler = new MessageHandler(this, udp,hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
-		filedir = Paths.get(LOCAL_FILE_PATH);
+		createDirectory(LOCAL_FILE_PATH);
+		createDirectory(OWNED_FILE_PATH);
+		
+	}
+
+	private void createDirectory(String dir) {
+		filedir = Paths.get(dir);
 		if (!Files.exists(filedir)) {
 			try {
 				Files.createDirectories(filedir);
@@ -74,6 +80,14 @@ public class Client implements PacketListener, FileReceiver {
 
 	private void setName(String name) {
 		this.name = name;
+	}
+
+	public INameServer getNameServer() {
+		return nameServer;
+	}
+
+	public void setNameServer(INameServer nameServer) {
+		this.nameServer = nameServer;
 	}
 
 	/**
@@ -103,6 +117,7 @@ public class Client implements PacketListener, FileReceiver {
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
 				public void run() {
+					System.out.println("Scanning files");
 					scanFiles(LOCAL_FILE_PATH);
 				}
 			}, 4 * 1000, 60 * 1000);
@@ -124,6 +139,7 @@ public class Client implements PacketListener, FileReceiver {
 			if (file.isFile()) {
 				boolean newFile = localFiles.add(file.getName());
 				if (newFile) {
+					System.out.println("File found: " + file.getName());
 					newFileFound(file);
 				}
 			}
@@ -137,6 +153,9 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	public void disconnect() {
 		try {
+			// Make the previous node the new owner of the files owned by the current node
+			moveFilesToPrev();
+
 			// Make previous node and next node neighbours
 			InetAddress prevNode = nameServer.lookupNodeByHash(previousNodeHash);
 			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
@@ -146,9 +165,6 @@ public class Client implements PacketListener, FileReceiver {
 
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
-			
-			// Move all of the replicated files to previous node
-			moveReplicatedFilesToPrev();
 		} catch (IOException e) {
 			System.err.println("Disconnect failed: " + e.getMessage());
 			e.printStackTrace();
@@ -180,7 +196,12 @@ public class Client implements PacketListener, FileReceiver {
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
 		case DISCOVER:
+			int next = nextNodeHash;
 			messageHandler.processDISCOVER(sender, message);
+			// If the nextNodeHash has changed, check if this new node should be owner of any of the owned files
+			if (next != nextNodeHash) {
+				recheckOwnedFiles();
+			}
 			break;
 
 		case DISCOVER_ACK:
@@ -241,42 +262,74 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	
-	/**
-	 * Send a file on the local node to the remote node
-	 * 
-	 * @param client	destination client
-	 * @param fileName	name of the file
-	 */
-	public void sendFile(String client, String fileName) {
-		try {
-			InetAddress host = nameServer.lookupNode(client);
-			File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-			tcp.sendFile(host, file);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
 	@Override
-	public void fileReceived(InetAddress sender, String fileName) {
-		InetAddress fileOwner;
+	public void fileReceived(InetAddress sender, String fileName, boolean isOwner) {
 		try {
 			localFiles.add(fileName);
-			
-			// If this node is the owner of the file, create a new record for it 
+
+			// If this node is the owner of the file, create a new record for it
 			// and add the sender to the list of nodes where it is available
-			fileOwner = nameServer.getFilelocation(fileName);
-			if (this.getAddress().equals(fileOwner)) {
+			if (isOwner) {
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(sender);
 				ownedFiles.add(record);
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * This method handles new files that are found on the current node by sending them to the right location and creating a fileRecord if needed
+	 * 
+	 * @param file The new file that has been found
+	 */
+	public void newFileFound(File file) {
+		try {
+			String fileName = file.getName();
+			InetAddress fileOwner = nameServer.getFilelocation(fileName);
+
+			// If the file file is owned by this node, create a new record for it,
+			// send it to its previous neighbour and add that neighbour to the list of available nodes
+			// Else send it the owner
+			if (this.getAddress().equals(fileOwner)) {
+				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				tcp.sendFile(previousNode, file, false);
+
+				int fileHash = nameServer.getShortHash(fileName);
+				FileRecord record = new FileRecord(fileName, fileHash);
+				record.addNode(previousNode);
+				ownedFiles.add(record);
+			} else {
+				tcp.sendFile(fileOwner, file, true);
+			}
+		} catch (RemoteException e) {
+			System.err.println("Unable to contact nameServer");
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * This method is triggered when a new node join the system The current node checks if the new node should be the owner of any of the current node's owned files
+	 */
+	public void recheckOwnedFiles() {
+		InetAddress owner;
+		String fileName;
+		for (FileRecord record : ownedFiles) {
+			try {
+				fileName = record.getFileName();
+				owner = nameServer.getFilelocation(fileName);
+				if (!this.getAddress().equals(owner)) {
+					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
+					tcp.sendFile(owner, file, true);
+					ownedFiles.remove(record);
+				}
+			} catch (RemoteException e) {
+				System.err.println("Unable to contact nameServer");
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -332,7 +385,7 @@ public class Client implements PacketListener, FileReceiver {
 			address = s.getLocalAddress();
 			s.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Host not found");
 			e.printStackTrace();
 		}
 		return address;
@@ -359,40 +412,9 @@ public class Client implements PacketListener, FileReceiver {
 	public void sendFileTest(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, new File(filedir.toFile(), fileName));
+			tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * This method handles new files that are found on the current node by sending them to the right location
-	 * and creating a fileRecord if needed
-	 * 
-	 * @param file	The new file that has been found
-	 */
-	public void newFileFound(File file) {
-		try {
-			String fileName = file.getName();
-			InetAddress fileOwner = nameServer.getFilelocation(fileName);
-			
-			// If the file file is owned by this node, create a new record for it,
-			// send it to its previous neighbour and add that neighbour to the list of available nodes
-			// Else send it the owner
-			if (this.getAddress().equals(fileOwner)) {
-				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-				tcp.sendFile(previousNode, file);
-
-				int fileHash = nameServer.getShortHash(fileName);
-				FileRecord record = new FileRecord(fileName, fileHash);
-				record.addNode(previousNode);
-				ownedFiles.add(record);
-			} else {
-				tcp.sendFile(fileOwner, file);
-			}
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
 	}
@@ -401,7 +423,7 @@ public class Client implements PacketListener, FileReceiver {
 	 * This method makes sure the owners of the replicated files update their file records by sending a message,
 	 * then moves all of its replicated files to the previous node
 	 */
-	private void moveReplicatedFilesToPrev() {
+	private void moveFilesToPrev() {
 		try {
 			for (int i = 0; i < localFiles.size(); i++) {
 				String fileName = localFiles.get(i);
@@ -413,7 +435,7 @@ public class Client implements PacketListener, FileReceiver {
 				// Second move all replicated files to previous node
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-				tcp.sendFile(previousNode, file);
+				tcp.sendFile(previousNode, file, true);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -447,7 +469,7 @@ public class Client implements PacketListener, FileReceiver {
 				}
 			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
 	}
