@@ -52,7 +52,7 @@ public class Client implements PacketListener, FileReceiver {
 		receivedPings = new ArrayList<String>();
 		localFiles = new ArrayList<String>();
 		connect();
-		messageHandler = new MessageHandler(this, nameServer, udp,hash, nextNodeHash, previousNodeHash);
+		messageHandler = new MessageHandler(this, nameServer, udp, hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
 		filedir = Paths.get(LOCAL_FILE_PATH);
 		if (!Files.exists(filedir)) {
@@ -146,7 +146,9 @@ public class Client implements PacketListener, FileReceiver {
 
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
-
+			
+			// Move all of the replicated files to previous node
+			moveReplicatedFilesToPrev();
 		} catch (IOException e) {
 			System.err.println("Disconnect failed: " + e.getMessage());
 			e.printStackTrace();
@@ -206,6 +208,9 @@ public class Client implements PacketListener, FileReceiver {
 			break;
 		case PING_ACK:
 			receivedPings.add(message[1]);
+			break;
+		case UPDATE_FILERECORD:
+			updateOwnedFiles(message[1], message[2]);
 			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
@@ -392,16 +397,54 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	// TODO
-	public void moveFilesToPrev() {
-		String fileName = "";
-
+	/**
+	 * This method makes sure the owners of the replicated files update their file records by sending a message,
+	 * then moves all of its replicated files to the previous node
+	 */
+	private void moveReplicatedFilesToPrev() {
 		try {
 			for (int i = 0; i < localFiles.size(); i++) {
-				fileName = localFiles.get(i);
+				String fileName = localFiles.get(i);
+				
+				// First let owner of file update file record
+				InetAddress fileOwner = nameServer.getFilelocation(fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, "" + name + " " + fileName);
+				
+				// Second move all replicated files to previous node
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
 				tcp.sendFile(previousNode, file);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 
+	 * This method is triggered when another node shuts down, checks if own list of download locations on
+	 * the file record is empty, either removes file itself or removes address of node that is
+	 * shutting down if list is not empty
+	 * 
+	 * @param otherNode		Address of node that is shutting down
+	 */
+	private void updateOwnedFiles(String disconnectingNode, String fileName){
+		try {
+			for(int i=0;i<ownedFiles.size();i++){
+				// Search for file in owned files list
+				if(ownedFiles.get(i).getFileName()==fileName){
+					FileRecord record = ownedFiles.get(i);
+					// Remove file itself
+					if(record.getNodes().isEmpty()){
+						ownedFiles.remove(i);
+					}
+					// Remove download location of file
+					else{
+						InetAddress dcNode = nameServer.lookupNode(disconnectingNode);
+						record.removeNode(dcNode);
+					}
+				}
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
