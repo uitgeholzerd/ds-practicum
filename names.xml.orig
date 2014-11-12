@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
+<java version="1.8.0_20" class="java.beans.XMLDecoder">
+=======
+<java version="1.8.0_25" class="java.beans.XMLDecoder">
+>>>>>>> 56775638963acfc6de2e7098543a0a0d786fab86
+ <object class="java.util.Collections" method="synchronizedSortedMap">
+  <object class="java.util.TreeMap">
+   <void method="put">
+    <int>1634</int>
+    <string>1.2.3.4</string>
+   </void>
+   <void method="put">
+    <int>5205</int>
+    <string>4.5.6.6</string>
+   </void>
+   <void method="put">
+<<<<<<< HEAD
+    <int>28086</int>
+    <string>146.175.144.65</string>
+=======
+    <int>15295</int>
+    <string>146.175.144.16</string>
+>>>>>>> 56775638963acfc6de2e7098543a0a0d786fab86
+   </void>
+  </object>
+ </object>
+</java>

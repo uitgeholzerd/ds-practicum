@@ -59,7 +59,6 @@ public class Client implements PacketListener, FileReceiver {
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
-		
 	}
 
 	public String getName() {
