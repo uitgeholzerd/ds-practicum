@@ -42,7 +42,7 @@ public class TCPHandler implements Runnable{
 			try {
 				connectionSocket = listenSocket.accept();
 				connection = new TCPConnection(connectionSocket, listener);
-				(new Thread(connection)).start();
+				//(new Thread(connection)).start();
 			} catch (IOException e) {
 				System.err.println("Error while listening for connections in TCPHandler");
 				e.printStackTrace();
