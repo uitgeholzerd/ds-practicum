@@ -42,7 +42,7 @@ public class TCPHandler implements Runnable{
 			try {
 				connectionSocket = listenSocket.accept();
 				connection = new TCPConnection(connectionSocket, listener);
-				(new Thread(connection)).start();
+				//(new Thread(connection)).start();
 			} catch (IOException e) {
 				System.err.println("Error while listening for connections in TCPHandler");
 				e.printStackTrace();
@@ -59,7 +59,7 @@ public class TCPHandler implements Runnable{
 	 * @param filehash	Hash of the file
 	 */
 	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) {
-		System.out.println("Sending file " + file);
+		System.out.print("Sending file " + file +"... ");
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		
@@ -70,9 +70,11 @@ public class TCPHandler implements Runnable{
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			
 			out.writeUTF(file.getName());
+			//out.flush();
+			
 			out.writeBoolean(receiverIsOwner);
 			
-			out.flush();
+		//	out.flush();
 			
 			int count;
 			// While there are bytes available, write then to the outputstream
@@ -80,6 +82,7 @@ public class TCPHandler implements Runnable{
 				out.write(fileByteArray, 0, count);
 			}
 			out.flush();
+			System.out.println("sent.");
 		} catch (IOException e) {
 			System.err.println("Error while sending file in TCPHandler");
 			e.printStackTrace();
@@ -92,9 +95,9 @@ public class TCPHandler implements Runnable{
 					out.close();
 				}
 				if (sendSocket != null ){
-					sendSocket.close();
+					//sendSocket.close();
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				System.err.println("Error while closing TCPHandler resources");
 				e.printStackTrace();
 			}
