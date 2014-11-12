@@ -11,9 +11,10 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 
-import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
@@ -21,6 +22,7 @@ import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
+import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client implements PacketListener, FileReceiver {
@@ -41,8 +43,9 @@ public class Client implements PacketListener, FileReceiver {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private ArrayList<String> localFiles;
+	private TreeSet<String> localFiles;
 	private ArrayList<FileRecord> ownedFiles;
+	private TreeMap<String, Boolean> availableFiles;
 	private ArrayList<String> receivedPings;
 	private Path filedir;
 
@@ -50,28 +53,13 @@ public class Client implements PacketListener, FileReceiver {
 		timer = new Timer();
 		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
-		localFiles = new ArrayList<String>();
+		localFiles = new TreeSet<String>();
 		connect();
 		messageHandler = new MessageHandler(this, udp,hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
 		
-	}
-
-	private void createDirectory(String dir) {
-		filedir = Paths.get(dir);
-		if (!Files.exists(filedir)) {
-			try {
-				Files.createDirectories(filedir);
-				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
-			} catch (IOException e) {
-				System.err.println("Failed to create directory " + filedir.toAbsolutePath() + ": " + e.getMessage());
-			}
-
-		} else {
-			System.out.println("Storing files in " + filedir.toAbsolutePath());
-		}
 	}
 
 	public String getName() {
@@ -88,6 +76,18 @@ public class Client implements PacketListener, FileReceiver {
 
 	public void setNameServer(INameServer nameServer) {
 		this.nameServer = nameServer;
+	}
+	
+	public ArrayList<FileRecord> getOwnedFiles() {
+		return ownedFiles;
+	}
+	
+	public TreeMap<String, Boolean> getAvailableFiles() {
+		return availableFiles;
+	}
+	
+	public void setAvailableFiles(TreeMap<String, Boolean> files){
+		this.availableFiles = files;
 	}
 
 	/**
@@ -132,7 +132,12 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	public void scanFiles(String path) {
+	/**
+	 * Scan a path for files and compare them to previously found files
+	 * If the file was not found before, execute the newFileFound method
+	 * @param path	Path to scan
+	 */
+	private void scanFiles(String path) {
 		File[] files = Paths.get(path).toFile().listFiles();
 		// If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
@@ -143,6 +148,21 @@ public class Client implements PacketListener, FileReceiver {
 					newFileFound(file);
 				}
 			}
+		}
+	}
+
+	private void createDirectory(String dir) {
+		filedir = Paths.get(dir);
+		if (!Files.exists(filedir)) {
+			try {
+				Files.createDirectories(filedir);
+				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
+			} catch (IOException e) {
+				System.err.println("Failed to create directory " + filedir.toAbsolutePath() + ": " + e.getMessage());
+			}
+
+		} else {
+			System.out.println("Storing files in " + filedir.toAbsolutePath());
 		}
 	}
 
@@ -302,6 +322,7 @@ public class Client implements PacketListener, FileReceiver {
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(previousNode);
 				ownedFiles.add(record);
+				file.renameTo(new File(OWNED_FILE_PATH + fileName));
 			} else {
 				tcp.sendFile(fileOwner, file, true);
 			}
@@ -312,7 +333,9 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * This method is triggered when a new node join the system The current node checks if the new node should be the owner of any of the current node's owned files
+	 * This method is triggered when a new node join the system
+	 * The current node checks if the new node should be the owner of any of the current node's owned files
+	 * 
 	 */
 	public void recheckOwnedFiles() {
 		InetAddress owner;
@@ -325,6 +348,7 @@ public class Client implements PacketListener, FileReceiver {
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(owner, file, true);
 					ownedFiles.remove(record);
+					file.delete();
 				}
 			} catch (RemoteException e) {
 				System.err.println("Unable to contact nameServer");
@@ -425,13 +449,12 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	private void moveFilesToPrev() {
 		try {
-			for (int i = 0; i < localFiles.size(); i++) {
-				String fileName = localFiles.get(i);
-				
+			for (String fileName : localFiles) {
 				// First let owner of file update file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
-				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, "" + name + " " + fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, name + " " + fileName);
 			}
+			
 			for (int i = 0; i < ownedFiles.size(); i++) {
 				String fileName = ownedFiles.get(i).getFileName();
 				
@@ -441,7 +464,7 @@ public class Client implements PacketListener, FileReceiver {
 				tcp.sendFile(previousNode, file, true);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Connection unavailable");
 			e.printStackTrace();
 		}
 	}
@@ -458,7 +481,7 @@ public class Client implements PacketListener, FileReceiver {
 		try {
 			for(int i=0;i<ownedFiles.size();i++){
 				// Search for file in owned files list
-				if(ownedFiles.get(i).getFileName()==fileName){
+				if(ownedFiles.get(i).getFileName() == fileName){
 					FileRecord record = ownedFiles.get(i);
 					// Remove file from owned files list + file itself
 					if(record.getNodes().isEmpty()){

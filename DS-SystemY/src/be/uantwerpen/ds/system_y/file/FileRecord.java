@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.system_y;
+package be.uantwerpen.ds.system_y.file;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
