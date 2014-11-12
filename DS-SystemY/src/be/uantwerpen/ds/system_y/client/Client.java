@@ -46,6 +46,7 @@ public class Client implements PacketListener, FileReceiver {
 	private TreeSet<String> localFiles;
 	private ArrayList<FileRecord> ownedFiles;
 	private TreeMap<String, Boolean> availableFiles;
+	private TreeMap<String, Boolean> lockRequests;
 	private ArrayList<String> receivedPings;
 	private Path filedir;
 
@@ -54,6 +55,8 @@ public class Client implements PacketListener, FileReceiver {
 		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
 		localFiles = new TreeSet<String>();
+		availableFiles = new TreeMap<String, Boolean>();
+		lockRequests = new TreeMap<String, Boolean>();
 		connect();
 		messageHandler = new MessageHandler(this, udp,hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
@@ -88,6 +91,10 @@ public class Client implements PacketListener, FileReceiver {
 	
 	public void setAvailableFiles(TreeMap<String, Boolean> files){
 		this.availableFiles = files;
+	}
+	
+	public TreeMap<String, Boolean> getLockRequests() {
+		return lockRequests;
 	}
 
 	/**
@@ -315,12 +322,15 @@ public class Client implements PacketListener, FileReceiver {
 			// send it to its previous neighbour and add that neighbour to the list of available nodes
 			// Else send it the owner
 			if (this.getAddress().equals(fileOwner)) {
-				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-				tcp.sendFile(previousNode, file, false);
-
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
-				record.addNode(previousNode);
+				
+				if (this.hash != previousNodeHash) {
+					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+					tcp.sendFile(previousNode, file, false);
+					record.addNode(previousNode);
+				}
+
 				ownedFiles.add(record);
 				file.renameTo(new File(OWNED_FILE_PATH + fileName));
 			} else {
