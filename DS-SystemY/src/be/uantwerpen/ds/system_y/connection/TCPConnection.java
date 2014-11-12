@@ -1,5 +1,6 @@
 package be.uantwerpen.ds.system_y.connection;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -38,8 +39,11 @@ public class TCPConnection implements Runnable {
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
-			String fileName = in.readUTF();
+			System.out.print("Receiving file... ");
+			String fileName =  in.readUTF();
+			System.out.print(fileName);
 			boolean owner = in.readBoolean();
+			System.out.println(" owner=" + owner );
 			Path file;
 			
 			if (owner) {
@@ -52,12 +56,13 @@ public class TCPConnection implements Runnable {
 			OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
 			fos = new BufferedOutputStream(Files.newOutputStream(file, options));
 			byte[] buffer = new byte[1024];
-			
+			System.out.println("reading data... ");
 			int count;
 			while ((count = in.read(buffer)) >= 0 ){
 				fos.write(buffer, 0, count);
 			}
 			fos.flush();
+			System.out.println("FIle written...");
 			client.fileReceived(sender, fileName, owner);
 			System.out.println("Received file " + fileName);
 		} catch (IOException e) {
