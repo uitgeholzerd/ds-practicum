@@ -39,8 +39,11 @@ public class TCPConnection implements Runnable {
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
+			System.out.print("Receiving file... ");
 			String fileName =  in.readUTF();
+			System.out.print(fileName);
 			boolean owner = in.readBoolean();
+			System.out.println(" owner=" + owner );
 			Path file;
 			
 			if (owner) {
