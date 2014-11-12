@@ -60,18 +60,18 @@ public class MessageHandler {
 	 * Server confirmed registration and answers with its location and the number of nodes
 	 * 
 	 * @param sender Host that sent the message
-	 * @param message Message cotaining the data
+	 * @param message Message containing the data
 	 */
 	public void processDISCOVER_ACK(InetAddress sender, String[] message) {
+		int nodeCount = Integer.parseInt(message[2]);
 		try {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
 			client.setNameServer((INameServer) registry.lookup(message[1]));
-
 			InetAddress registeredAddress = client.getNameServer().lookupNode(client.getName());
 			InetAddress localAddress = client.getAddress();
 			client.setHash(client.getNameServer().getShortHash(client.getName()));
 			if (registeredAddress.equals(localAddress)) {
-				System.out.println(message[1] + " self-test success: registered as " + client.getHash() + " [" + registeredAddress + "]");
+				System.out.println(message[1] + " self-test success: registered as " + client.getHash() + " [" + registeredAddress + "], " + nodeCount + " nodes in network.");
 			} else {
 				System.err.println(message[1] + " self-test failed: registered as " + client.getHash() + " [" + registeredAddress + "], should be " + localAddress);
 			}
@@ -81,7 +81,8 @@ public class MessageHandler {
 			e.printStackTrace();
 		}
 		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
-		if (Integer.parseInt(message[2]) == 1) {
+		
+		if (nodeCount == 1) {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
 			client.setPreviousNodeHash(client.getHash());
