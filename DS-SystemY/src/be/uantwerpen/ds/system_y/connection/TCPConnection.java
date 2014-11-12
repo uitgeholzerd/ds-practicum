@@ -1,5 +1,6 @@
 package be.uantwerpen.ds.system_y.connection;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class TCPConnection implements Runnable {
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
-			String fileName = in.readUTF();
+			String fileName =  in.readUTF();
 			boolean owner = in.readBoolean();
 			Path file;
 			

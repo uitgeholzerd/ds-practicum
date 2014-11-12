@@ -70,6 +70,8 @@ public class TCPHandler implements Runnable{
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			
 			out.writeUTF(file.getName());
+			out.flush();
+			
 			out.writeBoolean(receiverIsOwner);
 			
 			out.flush();
@@ -86,15 +88,15 @@ public class TCPHandler implements Runnable{
 		} finally {
 			try {
 				if (fis != null) {
-					fis.close();
+					//fis.close();
 				}
 				if (out != null) {
-					out.close();
+					//out.close();
 				}
 				if (sendSocket != null ){
-					sendSocket.close();
+					//sendSocket.close();
 				}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				System.err.println("Error while closing TCPHandler resources");
 				e.printStackTrace();
 			}
