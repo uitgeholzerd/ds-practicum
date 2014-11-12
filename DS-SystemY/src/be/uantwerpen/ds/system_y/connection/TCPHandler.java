@@ -59,7 +59,7 @@ public class TCPHandler implements Runnable{
 	 * @param filehash	Hash of the file
 	 */
 	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) {
-		System.out.println("Sending file " + file +"... ");
+		System.out.print("Sending file " + file +"... ");
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		
@@ -89,10 +89,10 @@ public class TCPHandler implements Runnable{
 		} finally {
 			try {
 				if (fis != null) {
-					//fis.close();
+					fis.close();
 				}
 				if (out != null) {
-					//out.close();
+					out.close();
 				}
 				if (sendSocket != null ){
 					//sendSocket.close();
