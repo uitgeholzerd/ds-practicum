@@ -80,9 +80,9 @@ public class NameServerTest {
 			if (command == null || command.isEmpty()) {
 				continue;
 			} else if (command.equals("dump")) {
-				System.out.println("Nodes in map:\n" + ns.dumpMap());
+				System.out.println("Nodes in map:\n" + ns.debugDumpMap());
 			} else if (command.equals("clear")) {
-				ns.clearMap();
+				ns.debugClearMap();
 				System.out.println("Map cleared");
 			} else if (command.equals("save")) {
 				ns.saveMap();

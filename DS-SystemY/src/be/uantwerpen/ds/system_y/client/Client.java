@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -447,7 +448,7 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public String lookupNode(String name) {
+	public String debugLookup(String name) {
 		InetAddress result = null;
 		try {
 			result = nameServer.lookupNode(name);
@@ -459,12 +460,12 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public String getNodes() {
+	public String debugNodes() {
 		return "Previous: " + getPreviousNodeHash() + "\nLocal: " + getHash() + "\nNext: " + getNextNodeHash();
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public void sendFileTest(String client, String fileName) {
+	public void debugSendFile(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
 			tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
@@ -473,7 +474,27 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-	
+	public String debugAvailableFiles() {
+		String result = "Available files:\n";
+		for (Map.Entry<String, Boolean> entry : getAvailableFiles().entrySet()) {
+			result += entry.getKey() + "=" + entry.getValue() + "\n";
+		}
+		return result;
+	}
+	public String debugLocalFiles() {
+		String result = "Local files:\n";
+		for (String entry : localFiles){
+			result += entry + "\n";
+		}
+		return result;
+	}
+	public String debugOwnedFiles() {
+		String result = "Owned files:\n";
+		for (FileRecord entry : ownedFiles){
+			result += entry.getFileName() + ": " + entry.getNodes().toString() + "\n";
+		}
+		return result;
+	}
 	/**
 	 * This method makes sure the owners of the replicated files update their file records by sending a udp message
 	 */

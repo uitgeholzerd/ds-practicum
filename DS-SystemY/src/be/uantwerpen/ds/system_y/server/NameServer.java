@@ -305,8 +305,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public String dumpMap() {
-		String result = "";
+	public String debugDumpMap() {
+		String result = "Nodes in map:\n";
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
 			result += entry.getKey() + "=" + entry.getValue() + "\n";
 		}
@@ -314,7 +314,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	// TODO waarvoor nodig?
-	public void clearMap() {
+	public void debugClearMap() {
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>());
 	}
 
