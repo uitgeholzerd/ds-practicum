@@ -66,7 +66,6 @@ public class Client implements PacketListener, FileReceiver {
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
-		
 	}
 
 	public String getName() {
@@ -308,10 +307,11 @@ public class Client implements PacketListener, FileReceiver {
 				for (FileRecord localRecord : ownedFiles) {
 					if(newRecord==localRecord){
 						hasTheFile=true;
+						break;
 					}
 				}
 				// If file already exists in records, replicate this file to previous node
-				if(hasTheFile==true){
+				if(hasTheFile){
 					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(previousNode, file, false);
@@ -541,13 +541,12 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	private void updateOwnedFiles(String disconnectingNode, String fileName){
 		try {
-			for(int i=0;i<ownedFiles.size();i++){
+			for(FileRecord record : ownedFiles){
 				// Search for file in owned files list
-				if(ownedFiles.get(i).getFileName() == fileName){
-					FileRecord record = ownedFiles.get(i);
+				if(record.getFileName() == fileName){
 					// Remove file from owned files list + file itself
 					if(record.getNodes().isEmpty()){
-						ownedFiles.remove(i);
+						ownedFiles.remove(record);
 						File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 						file.delete();
 					}
