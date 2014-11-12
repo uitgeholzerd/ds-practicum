@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.List;
 
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
@@ -26,7 +27,7 @@ public class FailureAgent implements Serializable, Runnable {
 	private int failureHash;
 	private int startupHash;	//Hier wordt de eerste node in opgeslagen waar de agent is op gestart
 	
-	private ArrayList<FileRecord> ownedFiles;
+	private List<FileRecord> ownedFiles;
 	private boolean firstTime = false;
 	private boolean succes;
 	
