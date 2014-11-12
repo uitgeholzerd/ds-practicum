@@ -79,7 +79,7 @@ public class TCPHandler implements Runnable{
 			while ((count = fis.read(fileByteArray)) >= 0) {
 				out.write(fileByteArray, 0, count);
 			}
-			
+			out.flush();
 		} catch (IOException e) {
 			System.err.println("Error while sending file in TCPHandler");
 			e.printStackTrace();
@@ -91,7 +91,9 @@ public class TCPHandler implements Runnable{
 				if (out != null) {
 					out.close();
 				}
-				sendSocket.close();
+				if (sendSocket != null ){
+					sendSocket.close();
+				}
 			} catch (IOException e) {
 				System.err.println("Error while closing TCPHandler resources");
 				e.printStackTrace();
