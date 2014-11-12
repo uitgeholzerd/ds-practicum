@@ -82,6 +82,7 @@ public class MessageHandler {
 		}
 		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		if (Integer.parseInt(message[2]) == 1) {
+			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
 			client.setPreviousNodeHash(client.getHash());
 		}
