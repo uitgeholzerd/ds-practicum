@@ -52,7 +52,7 @@ public class Client implements PacketListener, FileReceiver {
 		receivedPings = new ArrayList<String>();
 		localFiles = new ArrayList<String>();
 		connect();
-		messageHandler = new MessageHandler(this, udp,hash, nextNodeHash, previousNodeHash);
+		messageHandler = new MessageHandler(this, udp);
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
@@ -157,11 +157,11 @@ public class Client implements PacketListener, FileReceiver {
 			moveFilesToPrev();
 
 			// Make previous node and next node neighbours
-			InetAddress prevNode = nameServer.lookupNodeByHash(previousNodeHash);
-			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
+			InetAddress prevNode = nameServer.lookupNodeByHash(getPreviousNodeHash());
+			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(getNextNodeHash()));
 
-			InetAddress nextNode = nameServer.lookupNodeByHash(nextNodeHash);
-			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
+			InetAddress nextNode = nameServer.lookupNodeByHash(getNextNodeHash());
+			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(getPreviousNodeHash()));
 
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
@@ -196,10 +196,10 @@ public class Client implements PacketListener, FileReceiver {
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
 		case DISCOVER:
-			int next = nextNodeHash;
+			int next = getNextNodeHash();
 			messageHandler.processDISCOVER(sender, message);
 			// If the nextNodeHash has changed, check if this new node should be owner of any of the owned files
-			if (next != nextNodeHash) {
+			if (next != getNextNodeHash()) {
 				recheckOwnedFiles();
 			}
 			break;
@@ -210,18 +210,18 @@ public class Client implements PacketListener, FileReceiver {
 
 		case SET_NODES:
 			// Another client received the discover message and provides this client with its neighbours
-			previousNodeHash = Integer.parseInt(message[1]);
-			nextNodeHash = Integer.parseInt(message[2]);
+			setPreviousNodeHash(Integer.parseInt(message[1]));
+			setNextNodeHash(Integer.parseInt(message[2]));
 			break;
 
 		case SET_PREVNODE:
 			// Another client encountered a failed node and provides this client with its new previous node
-			previousNodeHash = Integer.parseInt(message[1]);
+			setPreviousNodeHash(Integer.parseInt(message[1]));
 			break;
 
 		case SET_NEXTNODE:
 			// Another client received the fail message and will provide this client with its next node
-			nextNodeHash = Integer.parseInt(message[1]);
+			setNextNodeHash(Integer.parseInt(message[1]));
 			break;
 
 		case PING:
@@ -295,7 +295,7 @@ public class Client implements PacketListener, FileReceiver {
 			// send it to its previous neighbour and add that neighbour to the list of available nodes
 			// Else send it the owner
 			if (this.getAddress().equals(fileOwner)) {
-				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				InetAddress previousNode = nameServer.lookupNodeByHash(getPreviousNodeHash());
 				tcp.sendFile(previousNode, file, false);
 
 				int fileHash = nameServer.getShortHash(fileName);
@@ -405,7 +405,7 @@ public class Client implements PacketListener, FileReceiver {
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public String getNodes() {
-		return "Previous: " + previousNodeHash + "\nLocal: " + hash + "\nNext: " + nextNodeHash;
+		return "Previous: " + getPreviousNodeHash() + "\nLocal: " + getHash() + "\nNext: " + getNextNodeHash();
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
@@ -436,7 +436,7 @@ public class Client implements PacketListener, FileReceiver {
 				String fileName = ownedFiles.get(i).getFileName();
 				
 				// Second move all owned files to previous node
-				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				InetAddress previousNode = nameServer.lookupNodeByHash(getPreviousNodeHash());
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				tcp.sendFile(previousNode, file, true);
 			}
@@ -477,5 +477,47 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * @return the previousNodeHash
+	 */
+	public int getPreviousNodeHash() {
+		return previousNodeHash;
+	}
+
+	/**
+	 * @param previousNodeHash the previousNodeHash to set
+	 */
+	public void setPreviousNodeHash(int previousNodeHash) {
+		this.previousNodeHash = previousNodeHash;
+	}
+
+	/**
+	 * @return the nextNodeHash
+	 */
+	public int getNextNodeHash() {
+		return nextNodeHash;
+	}
+
+	/**
+	 * @param nextNodeHash the nextNodeHash to set
+	 */
+	public void setNextNodeHash(int nextNodeHash) {
+		this.nextNodeHash = nextNodeHash;
+	}
+
+	/**
+	 * @return the hash
+	 */
+	public int getHash() {
+		return hash;
+	}
+
+	/**
+	 * @param hash the hash to set
+	 */
+	public void setHash(int hash) {
+		this.hash = hash;
 	}
 }
