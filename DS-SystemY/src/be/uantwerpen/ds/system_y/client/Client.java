@@ -9,7 +9,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -44,19 +47,19 @@ public class Client implements PacketListener, FileReceiver {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private TreeSet<String> localFiles;
-	private ArrayList<FileRecord> ownedFiles;
-	private TreeMap<String, Boolean> availableFiles;
-	private TreeMap<String, Boolean> lockRequests;
-	private ArrayList<String> receivedPings;
+	private Set<String> localFiles;
+	private List<FileRecord> ownedFiles;
+	private Map<String, Boolean> availableFiles;
+	private Map<String, Boolean> lockRequests;
+	private List<String> receivedPings;
 	private Path filedir;
 
 	public Client() {
 		timer = new Timer();
-		ownedFiles = new ArrayList<FileRecord>();
-		receivedPings = new ArrayList<String>();
-		localFiles = new TreeSet<String>();
-		availableFiles = new TreeMap<String, Boolean>();
+		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
+		receivedPings = Collections.synchronizedList(new ArrayList<String>());
+		localFiles = Collections.synchronizedSet(new TreeSet<String>());
+		availableFiles = Collections.synchronizedMap(new TreeMap<String, Boolean>());
 		lockRequests = new TreeMap<String, Boolean>();
 		connect();
 		messageHandler = new MessageHandler(this, udp);
@@ -82,11 +85,11 @@ public class Client implements PacketListener, FileReceiver {
 		this.nameServer = nameServer;
 	}
 	
-	public ArrayList<FileRecord> getOwnedFiles() {
+	public List<FileRecord> getOwnedFiles() {
 		return ownedFiles;
 	}
 	
-	public TreeMap<String, Boolean> getAvailableFiles() {
+	public  Map<String, Boolean> getAvailableFiles() {
 		return availableFiles;
 	}
 	
@@ -94,7 +97,7 @@ public class Client implements PacketListener, FileReceiver {
 		this.availableFiles = files;
 	}
 	
-	public TreeMap<String, Boolean> getLockRequests() {
+	public  Map<String, Boolean> getLockRequests() {
 		return lockRequests;
 	}
 

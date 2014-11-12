@@ -2,6 +2,8 @@ package be.uantwerpen.ds.system_y.agents;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -25,10 +27,10 @@ public class FileAgent implements Runnable, Serializable {
 
 	@Override
 	public void run() {
-		TreeMap<String, Boolean> clientAvailableFiles = client.getAvailableFiles();
+		Map<String, Boolean> clientAvailableFiles = client.getAvailableFiles();
 		
 		// Add new files to the list
-		ArrayList<FileRecord> ownedFiles = client.getOwnedFiles();
+		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				clientAvailableFiles.put(fileRecord.getFileName(), false);
@@ -36,7 +38,7 @@ public class FileAgent implements Runnable, Serializable {
 			}
 		}
 		
-		TreeMap<String, Boolean> clientLockrequests = client.getLockRequests();
+		Map<String, Boolean> clientLockrequests = client.getLockRequests();
 		for (Entry<String, Boolean> entry : clientLockrequests.entrySet()) {
 			//If the node has a lock request and the file is not locked,
 			//lock the file and start the download. Else do nothing
