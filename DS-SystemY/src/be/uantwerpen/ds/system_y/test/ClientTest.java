@@ -38,7 +38,7 @@ public class ClientTest {
 			} else if (command.equals("join")) {
 				client.connect();
 			} else if (command.equals("nodes")) {
-				System.out.println(client.getNodes());
+				System.out.println(client.debugNodes());
 			} else if (command.equals("ping")) {
 				try {
 					if (cmd[1] == null) {
@@ -50,12 +50,18 @@ public class ClientTest {
 					System.err.println("Failed to send ping: " + e.getMessage());
 				}
 			} else if (command.equals("lookup")) {
-				System.out.println(client.lookupNode(cmd[0]));
+				System.out.println(client.debugLookup(cmd[0]));
+			}else if (command.equals("local")) {
+				System.out.println(client.debugLocalFiles());
+			}else if (command.equals("owned")) {
+				System.out.println(client.debugOwnedFiles());
+			}else if (command.equals("avail")) {
+				System.out.println(client.debugAvailableFiles());
 			} else if (command.equals("send")) {
 				if (cmd[2] == null) {
 					System.err.println("Need 2 arguments to send.");
 				} else { 
-					client.sendFileTest(cmd[1], cmd[2]);
+					client.debugSendFile(cmd[1], cmd[2]);
 				}
 			} else if (command.equals("id")) {
 				System.out.println(client.getName() + " [" + client.getAddress() + "]");
