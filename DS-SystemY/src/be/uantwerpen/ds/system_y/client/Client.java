@@ -431,10 +431,13 @@ public class Client implements PacketListener, FileReceiver {
 				// First let owner of file update file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
 				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, "" + name + " " + fileName);
+			}
+			for (int i = 0; i < ownedFiles.size(); i++) {
+				String fileName = ownedFiles.get(i).getFileName();
 				
-				// Second move all replicated files to previous node
+				// Second move all owned files to previous node
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
+				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				tcp.sendFile(previousNode, file, true);
 			}
 		} catch (IOException e) {
@@ -457,9 +460,11 @@ public class Client implements PacketListener, FileReceiver {
 				// Search for file in owned files list
 				if(ownedFiles.get(i).getFileName()==fileName){
 					FileRecord record = ownedFiles.get(i);
-					// Remove file itself
+					// Remove file from owned files list + file itself
 					if(record.getNodes().isEmpty()){
 						ownedFiles.remove(i);
+						File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
+						file.delete();
 					}
 					// Remove download location of file
 					else{
