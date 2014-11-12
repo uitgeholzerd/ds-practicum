@@ -13,7 +13,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
@@ -21,6 +20,7 @@ import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
+import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client implements PacketListener, FileReceiver {
@@ -312,7 +312,8 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * This method is triggered when a new node join the system The current node checks if the new node should be the owner of any of the current node's owned files
+	 * This method is triggered when a new node join the systemThe current node checks if the new node should be the owner of any of the current node's owned files
+	 * 
 	 */
 	public void recheckOwnedFiles() {
 		InetAddress owner;
@@ -430,7 +431,7 @@ public class Client implements PacketListener, FileReceiver {
 				
 				// First let owner of file update file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
-				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, "" + name + " " + fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, name + " " + fileName);
 				
 				// Second move all replicated files to previous node
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
@@ -438,7 +439,7 @@ public class Client implements PacketListener, FileReceiver {
 				tcp.sendFile(previousNode, file, true);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Connection unavailable");
 			e.printStackTrace();
 		}
 	}
@@ -455,7 +456,7 @@ public class Client implements PacketListener, FileReceiver {
 		try {
 			for(int i=0;i<ownedFiles.size();i++){
 				// Search for file in owned files list
-				if(ownedFiles.get(i).getFileName()==fileName){
+				if(ownedFiles.get(i).getFileName() == fileName){
 					FileRecord record = ownedFiles.get(i);
 					// Remove file itself
 					if(record.getNodes().isEmpty()){
