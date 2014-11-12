@@ -9,6 +9,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
@@ -43,18 +47,18 @@ public class Client implements PacketListener, FileReceiver {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private TreeSet<String> localFiles;
-	private ArrayList<FileRecord> ownedFiles;
+	private Set<String> localFiles;
+	private List<FileRecord> ownedFiles;
 	private TreeMap<String, Boolean> availableFiles;
 	private TreeMap<String, Boolean> lockRequests;
-	private ArrayList<String> receivedPings;
+	private List<String> receivedPings;
 	private Path filedir;
 
 	public Client() {
 		timer = new Timer();
-		ownedFiles = new ArrayList<FileRecord>();
-		receivedPings = new ArrayList<String>();
-		localFiles = new TreeSet<String>();
+		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
+		receivedPings = Collections.synchronizedList(new ArrayList<String>());
+		localFiles = Collections.synchronizedSet(new TreeSet<String>());
 		availableFiles = new TreeMap<String, Boolean>();
 		lockRequests = new TreeMap<String, Boolean>();
 		connect();
@@ -62,7 +66,6 @@ public class Client implements PacketListener, FileReceiver {
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
-
 	}
 
 	public String getName() {
@@ -105,18 +108,18 @@ public class Client implements PacketListener, FileReceiver {
 		this.hash = hash;
 	}
 
-	public ArrayList<FileRecord> getOwnedFiles() {
+	public List<FileRecord> getOwnedFiles() {
 		return ownedFiles;
 	}
-
+	
 	public TreeMap<String, Boolean> getAvailableFiles() {
 		return availableFiles;
 	}
-
-	public void setAvailableFiles(TreeMap<String, Boolean> files) {
+	
+	public void setAvailableFiles(TreeMap<String, Boolean> files){
 		this.availableFiles = files;
 	}
-
+	
 	public TreeMap<String, Boolean> getLockRequests() {
 		return lockRequests;
 	}
@@ -330,12 +333,13 @@ public class Client implements PacketListener, FileReceiver {
 				FileRecord newRecord = new FileRecord(fileName, fileHash);
 				// Check if file exists in records
 				for (FileRecord localRecord : ownedFiles) {
-					if (newRecord == localRecord) {
+					if(newRecord == localRecord){
 						hasTheFile = true;
+						break;
 					}
 				}
 				// If file already exists in records, replicate this file to previous node
-				if (hasTheFile == true) {
+				if(hasTheFile){
 					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(previousNode, file, false);
@@ -480,7 +484,7 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public String lookupNode(String name) {
+	public String debugLookup(String name) {
 		InetAddress result = null;
 		try {
 			result = nameServer.lookupNode(name);
@@ -491,12 +495,12 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public String getNodes() {
+	public String debugNodes() {
 		return "Previous: " + getPreviousNodeHash() + "\nLocal: " + getHash() + "\nNext: " + getNextNodeHash();
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
-	public void sendFileTest(String client, String fileName) {
+	public void debugSendFile(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
 			tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
@@ -505,7 +509,27 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-
+	public String debugAvailableFiles() {
+		String result = "Available files:\n";
+		for (Map.Entry<String, Boolean> entry : getAvailableFiles().entrySet()) {
+			result += entry.getKey() + "=" + entry.getValue() + "\n";
+		}
+		return result;
+	}
+	public String debugLocalFiles() {
+		String result = "Local files:\n";
+		for (String entry : localFiles){
+			result += entry + "\n";
+		}
+		return result;
+	}
+	public String debugOwnedFiles() {
+		String result = "Owned files:\n";
+		for (FileRecord entry : ownedFiles){
+			result += entry.getFileName() + ": " + entry.getNodes().toString() + "\n";
+		}
+		return result;
+	}
 	/**
 	 * This method makes sure the owners of the replicated files update their file records by sending a udp message
 	 */
@@ -549,13 +573,12 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	private void updateOwnedFiles(String disconnectingNode, String fileName) {
 		try {
-			for (int i = 0; i < ownedFiles.size(); i++) {
+			for(FileRecord record : ownedFiles){
 				// Search for file in owned files list
-				if (ownedFiles.get(i).getFileName() == fileName) {
-					FileRecord record = ownedFiles.get(i);
+				if(record.getFileName() == fileName){
 					// Remove file from owned files list + file itself
-					if (record.getNodes().isEmpty()) {
-						ownedFiles.remove(i);
+					if(record.getNodes().isEmpty()){
+						ownedFiles.remove(record);
 						File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 						file.delete();
 					}

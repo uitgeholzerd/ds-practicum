@@ -1,7 +1,7 @@
 package be.uantwerpen.ds.system_y.agents;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -28,7 +28,7 @@ public class FileAgent implements Runnable, Serializable {
 		TreeMap<String, Boolean> clientAvailableFiles = client.getAvailableFiles();
 		
 		// Add new files to the list
-		ArrayList<FileRecord> ownedFiles = client.getOwnedFiles();
+		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				clientAvailableFiles.put(fileRecord.getFileName(), false);
