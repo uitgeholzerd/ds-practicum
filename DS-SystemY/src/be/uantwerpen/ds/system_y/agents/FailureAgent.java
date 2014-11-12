@@ -40,7 +40,7 @@ public class FailureAgent implements Serializable, Runnable {
 	 * @param failureHash 	node who failed
 	 * @param clientHash	node where the agent runs on
 	 */
-	public void FailureAgent(int failureHash, int clientHash){
+	public FailureAgent(int failureHash, int clientHash){
 		this.clientHash = clientHash;
 		this.failureHash = failureHash;
 		
@@ -73,7 +73,6 @@ public class FailureAgent implements Serializable, Runnable {
 								File file = Paths.get(Client.LOCAL_FILE_PATH, fileName).toFile();
 								tcp.sendFile(newOwner, file, true);
 								// Update fileFishe "newOwner" 
-								
 								record.addNode(newOwner);
 								// Change downloadlocation file from "newOwner"
 								
