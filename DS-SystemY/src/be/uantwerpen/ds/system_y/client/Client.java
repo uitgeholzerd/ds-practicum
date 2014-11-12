@@ -52,7 +52,7 @@ public class Client implements PacketListener, FileReceiver {
 		receivedPings = new ArrayList<String>();
 		localFiles = new ArrayList<String>();
 		connect();
-		messageHandler = new MessageHandler(this, udp, hash, nextNodeHash, previousNodeHash);
+		messageHandler = new MessageHandler(this, udp,hash, nextNodeHash, previousNodeHash);
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
@@ -117,6 +117,7 @@ public class Client implements PacketListener, FileReceiver {
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
 				public void run() {
+					System.out.println("Scanning files");
 					scanFiles(LOCAL_FILE_PATH);
 				}
 			}, 4 * 1000, 60 * 1000);
@@ -138,6 +139,7 @@ public class Client implements PacketListener, FileReceiver {
 			if (file.isFile()) {
 				boolean newFile = localFiles.add(file.getName());
 				if (newFile) {
+					System.out.println("File found: " + file.getName());
 					newFileFound(file);
 				}
 			}
@@ -163,7 +165,6 @@ public class Client implements PacketListener, FileReceiver {
 
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
-
 		} catch (IOException e) {
 			System.err.println("Disconnect failed: " + e.getMessage());
 			e.printStackTrace();
@@ -229,6 +230,9 @@ public class Client implements PacketListener, FileReceiver {
 		case PING_ACK:
 			receivedPings.add(message[1]);
 			break;
+		case UPDATE_FILERECORD:
+			updateOwnedFiles(message[1], message[2]);
+			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
 			break;
@@ -258,33 +262,14 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	/**
-	 * Send a file on the local node to the remote node
-	 * 
-	 * @param client destination client
-	 * @param fileName name of the file
-	 */
-	public void sendFile(String client, String fileName) {
-		try {
-			InetAddress host = nameServer.lookupNode(client);
-			File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-			tcp.sendFile(host, file);
-		} catch (RemoteException e) {
-			System.err.println("Unable to contact nameServer");
-			e.printStackTrace();
-		}
-	}
-
 	@Override
-	public void fileReceived(InetAddress sender, String fileName) {
-		InetAddress fileOwner;
+	public void fileReceived(InetAddress sender, String fileName, boolean isOwner) {
 		try {
 			localFiles.add(fileName);
 
 			// If this node is the owner of the file, create a new record for it
 			// and add the sender to the list of nodes where it is available
-			fileOwner = nameServer.getFilelocation(fileName);
-			if (this.getAddress().equals(fileOwner)) {
+			if (isOwner) {
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(sender);
@@ -311,14 +296,14 @@ public class Client implements PacketListener, FileReceiver {
 			// Else send it the owner
 			if (this.getAddress().equals(fileOwner)) {
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-				tcp.sendFile(previousNode, file);
+				tcp.sendFile(previousNode, file, false);
 
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(previousNode);
 				ownedFiles.add(record);
 			} else {
-				tcp.sendFile(fileOwner, file);
+				tcp.sendFile(fileOwner, file, true);
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
@@ -337,8 +322,8 @@ public class Client implements PacketListener, FileReceiver {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
 				if (!this.getAddress().equals(owner)) {
-					File file = Paths.get(OWNED_FILE_PATH + "/" + fileName).toFile();
-					tcp.sendFile(owner, file);
+					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
+					tcp.sendFile(owner, file, true);
 					ownedFiles.remove(record);
 				}
 			} catch (RemoteException e) {
@@ -427,23 +412,61 @@ public class Client implements PacketListener, FileReceiver {
 	public void sendFileTest(String client, String fileName) {
 		try {
 			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, new File(filedir.toFile(), fileName));
+			tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
 	}
 
-	// TODO
-	public void moveFilesToPrev() {
-		String fileName = "";
-
+	/**
+	 * This method makes sure the owners of the replicated files update their file records by sending a message,
+	 * then moves all of its replicated files to the previous node
+	 */
+	private void moveFilesToPrev() {
 		try {
 			for (int i = 0; i < localFiles.size(); i++) {
-				fileName = localFiles.get(i);
+				String fileName = localFiles.get(i);
+				
+				// First let owner of file update file record
+				InetAddress fileOwner = nameServer.getFilelocation(fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, "" + name + " " + fileName);
+				
+				// Second move all replicated files to previous node
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
-				tcp.sendFile(previousNode, file);
+				tcp.sendFile(previousNode, file, true);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 
+	 * This method is triggered when another node shuts down, checks if own list of download locations on
+	 * the file record is empty, either removes file itself or removes address of node that is
+	 * shutting down if list is not empty
+	 * 
+	 * @param otherNode		Address of node that is shutting down
+	 */
+	private void updateOwnedFiles(String disconnectingNode, String fileName){
+		try {
+			for(int i=0;i<ownedFiles.size();i++){
+				// Search for file in owned files list
+				if(ownedFiles.get(i).getFileName()==fileName){
+					FileRecord record = ownedFiles.get(i);
+					// Remove file itself
+					if(record.getNodes().isEmpty()){
+						ownedFiles.remove(i);
+					}
+					// Remove download location of file
+					else{
+						InetAddress dcNode = nameServer.lookupNode(disconnectingNode);
+						record.removeNode(dcNode);
+					}
+				}
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");

@@ -11,5 +11,5 @@ public interface FileReceiver {
 	 * @param fileHash	Hash of the file
 	 * @param fileName	Name of the file
 	 */
-	void fileReceived(InetAddress sender, String fileName);
+	void fileReceived(InetAddress sender, String fileName, boolean isOwner);
 }
