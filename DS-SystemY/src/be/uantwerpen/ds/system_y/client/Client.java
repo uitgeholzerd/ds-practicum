@@ -11,9 +11,10 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
 
-import be.uantwerpen.ds.system_y.FileRecord;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
@@ -21,6 +22,7 @@ import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
+import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client implements PacketListener, FileReceiver {
@@ -41,8 +43,9 @@ public class Client implements PacketListener, FileReceiver {
 	private int hash;
 	private int previousNodeHash;
 	private int nextNodeHash;
-	private ArrayList<String> localFiles;
+	private TreeSet<String> localFiles;
 	private ArrayList<FileRecord> ownedFiles;
+	private TreeMap<String, Boolean> availableFiles;
 	private ArrayList<String> receivedPings;
 	private Path filedir;
 
@@ -50,28 +53,13 @@ public class Client implements PacketListener, FileReceiver {
 		timer = new Timer();
 		ownedFiles = new ArrayList<FileRecord>();
 		receivedPings = new ArrayList<String>();
-		localFiles = new ArrayList<String>();
+		localFiles = new TreeSet<String>();
 		connect();
-		messageHandler = new MessageHandler(this, udp,hash, nextNodeHash, previousNodeHash);
+		messageHandler = new MessageHandler(this, udp);
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
 		
-	}
-
-	private void createDirectory(String dir) {
-		filedir = Paths.get(dir);
-		if (!Files.exists(filedir)) {
-			try {
-				Files.createDirectories(filedir);
-				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
-			} catch (IOException e) {
-				System.err.println("Failed to create directory " + filedir.toAbsolutePath() + ": " + e.getMessage());
-			}
-
-		} else {
-			System.out.println("Storing files in " + filedir.toAbsolutePath());
-		}
 	}
 
 	public String getName() {
@@ -88,6 +76,18 @@ public class Client implements PacketListener, FileReceiver {
 
 	public void setNameServer(INameServer nameServer) {
 		this.nameServer = nameServer;
+	}
+	
+	public ArrayList<FileRecord> getOwnedFiles() {
+		return ownedFiles;
+	}
+	
+	public TreeMap<String, Boolean> getAvailableFiles() {
+		return availableFiles;
+	}
+	
+	public void setAvailableFiles(TreeMap<String, Boolean> files){
+		this.availableFiles = files;
 	}
 
 	/**
@@ -132,7 +132,12 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	public void scanFiles(String path) {
+	/**
+	 * Scan a path for files and compare them to previously found files
+	 * If the file was not found before, execute the newFileFound method
+	 * @param path	Path to scan
+	 */
+	private void scanFiles(String path) {
 		File[] files = Paths.get(path).toFile().listFiles();
 		// If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
@@ -143,6 +148,21 @@ public class Client implements PacketListener, FileReceiver {
 					newFileFound(file);
 				}
 			}
+		}
+	}
+
+	private void createDirectory(String dir) {
+		filedir = Paths.get(dir);
+		if (!Files.exists(filedir)) {
+			try {
+				Files.createDirectories(filedir);
+				System.out.println("Created directory for files: " + filedir.toAbsolutePath());
+			} catch (IOException e) {
+				System.err.println("Failed to create directory " + filedir.toAbsolutePath() + ": " + e.getMessage());
+			}
+
+		} else {
+			System.out.println("Storing files in " + filedir.toAbsolutePath());
 		}
 	}
 
@@ -159,11 +179,11 @@ public class Client implements PacketListener, FileReceiver {
 			warnFileOwner();
 
 			// Make previous node and next node neighbours
-			InetAddress prevNode = nameServer.lookupNodeByHash(previousNodeHash);
-			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(nextNodeHash));
+			InetAddress prevNode = nameServer.lookupNodeByHash(getPreviousNodeHash());
+			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(getNextNodeHash()));
 
-			InetAddress nextNode = nameServer.lookupNodeByHash(nextNodeHash);
-			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(previousNodeHash));
+			InetAddress nextNode = nameServer.lookupNodeByHash(getNextNodeHash());
+			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(getPreviousNodeHash()));
 
 			// Unregister the node on the nameserver
 			nameServer.unregisterNode(getName());
@@ -198,10 +218,10 @@ public class Client implements PacketListener, FileReceiver {
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
 		case DISCOVER:
-			int next = nextNodeHash;
+			int next = getNextNodeHash();
 			messageHandler.processDISCOVER(sender, message);
 			// If the nextNodeHash has changed, check if this new node should be owner of any of the owned files
-			if (next != nextNodeHash) {
+			if (next != getNextNodeHash()) {
 				recheckOwnedFiles();
 			}
 			break;
@@ -212,18 +232,18 @@ public class Client implements PacketListener, FileReceiver {
 
 		case SET_NODES:
 			// Another client received the discover message and provides this client with its neighbours
-			previousNodeHash = Integer.parseInt(message[1]);
-			nextNodeHash = Integer.parseInt(message[2]);
+			setPreviousNodeHash(Integer.parseInt(message[1]));
+			setNextNodeHash(Integer.parseInt(message[2]));
 			break;
 
 		case SET_PREVNODE:
 			// Another client encountered a failed node and provides this client with its new previous node
-			previousNodeHash = Integer.parseInt(message[1]);
+			setPreviousNodeHash(Integer.parseInt(message[1]));
 			break;
 
 		case SET_NEXTNODE:
 			// Another client received the fail message and will provide this client with its next node
-			nextNodeHash = Integer.parseInt(message[1]);
+			setNextNodeHash(Integer.parseInt(message[1]));
 			break;
 
 		case PING:
@@ -315,13 +335,14 @@ public class Client implements PacketListener, FileReceiver {
 			// send it to its previous neighbour and add that neighbour to the list of available nodes
 			// Else send it the owner
 			if (this.getAddress().equals(fileOwner)) {
-				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				InetAddress previousNode = nameServer.lookupNodeByHash(getPreviousNodeHash());
 				tcp.sendFile(previousNode, file, false);
 
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
 				record.addNode(previousNode);
 				ownedFiles.add(record);
+				file.renameTo(new File(OWNED_FILE_PATH + fileName));
 			} else {
 				tcp.sendFile(fileOwner, file, true);
 			}
@@ -332,7 +353,9 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * This method is triggered when a new node join the system The current node checks if the new node should be the owner of any of the current node's owned files
+	 * This method is triggered when a new node join the system
+	 * The current node checks if the new node should be the owner of any of the current node's owned files
+	 * 
 	 */
 	public void recheckOwnedFiles() {
 		InetAddress owner;
@@ -345,6 +368,7 @@ public class Client implements PacketListener, FileReceiver {
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(owner, file, true);
 					ownedFiles.remove(record);
+					file.delete();
 				}
 			} catch (RemoteException e) {
 				System.err.println("Unable to contact nameServer");
@@ -425,7 +449,7 @@ public class Client implements PacketListener, FileReceiver {
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public String getNodes() {
-		return "Previous: " + previousNodeHash + "\nLocal: " + hash + "\nNext: " + nextNodeHash;
+		return "Previous: " + getPreviousNodeHash() + "\nLocal: " + getHash() + "\nNext: " + getNextNodeHash();
 	}
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
@@ -444,11 +468,10 @@ public class Client implements PacketListener, FileReceiver {
 	 */
 	private void warnFileOwner(){
 		try {
-			for (int i = 0; i < localFiles.size(); i++) {
-				String fileName = localFiles.get(i);
-				
+			for (String fileName : localFiles) {
+				// First let owner of file update file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
-				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, "" + name + " " + fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, name + " " + fileName);
 			}
 		} catch (IOException e) {
 			System.err.println("Unable to contact nameServer");
@@ -486,7 +509,7 @@ public class Client implements PacketListener, FileReceiver {
 		try {
 			for(int i=0;i<ownedFiles.size();i++){
 				// Search for file in owned files list
-				if(ownedFiles.get(i).getFileName()==fileName){
+				if(ownedFiles.get(i).getFileName() == fileName){
 					FileRecord record = ownedFiles.get(i);
 					// Remove file from owned files list + file itself
 					if(record.getNodes().isEmpty()){
@@ -505,5 +528,47 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * @return the previousNodeHash
+	 */
+	public int getPreviousNodeHash() {
+		return previousNodeHash;
+	}
+
+	/**
+	 * @param previousNodeHash the previousNodeHash to set
+	 */
+	public void setPreviousNodeHash(int previousNodeHash) {
+		this.previousNodeHash = previousNodeHash;
+	}
+
+	/**
+	 * @return the nextNodeHash
+	 */
+	public int getNextNodeHash() {
+		return nextNodeHash;
+	}
+
+	/**
+	 * @param nextNodeHash the nextNodeHash to set
+	 */
+	public void setNextNodeHash(int nextNodeHash) {
+		this.nextNodeHash = nextNodeHash;
+	}
+
+	/**
+	 * @return the hash
+	 */
+	public int getHash() {
+		return hash;
+	}
+
+	/**
+	 * @param hash the hash to set
+	 */
+	public void setHash(int hash) {
+		this.hash = hash;
 	}
 }
