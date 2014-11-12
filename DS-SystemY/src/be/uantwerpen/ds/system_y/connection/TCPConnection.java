@@ -1,6 +1,5 @@
 package be.uantwerpen.ds.system_y.connection;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -17,7 +16,6 @@ import be.uantwerpen.ds.system_y.client.Client;
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
-	private Thread connectionThread;
 	private FileReceiver client;
 	
 	public TCPConnection(Socket clientSocket, FileReceiver client) {
@@ -25,8 +23,6 @@ public class TCPConnection implements Runnable {
 		this.client = client;
 		try {
 			in = new DataInputStream(clientSocket.getInputStream());
-			connectionThread = new Thread(this);
-			connectionThread.start();
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

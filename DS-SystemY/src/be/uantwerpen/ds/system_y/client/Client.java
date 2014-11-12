@@ -62,7 +62,7 @@ public class Client implements PacketListener, FileReceiver {
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
-		
+
 	}
 
 	public String getName() {
@@ -80,19 +80,43 @@ public class Client implements PacketListener, FileReceiver {
 	public void setNameServer(INameServer nameServer) {
 		this.nameServer = nameServer;
 	}
-	
+
+	public int getPreviousNodeHash() {
+		return previousNodeHash;
+	}
+
+	public void setPreviousNodeHash(int previousNodeHash) {
+		this.previousNodeHash = previousNodeHash;
+	}
+
+	public int getNextNodeHash() {
+		return nextNodeHash;
+	}
+
+	public void setNextNodeHash(int nextNodeHash) {
+		this.nextNodeHash = nextNodeHash;
+	}
+
+	public int getHash() {
+		return hash;
+	}
+
+	public void setHash(int hash) {
+		this.hash = hash;
+	}
+
 	public ArrayList<FileRecord> getOwnedFiles() {
 		return ownedFiles;
 	}
-	
+
 	public TreeMap<String, Boolean> getAvailableFiles() {
 		return availableFiles;
 	}
-	
-	public void setAvailableFiles(TreeMap<String, Boolean> files){
+
+	public void setAvailableFiles(TreeMap<String, Boolean> files) {
 		this.availableFiles = files;
 	}
-	
+
 	public TreeMap<String, Boolean> getLockRequests() {
 		return lockRequests;
 	}
@@ -140,9 +164,9 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * Scan a path for files and compare them to previously found files
-	 * If the file was not found before, execute the newFileFound method
-	 * @param path	Path to scan
+	 * Scan a path for files and compare them to previously found files If the file was not found before, execute the newFileFound method
+	 * 
+	 * @param path Path to scan
 	 */
 	private void scanFiles(String path) {
 		File[] files = Paths.get(path).toFile().listFiles();
@@ -262,6 +286,10 @@ public class Client implements PacketListener, FileReceiver {
 		case UPDATE_FILERECORD:
 			updateOwnedFiles(message[1], message[2]);
 			break;
+		case DOWNLOAD_REQUEST:
+			File file = Paths.get(OWNED_FILE_PATH + message[1]).toFile();
+			tcp.sendFile(sender, file, false);
+			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
 			break;
@@ -302,30 +330,37 @@ public class Client implements PacketListener, FileReceiver {
 				FileRecord newRecord = new FileRecord(fileName, fileHash);
 				// Check if file exists in records
 				for (FileRecord localRecord : ownedFiles) {
-					if(newRecord==localRecord){
-						hasTheFile=true;
+					if (newRecord == localRecord) {
+						hasTheFile = true;
 					}
 				}
 				// If file already exists in records, replicate this file to previous node
-				if(hasTheFile==true){
+				if (hasTheFile == true) {
 					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(previousNode, file, false);
 				}
 				// Else create record and add sender to downloadlocations
-				else{
+				else {
 					newRecord.addNode(sender);
 					ownedFiles.add(newRecord);
 				}
 			}
 			// If node is not the owner, add the file to the replicated files
-			else{
+			else {
 				localFiles.add(fileName);
+			}
+			
+			
+			//If this node requested a lock for the file, request a release
+			if (lockRequests.containsKey(fileName) && (lockRequests.get(fileName) == null)) {
+				lockRequests.put(fileName, false);
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
+		
 	}
 
 	/**
@@ -344,7 +379,7 @@ public class Client implements PacketListener, FileReceiver {
 			if (this.getAddress().equals(fileOwner)) {
 				int fileHash = nameServer.getShortHash(fileName);
 				FileRecord record = new FileRecord(fileName, fileHash);
-				
+
 				if (this.hash != previousNodeHash) {
 					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 					tcp.sendFile(previousNode, file, false);
@@ -363,11 +398,10 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * This method is triggered when a new node join the system
-	 * The current node checks if the new node should be the owner of any of the current node's owned files
+	 * This method is triggered when a new node join the system The current node checks if the new node should be the owner of any of the current node's owned files
 	 * 
 	 */
-	public void recheckOwnedFiles() {
+	private void recheckOwnedFiles() {
 		InetAddress owner;
 		String fileName;
 		for (FileRecord record : ownedFiles) {
@@ -451,7 +485,6 @@ public class Client implements PacketListener, FileReceiver {
 		try {
 			result = nameServer.lookupNode(name);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return result.getHostAddress();
@@ -472,11 +505,11 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * This method makes sure the owners of the replicated files update their file records by sending a udp message
 	 */
-	private void warnFileOwner(){
+	private void warnFileOwner() {
 		try {
 			for (String fileName : localFiles) {
 				// First let owner of file update file record
@@ -496,7 +529,7 @@ public class Client implements PacketListener, FileReceiver {
 		try {
 			for (FileRecord record : ownedFiles) {
 				String fileName = record.getFileName();
-				
+
 				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				tcp.sendFile(previousNode, file, true);
@@ -506,29 +539,28 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * 
-	 * This method is triggered when another node shuts down, checks if own list of download locations on
-	 * the file record is empty, either removes file itself or removes address of node that is
-	 * shutting down if list is not empty
+	 * This method is triggered when another node shuts down, checks if own list of download locations on the file record is empty, either removes file itself or
+	 * removes address of node that is shutting down if list is not empty
 	 * 
-	 * @param otherNode		Address of node that is shutting down
+	 * @param otherNode Address of node that is shutting down
 	 */
-	private void updateOwnedFiles(String disconnectingNode, String fileName){
+	private void updateOwnedFiles(String disconnectingNode, String fileName) {
 		try {
-			for(int i=0;i<ownedFiles.size();i++){
+			for (int i = 0; i < ownedFiles.size(); i++) {
 				// Search for file in owned files list
-				if(ownedFiles.get(i).getFileName() == fileName){
+				if (ownedFiles.get(i).getFileName() == fileName) {
 					FileRecord record = ownedFiles.get(i);
 					// Remove file from owned files list + file itself
-					if(record.getNodes().isEmpty()){
+					if (record.getNodes().isEmpty()) {
 						ownedFiles.remove(i);
 						File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 						file.delete();
 					}
 					// Remove download location of file
-					else{
+					else {
 						InetAddress dcNode = nameServer.lookupNode(disconnectingNode);
 						record.removeNode(dcNode);
 					}
@@ -540,45 +572,17 @@ public class Client implements PacketListener, FileReceiver {
 		}
 	}
 
-	/**
-	 * @return the previousNodeHash
-	 */
-	public int getPreviousNodeHash() {
-		return previousNodeHash;
+	public void requestDownload(String fileName) {
+		lockRequests.put(fileName, true);
 	}
 
-	/**
-	 * @param previousNodeHash the previousNodeHash to set
-	 */
-	public void setPreviousNodeHash(int previousNodeHash) {
-		this.previousNodeHash = previousNodeHash;
-	}
-
-	/**
-	 * @return the nextNodeHash
-	 */
-	public int getNextNodeHash() {
-		return nextNodeHash;
-	}
-
-	/**
-	 * @param nextNodeHash the nextNodeHash to set
-	 */
-	public void setNextNodeHash(int nextNodeHash) {
-		this.nextNodeHash = nextNodeHash;
-	}
-
-	/**
-	 * @return the hash
-	 */
-	public int getHash() {
-		return hash;
-	}
-
-	/**
-	 * @param hash the hash to set
-	 */
-	public void setHash(int hash) {
-		this.hash = hash;
+	public void startDownload(String fileName) {
+		try {
+			InetAddress fileOwner = nameServer.getFilelocation(fileName);
+			udp.sendMessage(fileOwner, UDP_CLIENT_PORT, Protocol.DOWNLOAD_REQUEST, fileName);
+		} catch (IOException e) {
+			System.err.println("Error while requesting file download");
+			e.printStackTrace();
+		}
 	}
 }

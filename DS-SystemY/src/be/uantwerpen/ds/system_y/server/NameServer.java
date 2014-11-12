@@ -189,8 +189,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	@Override
-	public InetAddress getFilelocation(String filename) {
-		int hash = getShortHash(filename);
+	public InetAddress getFilelocation(String fileName) {
+		int hash = getShortHash(fileName);
 		String location = null;
 
 		// If the hash of the file is lower than the hash of the first node, the file can be found on the last node
