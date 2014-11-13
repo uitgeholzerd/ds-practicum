@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.List;
 
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
@@ -26,13 +27,25 @@ public class FailureAgent implements Serializable, Runnable {
 	private int failureHash;
 	private int startupHash;	//Hier wordt de eerste node in opgeslagen waar de agent is op gestart
 	
-	private ArrayList<FileRecord> ownedFiles;
+	private List<FileRecord> ownedFiles;
 	private boolean firstTime = false;
 	private boolean succes;
 	
 	public void setCurrentClient(Client client){
 		this.client = client;
 	}	
+	
+
+	public void checkStartEndAgent(){
+		if(firstTime == false){
+			startupHash = clientHash;
+			firstTime = true;
+		}
+		
+		if (startupHash == clientHash){
+			//Stop agent
+		}
+	}
 	
 	/**
 	 * 
@@ -46,6 +59,8 @@ public class FailureAgent implements Serializable, Runnable {
 		checkStartEndAgent();
 	}
 
+	
+	@Override
 	public void run(){
 		
 		//Lijst bestanden opvragen van "clientHash"
@@ -81,6 +96,7 @@ public class FailureAgent implements Serializable, Runnable {
 						}						
 					}else{
 						//couldn't remove node
+						System.err.println("Unable to remove failNode with hash: "+failureHash);
 					}
 					
 				} catch (RemoteException e) {
@@ -88,10 +104,8 @@ public class FailureAgent implements Serializable, Runnable {
 					e.printStackTrace();
 				}
 				
-			}
-
-			else{
-				
+			} else{
+				// there is no file owend by the "failureHash"
 			}
 		}
 		
@@ -107,16 +121,5 @@ public class FailureAgent implements Serializable, Runnable {
 	
 
 		//Check voor "startupHash"
-	}
-	
-	public void checkStartEndAgent(){
-		if(firstTime == false){
-			startupHash = clientHash;
-			firstTime = true;
-		}
-		
-		if (startupHash == clientHash){
-			//Stop agent
-		}
 	}
 }
