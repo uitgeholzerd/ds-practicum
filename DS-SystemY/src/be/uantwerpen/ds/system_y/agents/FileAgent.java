@@ -36,23 +36,23 @@ public class FileAgent implements Runnable, Serializable {
 			}
 		}
 		
-		//Check for lock/release requests
+		//If the node has a lock request and the file is not locked, lock the file and start the download. 
+		//If the node has a unlock request, release the lock
 		TreeMap<String, Boolean> clientLockrequests = client.getLockRequests();
 		for (Entry<String, Boolean> entry : clientLockrequests.entrySet()) {
-			//If the node has a lock request and the file is not locked,
-			//lock the file and start the download. Else do nothing
-			if (entry.getValue() && !availableFiles.get(entry.getKey())) {
+			if (entry.getValue() == null) {
+				// This if-statement is included to prevent the next ones from failing when the value is null
+			}
+			else if (entry.getValue() && !availableFiles.get(entry.getKey())) {
 				availableFiles.put(entry.getKey(), true);
 				clientLockrequests.put(entry.getKey(), null);
 				client.startDownload(entry.getKey());
 			}
-			//If the node has an unlock request, unlock the file
 			else if (!entry.getValue()) {
 				availableFiles.put(entry.getKey(), false);
 				clientLockrequests.remove(entry);
 			}
 		}
-
 	}
 
 }

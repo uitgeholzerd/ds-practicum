@@ -23,53 +23,65 @@ public class FailureAgent implements Serializable, Runnable {
 	private Client client;
 	private INameServer nameServer;
 	private TCPHandler tcp;
-	private int clientHash;
-	private int failureHash;
-	private int startupHash;	//Hier wordt de eerste node in opgeslagen waar de agent is op gestart
 	
-	private List<FileRecord> ownedFiles;
-	private boolean firstTime = false;
+	InetAddress failedNodeLocation;
+	private int startNodeHash;	
+	
 	private boolean succes;
-	
-	public void setCurrentClient(Client client){
-		this.client = client;
-	}	
-	
-
-	public void checkStartEndAgent(){
-		if(firstTime == false){
-			startupHash = clientHash;
-			firstTime = true;
-		}
-		
-		if (startupHash == clientHash){
-			//Stop agent
-		}
-	}
 	
 	/**
 	 * 
-	 * @param failureHash 	node who failed
-	 * @param clientHash	node where the agent runs on
+	 * @param failureHash 	The node that failed
+	 * @param clientHash	The node on which the agent started
 	 */
-	public FailureAgent(int failureHash, int clientHash){
-		this.clientHash = clientHash;
-		this.failureHash = failureHash;
-		
-		checkStartEndAgent();
+	public FailureAgent(int clientHash, InetAddress failedNodeLocation){
+		this.startNodeHash = clientHash;
+		this.failedNodeLocation = failedNodeLocation;
+	}
+	
+	public void setCurrentClient(Client client) {
+		this.client = client;
+		this.nameServer = client.getNameServer();
+		//TODO TCP van client ophalen
+	}
+	
+	public int getStartNodeHash() {
+		return startNodeHash;
 	}
 
-	
+
 	@Override
-	public void run(){
+	public void run() {
+		try {
+			InetAddress fileLocation;
+			
+			for (FileRecord record : client.getOwnedFiles()){
+				fileLocation = nameServer.getFilelocation(record.getFileName());
+				
+				if (fileLocation.equals(failedNodeLocation)) {
+					//TODO hoe controleren of nieuwe eigenaar al eigenaar is?
+					if (succes) {
+						
+					}
+					
+				}
+			}
+		} catch (RemoteException e) {
+			System.err.println("Error while contacting nameserver");
+			e.printStackTrace();
+		}
 		
-		//Lijst bestanden opvragen van "clientHash"
-		ownedFiles = client.getOwnedFiles();
+	}
+	
+	public void run2(){
+		
+		//Lijst bestanden van client opvragen
+		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		
 		//Controle uitvoeren om te zien of bestand op "failureHash" staat
 		for (FileRecord record : ownedFiles){
 			
-			if (record.getFileHash() == failureHash){
+			if (record.getFileHash() == failedNodeHash){
 				try{
 					//Remove failNode to get new owner
 					String fileName = record.getFileName();
@@ -96,7 +108,7 @@ public class FailureAgent implements Serializable, Runnable {
 						}						
 					}else{
 						//couldn't remove node
-						System.err.println("Unable to remove failNode with hash: "+failureHash);
+						System.err.println("Unable to remove failNode with hash: "+failedNodeHash);
 					}
 					
 				} catch (RemoteException e) {

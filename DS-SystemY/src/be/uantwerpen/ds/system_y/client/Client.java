@@ -126,6 +126,7 @@ public class Client implements PacketListener, FileReceiver {
 
 	/**
 	 * Joins the multicast group, sends a discovery message and starts listening for replies.
+	 * Check the connections with the nameserver after a delay and start the regular scanning for new files
 	 */
 	public void connect() {
 		try {
@@ -208,7 +209,7 @@ public class Client implements PacketListener, FileReceiver {
 	public void disconnect() {
 		try {
 			// Make the previous node the new owner of the files owned by the current node
-			moveFilesToPrev();
+			moveFilesToNode(previousNodeHash);
 			// Warn the owner of the replicated files of the current node to update its file records
 			warnFileOwner();
 
@@ -315,6 +316,7 @@ public class Client implements PacketListener, FileReceiver {
 			udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
 			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
+			//TODO kan zijn dat dit in de FailureAgent moet gebeuren
 			nameServer.unregisterNode(nodeName);
 		} catch (IOException e) {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
@@ -509,6 +511,7 @@ public class Client implements PacketListener, FileReceiver {
 			e.printStackTrace();
 		}
 	}
+	
 	public String debugAvailableFiles() {
 		String result = "Available files:\n";
 		for (Map.Entry<String, Boolean> entry : getAvailableFiles().entrySet()) {
@@ -549,14 +552,14 @@ public class Client implements PacketListener, FileReceiver {
 	/**
 	 * This method moves all of its owned files to the previous node
 	 */
-	private void moveFilesToPrev() {
+	private void moveFilesToNode(int nodeHash) {
 		try {
 			for (FileRecord record : ownedFiles) {
 				String fileName = record.getFileName();
 
-				InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				InetAddress nodeLocation = nameServer.lookupNodeByHash(nodeHash);
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
-				tcp.sendFile(previousNode, file, true);
+				tcp.sendFile(nodeLocation, file, true);
 			}
 		} catch (IOException e) {
 			System.err.println("Moving local files to previous node failed");

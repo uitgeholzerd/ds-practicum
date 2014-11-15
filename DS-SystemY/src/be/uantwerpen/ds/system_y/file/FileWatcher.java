@@ -19,7 +19,6 @@ public class FileWatcher implements Runnable {
 	private WatchService watcher;
 	private Path dir;
 
-	// TODO client meegeven?
 	public FileWatcher(Client client, String path) {
 		this.client = client;
 		dir = Paths.get(path);
