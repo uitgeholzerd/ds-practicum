@@ -24,7 +24,8 @@ public class FailureAgent implements Serializable, Runnable {
 	private INameServer nameServer;
 	private TCPHandler tcp;
 	
-	InetAddress failedNodeLocation;
+	private InetAddress failedNodeLocation;
+	private String failedNode;
 	private int startNodeHash;	
 	
 	private boolean succes;
@@ -37,6 +38,11 @@ public class FailureAgent implements Serializable, Runnable {
 	public FailureAgent(int clientHash, InetAddress failedNodeLocation){
 		this.startNodeHash = clientHash;
 		this.failedNodeLocation = failedNodeLocation;
+	}
+	
+	public FailureAgent(int clientHash, String failedNode){
+		this.startNodeHash = clientHash;
+		this.failedNode = failedNode;
 	}
 	
 	public void setCurrentClient(Client client) {
@@ -54,13 +60,15 @@ public class FailureAgent implements Serializable, Runnable {
 	public void run() {
 		try {
 			InetAddress fileLocation;
+			InetAddress newOwner;
 			
 			for (FileRecord record : client.getOwnedFiles()){
 				fileLocation = nameServer.getFilelocation(record.getFileName());
 				
 				if (fileLocation.equals(failedNodeLocation)) {
+					newOwner = nameServer.lookupNeighbours(failedNode)[0];
 					//TODO hoe controleren of nieuwe eigenaar al eigenaar is?
-					if (succes) {
+					if (true) {
 						
 					}
 					
@@ -72,7 +80,7 @@ public class FailureAgent implements Serializable, Runnable {
 		}
 		
 	}
-	
+	/*
 	public void run2(){
 		
 		//Lijst bestanden van client opvragen
@@ -120,7 +128,8 @@ public class FailureAgent implements Serializable, Runnable {
 				// there is no file owend by the "failureHash"
 			}
 		}
-		
+	}
+*/		
 		/*	1. 	Stuur bestand door naar de nieuwe eigenaar, als de nieuwe eigenaar nog geen		// 
 		//		eigenaar is van het bestand en niet over het bestand beschikt. Update bij de 	//
 		//		nieuwe eigenaar (bestandsfiche) de informatie over waar het bestand 			//
@@ -133,5 +142,4 @@ public class FailureAgent implements Serializable, Runnable {
 	
 
 		//Check voor "startupHash"
-	}
 }

@@ -19,6 +19,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import be.uantwerpen.ds.system_y.agents.FailureAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
@@ -302,7 +303,7 @@ public class Client implements PacketListener, FileReceiver {
 	}
 
 	/**
-	 * Remediates a failed node, updates its neighbours and the server.
+	 * Remediates a failed node, updates its neighbours and the server and starts the FailureAgent
 	 * 
 	 * @param nodeName Name of the failed node
 	 */
@@ -316,8 +317,9 @@ public class Client implements PacketListener, FileReceiver {
 			udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
 			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
-			//TODO kan zijn dat dit in de FailureAgent moet gebeuren
-			nameServer.unregisterNode(nodeName);
+			// Initilizes and starts the FailureAgent
+			InetAddress failedNodeLocation = nameServer.lookupNode(nodeName);
+			FailureAgent failureAgent = new FailureAgent(this.hash, failedNodeLocation);
 		} catch (IOException e) {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 			e.printStackTrace();
