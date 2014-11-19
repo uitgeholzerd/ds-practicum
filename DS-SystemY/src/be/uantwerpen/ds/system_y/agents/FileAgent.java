@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 
-public class FileAgent implements Runnable, Serializable {
+public class FileAgent implements Runnable, Serializable, IAgent {
 
 	private static final long serialVersionUID = -7644508104728738008L;
 
@@ -19,8 +19,9 @@ public class FileAgent implements Runnable, Serializable {
 		availableFiles = new TreeMap<String, Boolean>();
 	}
 
-	public void setCurrentClient(Client client) {
+	public boolean setCurrentClient(Client client) {
 		this.client = client;
+		return true;
 	}
 
 	@Override

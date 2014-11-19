@@ -20,6 +20,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 
 import be.uantwerpen.ds.system_y.agents.FailureAgent;
+import be.uantwerpen.ds.system_y.agents.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
@@ -30,7 +31,7 @@ import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class Client implements PacketListener, FileReceiver {
+public class Client implements PacketListener, FileReceiver, IClient {
 
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
@@ -318,8 +319,7 @@ public class Client implements PacketListener, FileReceiver {
 			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
 			// Initilizes and starts the FailureAgent
-			InetAddress failedNodeLocation = nameServer.lookupNode(nodeName);
-			FailureAgent failureAgent = new FailureAgent(this.hash, failedNodeLocation);
+			FailureAgent failureAgent = new FailureAgent(this.hash, nodeName);
 		} catch (IOException e) {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 			e.printStackTrace();
@@ -612,5 +612,25 @@ public class Client implements PacketListener, FileReceiver {
 			System.err.println("Error while requesting file download");
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	//TODO de code in deze methode moet op zich in een aparte thread uitgevoerd worden + .join kan mogelij kvervangen worden door .sleep
+	public void receiveAgent(IAgent agent) {
+		boolean sendAgent = agent.setCurrentClient(this);
+		Thread agentThread = new Thread(agent);
+		agentThread.start();
+		try {
+			
+			agentThread.join();
+		} catch (InterruptedException e) {
+			System.err.println("Error while waiting for agent thread");
+			e.printStackTrace();
+		}
+		
+		if (sendAgent) {
+			//TODO get next neighbour en call his receiveAgent method
+		}
+		
 	}
 }
