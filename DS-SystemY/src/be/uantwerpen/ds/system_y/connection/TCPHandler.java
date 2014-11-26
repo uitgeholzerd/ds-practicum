@@ -112,13 +112,12 @@ public class TCPHandler implements Runnable{
 		listenThread.interrupt();
 		try {
 			listenSocket.close();
-			sendSocket.close();
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		sendSocket= null;
+
 		listenSocket = null;
 		listenThread = null;
 	}
