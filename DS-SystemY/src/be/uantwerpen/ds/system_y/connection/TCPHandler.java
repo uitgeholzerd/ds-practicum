@@ -38,7 +38,7 @@ public class TCPHandler implements Runnable{
 		Socket connectionSocket;
 		TCPConnection connection;
 		// Handler waits untill a connection is made on de listenSocket, then spawn a new TCPConnection thread that handles the transfer
-		while (true) {
+		while (!listenThread.isInterrupted()) {
 			try {
 				connectionSocket = listenSocket.accept();
 				connection = new TCPConnection(connectionSocket, listener);
@@ -103,5 +103,21 @@ public class TCPHandler implements Runnable{
 			}
 		}
 	}
-
+	/**
+	 * Closes the socket of the client
+	 */
+	public void closeClient() {
+		listenThread.interrupt();
+		try {
+			listenSocket.close();
+			sendSocket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		sendSocket= null;
+		listenSocket = null;
+		listenThread = null;
+	}
 }

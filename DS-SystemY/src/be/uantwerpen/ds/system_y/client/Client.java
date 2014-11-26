@@ -259,9 +259,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			// Close connections
 			udp.closeClient();
 			group.closeClient();
+			tcp.closeClient();
 			System.out.println("Disconnected from network");
 			udp = null;
 			group = null;
+			tcp = null;
 			nameServer = null;
 		}
 	}
