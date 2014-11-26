@@ -673,16 +673,16 @@ public class Client implements PacketListener, FileReceiver, IClient {
 				try {
 					String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
 					
-					
 					boolean sendAgent = agent.setCurrentClient(thisClient);
 
 					Thread agentThread = new Thread(agent);
 					agentThread.start();
 					agentThread.join();
 					
-					System.out.println("This clietn address: " + thisClient.getAddress().getHostAddress());
+					System.out.println("This client address: " + thisClient.getAddress().getHostAddress());
+					//As long as there are no other nodes in the network, don't send the agent
 					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
-						Thread.sleep(30000);
+						Thread.sleep(10000);
 						nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
 						System.out.println("Next client address:" + nextClientAddress);
 					}

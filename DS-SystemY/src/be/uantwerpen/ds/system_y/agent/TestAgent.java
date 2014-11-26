@@ -8,7 +8,7 @@ public class TestAgent implements IAgent {
 
 	@Override
 	public void run() {
-		System.out.println("Aangekomen in client: " + client.getName() + " - " + client.getHash());
+		System.out.println("TestAgent aangekomen in client: " + client.getName() + " - " + client.getHash());
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
