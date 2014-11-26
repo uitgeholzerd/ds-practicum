@@ -67,7 +67,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private Path filedir;
 
 	public Client() throws RemoteException {
-		timer = new Timer();
 		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
 		receivedPings = Collections.synchronizedList(new ArrayList<String>());
 		localFiles = Collections.synchronizedSet(new TreeSet<String>());
@@ -148,7 +147,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			this.name = getAddress().getHostName();
 			messageHandler = new MessageHandler(this, udp, group);
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
-
+			timer = new Timer();
 			// If the namesever isn't set after a certain period, assume the connection has failed
 			timer.schedule(new TimerTask() {
 				@Override
@@ -238,6 +237,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 */
 	public void disconnect() {
 		try {
+			timer.cancel();
 			// Make the previous node the new owner of the files owned by the current node
 			moveFilesToNode(previousNodeHash);
 			// Warn the owner of the replicated files of the current node to update its file records
