@@ -14,6 +14,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,8 +37,9 @@ import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class Client implements PacketListener, FileReceiver, IClient {
+public class Client extends UnicastRemoteObject implements PacketListener, FileReceiver, IClient {
 
+	private static final long serialVersionUID = 5234233628726984521L;
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
 	public static final String LOCAL_FILE_PATH = "files/";
@@ -63,7 +65,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	private List<String> receivedPings;
 	private Path filedir;
 
-	public Client() {
+	public Client() throws RemoteException {
 		timer = new Timer();
 		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
 		receivedPings = Collections.synchronizedList(new ArrayList<String>());
