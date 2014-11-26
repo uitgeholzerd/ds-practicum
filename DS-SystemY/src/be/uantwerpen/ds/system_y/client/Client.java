@@ -25,7 +25,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
-import be.uantwerpen.ds.system_y.agent.FailureAgent;
 import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
@@ -36,7 +35,6 @@ import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
-import be.uantwerpen.ds.system_y.server.NameServer;
 
 public class Client implements PacketListener, FileReceiver, IClient {
 
@@ -704,7 +702,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 			wrapperThread.start();
 		}
 	}
-		public String debugInfo() {
+	public String debugInfo() {
 		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
 	}
 
