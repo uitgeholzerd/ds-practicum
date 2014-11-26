@@ -90,7 +90,7 @@ public class MessageHandler {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
 			client.setPreviousNodeHash(client.getHash());
-			//client.receiveAgent(new TestAgent());
+			client.receiveAgent(new TestAgent());
 		} else { 
 			try {
 				group.sendMessage(Protocol.NODE_JOINED, client.getName() + " " + client.getAddress().getHostAddress());
