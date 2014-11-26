@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.system_y.client.Client;
 
@@ -13,7 +14,12 @@ public class ClientTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		client = new Client();
+		try {
+			client = new Client();
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		// read commands from stdio
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
