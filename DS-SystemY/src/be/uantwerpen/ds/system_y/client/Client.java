@@ -535,6 +535,17 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 		return result;
 	}
+	public String debugFile(String name) {
+		String result = "File record:\n";
+		for (FileRecord entry : ownedFiles){
+			if (entry.getFileName().equalsIgnoreCase(name)){
+				result += "\t Name:" + entry.getFileName() + "\n";
+				result += "\t Hash:" + entry.getFileHash() + "\n";
+				result += "\t Nodes:" + entry.getNodes().toString() + "\n";
+			}
+		}
+		return result;
+	}
 	/**
 	 * This method makes sure the owners of the replicated files update their file records by sending a udp message
 	 */

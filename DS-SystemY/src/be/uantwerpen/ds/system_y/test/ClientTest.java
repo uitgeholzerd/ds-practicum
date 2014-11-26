@@ -50,12 +50,22 @@ public class ClientTest {
 					System.err.println("Failed to send ping: " + e.getMessage());
 				}
 			} else if (command.equals("lookup")) {
-				System.out.println(client.debugLookup(cmd[0]));
-			}else if (command.equals("local")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to lookup.");
+				} else { 
+					System.out.println(client.debugLookup(cmd[1]));
+				}
+			} else if (command.equals("file")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to file.");
+				} else { 
+					System.out.println(client.debugFile(cmd[1]));
+				}
+			} else if (command.equals("local")) {
 				System.out.println(client.debugLocalFiles());
-			}else if (command.equals("owned")) {
+			} else if (command.equals("owned")) {
 				System.out.println(client.debugOwnedFiles());
-			}else if (command.equals("avail")) {
+			} else if (command.equals("avail")) {
 				System.out.println(client.debugAvailableFiles());
 			} else if (command.equals("send")) {
 				if (cmd[2] == null) {
