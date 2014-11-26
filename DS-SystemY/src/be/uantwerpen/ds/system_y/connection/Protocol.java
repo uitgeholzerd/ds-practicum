@@ -6,6 +6,7 @@ package be.uantwerpen.ds.system_y.connection;
 public enum Protocol {
 	DISCOVER,
 	DISCOVER_ACK,
+	NODE_JOINED,
 	SET_NODES,
 	SET_PREVNODE,
 	SET_NEXTNODE,

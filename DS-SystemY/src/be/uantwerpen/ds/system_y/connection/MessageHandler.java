@@ -15,12 +15,13 @@ import be.uantwerpen.ds.system_y.server.NameServer;
 public class MessageHandler {
 	Client client;
 	DatagramHandler udp;
+	MulticastHandler group;
 	
 	
-	public MessageHandler(Client client, DatagramHandler udp){
+	public MessageHandler(Client client, DatagramHandler udp, MulticastHandler group){
 		this.client = client;
 		this.udp = udp;
-
+		this.group = group;
 	}
 	
 	/**
@@ -29,7 +30,7 @@ public class MessageHandler {
 	 * @param sender Host that sent the message
 	 * @param message Message cotaining the data
 	 */
-	public void processDISCOVER(InetAddress sender, String[] message) {
+	public void processNODE_JOINED(InetAddress sender, String[] message) {
 		//
 		
 		if (client.getNameServer() == null) {
@@ -45,6 +46,7 @@ public class MessageHandler {
 				System.out.println("It's between me and the next node!");
 				udp.sendMessage(sender, Client.UDP_CLIENT_PORT, Protocol.SET_NODES, client.getHash() + " " + client.getNextNodeHash());
 				client.setNextNodeHash(newNodeHash);
+				client.recheckOwnedFiles();
 			}
 			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
 					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
@@ -89,6 +91,13 @@ public class MessageHandler {
 			client.setNextNodeHash(client.getHash());
 			client.setPreviousNodeHash(client.getHash());
 			//client.receiveAgent(new TestAgent());
+		} else { 
+			try {
+				group.sendMessage(Protocol.DISCOVER, client.getName() + " " + client.getAddress().getHostAddress());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	

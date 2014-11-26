@@ -34,5 +34,16 @@ public class FileRecord {
 	public ArrayList<InetAddress> getNodes() {
 		return nodes;
 	}
+	
+
+    public boolean equals(Object obj) {
+       if (!(obj instanceof FileRecord))
+            return false;
+        if (obj == this)
+            return true;
+
+        FileRecord rec = (FileRecord) obj;
+        return (this.getFileName().equals(rec.getFileName())&&this.getFileHash() == rec.getFileHash());
+    }
 
 }
