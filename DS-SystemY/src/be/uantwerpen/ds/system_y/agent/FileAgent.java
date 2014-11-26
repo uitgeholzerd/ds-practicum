@@ -1,4 +1,4 @@
-package be.uantwerpen.ds.system_y.agents;
+package be.uantwerpen.ds.system_y.agent;
 
 import java.io.Serializable;
 import java.util.List;
@@ -25,14 +25,12 @@ public class FileAgent implements Runnable, Serializable, IAgent {
 	}
 
 	@Override
-	public void run() {
-		TreeMap<String, Boolean> clientAvailableFiles = client.getAvailableFiles();
-		
+	public void run() {		
 		// Add new files to the list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
-				clientAvailableFiles.put(fileRecord.getFileName(), false);
+				client.getAvailableFiles().put(fileRecord.getFileName(), false);
 				availableFiles.put(fileRecord.getFileName(), false);
 			}
 		}
@@ -54,6 +52,11 @@ public class FileAgent implements Runnable, Serializable, IAgent {
 				clientLockrequests.remove(entry);
 			}
 		}
+	}
+	
+	@Override
+	public void prepareToSend() {
+		this.client = null;
 	}
 
 }

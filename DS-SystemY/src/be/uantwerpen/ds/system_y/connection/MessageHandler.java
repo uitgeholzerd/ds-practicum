@@ -9,6 +9,7 @@ import java.rmi.registry.Registry;
 
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.server.INameServer;
+import be.uantwerpen.ds.system_y.server.NameServer;
 
 public class MessageHandler {
 	Client client;
@@ -65,7 +66,7 @@ public class MessageHandler {
 	public void processDISCOVER_ACK(InetAddress sender, String[] message) {
 		int nodeCount = Integer.parseInt(message[2]);
 		try {
-			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
+			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), NameServer.rmiPort);
 			client.setNameServer((INameServer) registry.lookup(message[1]));
 			InetAddress registeredAddress = client.getNameServer().lookupNode(client.getName());
 			InetAddress localAddress = client.getAddress();
@@ -80,8 +81,8 @@ public class MessageHandler {
 			System.err.println("RMI setup failed: " + e.getMessage());
 			e.printStackTrace();
 		}
-		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		
+		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		if (nodeCount == 1) {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());

@@ -3,11 +3,17 @@ package be.uantwerpen.ds.system_y.client;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.AlreadyBoundException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,8 +25,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
-import be.uantwerpen.ds.system_y.agents.FailureAgent;
-import be.uantwerpen.ds.system_y.agents.IAgent;
+import be.uantwerpen.ds.system_y.agent.FailureAgent;
+import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
@@ -30,6 +36,7 @@ import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
+import be.uantwerpen.ds.system_y.server.NameServer;
 
 public class Client implements PacketListener, FileReceiver, IClient {
 
@@ -37,6 +44,8 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	public static final int TCP_CLIENT_PORT = 4567;
 	public static final String LOCAL_FILE_PATH = "files/";
 	public static final String OWNED_FILE_PATH = "files/owned/";
+	public static final int rmiPort = 1200;
+	private static final String bindLocation = "Client";
 
 	private MulticastHandler group;
 	private DatagramHandler udp;
@@ -125,6 +134,8 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	public TreeMap<String, Boolean> getLockRequests() {
 		return lockRequests;
 	}
+	
+	
 
 	/**
 	 * Joins the multicast group, sends a discovery message and starts listening for replies.
@@ -135,6 +146,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 			// set up UDP socket and receive messages
 			System.out.println("Connecting to network...");
 			udp = new DatagramHandler(UDP_CLIENT_PORT, this);
+			
 			// join multicast group
 			group = new MulticastHandler(this);
 			setName(getAddress().getHostName());
@@ -150,6 +162,10 @@ public class Client implements PacketListener, FileReceiver, IClient {
 				}
 			}, 3 * 1000);
 			tcp = new TCPHandler(TCP_CLIENT_PORT, this);
+			
+			//Bind the client for RMI
+			rmiBind();
+			
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
@@ -166,6 +182,17 @@ public class Client implements PacketListener, FileReceiver, IClient {
 			group = null;
 			nameServer = null;
 			e.printStackTrace();
+		}
+	}
+	
+	private void rmiBind() {
+		try {
+			LocateRegistry.createRegistry(rmiPort);
+			Naming.bind("//" + getAddress().getHostAddress() + "/" + bindLocation, this);
+		} catch (MalformedURLException | AlreadyBoundException e) {
+			System.err.println("java RMI registry already exists.");
+		} catch (RemoteException e) {
+			System.err.println("RemoteException: " + e.getMessage());
 		}
 	}
 
@@ -318,8 +345,9 @@ public class Client implements PacketListener, FileReceiver, IClient {
 			udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
 			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
+			nameServer.unregisterNode(nodeName);
 			// Initilizes and starts the FailureAgent
-			FailureAgent failureAgent = new FailureAgent(this.hash, nodeName);
+			//FailureAgent failureAgent = new FailureAgent(this.hash, nodeName);
 		} catch (IOException e) {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 			e.printStackTrace();
@@ -600,10 +628,20 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 	}
 
+	
+	/**
+	 * Request a download by placing a lock on a file and waiting for the FileAgent to initiate the download
+	 * @param fileName	Name of the file
+	 */
 	public void requestDownload(String fileName) {
 		lockRequests.put(fileName, true);
 	}
 
+	/**
+	 * This method will be called by the FileAgent when the client can download a file
+	 * 
+	 * @param fileName	Name of the file
+	 */
 	public void startDownload(String fileName) {
 		try {
 			InetAddress fileOwner = nameServer.getFilelocation(fileName);
@@ -615,22 +653,49 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	}
 
 	@Override
-	//TODO de code in deze methode moet op zich in een aparte thread uitgevoerd worden + .join kan mogelij kvervangen worden door .sleep
-	public void receiveAgent(IAgent agent) {
-		boolean sendAgent = agent.setCurrentClient(this);
-		Thread agentThread = new Thread(agent);
-		agentThread.start();
+	public void receiveAgent(final IAgent agent) {
+		Runnable run = null;
+		
 		try {
-			
-			agentThread.join();
-		} catch (InterruptedException e) {
-			System.err.println("Error while waiting for agent thread");
-			e.printStackTrace();
+			final Client thisClient = this;
+			final String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+
+			run = new Runnable() {
+				public void run() {
+					try {
+						boolean sendAgent = agent.setCurrentClient(thisClient);
+						
+						Thread agentThread = new Thread(agent);
+						agentThread.start();
+						agentThread.join();
+						
+						if (sendAgent) {
+							agent.prepareToSend();
+							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
+							IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
+							nextClient.receiveAgent(agent);
+						}
+					} catch (InterruptedException e) {
+						System.err.println("Interrupted while waiting for agent thread");
+					} catch (RemoteException e) {
+						System.err.println("Error while locating registry or client");
+						e.printStackTrace();
+					} catch (NotBoundException e) {
+						System.err.println("Error while looking up remote client");
+						e.printStackTrace();
+					}
+
+				}
+			};
+		} catch (RemoteException e1) {
+			System.err.println("Error while looking up next client address");
+			e1.printStackTrace();
 		}
-		
-		if (sendAgent) {
-			//TODO get next neighbour en call his receiveAgent method
+		 
+		if (run != null) {
+			Thread wrapperThread = new Thread(run);
+			wrapperThread.start();
 		}
-		
 	}
+	
 }
