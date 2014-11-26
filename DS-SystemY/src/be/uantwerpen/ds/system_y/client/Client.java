@@ -593,17 +593,21 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * This method moves all of its owned files to the previous node
 	 */
 	private void moveFilesToNode(int nodeHash) {
-		try {
-			for (FileRecord record : ownedFiles) {
-				String fileName = record.getFileName();
-
-				InetAddress nodeLocation = nameServer.lookupNodeByHash(nodeHash);
-				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
-				tcp.sendFile(nodeLocation, file, true);
+		if (nodeHash == getHash()){
+			System.out.println("Not moving files to myself. Am I the last node?");
+		} else {
+			try {
+				for (FileRecord record : ownedFiles) {
+					String fileName = record.getFileName();
+	
+					InetAddress nodeLocation = nameServer.lookupNodeByHash(nodeHash);
+					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
+					tcp.sendFile(nodeLocation, file, true);
+				}
+			} catch (IOException e) {
+				System.err.println("Moving local files to previous node failed");
+				e.printStackTrace();
 			}
-		} catch (IOException e) {
-			System.err.println("Moving local files to previous node failed");
-			e.printStackTrace();
 		}
 	}
 
