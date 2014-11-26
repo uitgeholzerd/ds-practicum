@@ -72,6 +72,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		localFiles = Collections.synchronizedSet(new TreeSet<String>());
 		availableFiles = new TreeMap<String, Boolean>();
 		lockRequests = new TreeMap<String, Boolean>();
+		rmiBind();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
@@ -158,9 +159,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			}, 3 * 1000);
 			tcp = new TCPHandler(TCP_CLIENT_PORT, this);
 			
-			//Bind the client for RMI
-			rmiBind();
-			
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
@@ -185,8 +183,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 */
 	private void rmiBind() {
 		try {
-			LocateRegistry.createRegistry(rmiPort);
-			Naming.bind("//" + getAddress().getHostAddress() + "/" + bindLocation, this);
+			LocateRegistry.createRegistry(Client.rmiPort);
+			Naming.bind("//" + getAddress().getHostAddress() + "/" + Client.bindLocation, this);
+			System.out.println("Host address: " + getAddress().getHostAddress());
+			System.out.println("RMI port: " + rmiPort);
+			System.out.println("Bindlocation: " + bindLocation);
 		} catch (MalformedURLException | AlreadyBoundException e) {
 			System.err.println("java RMI registry already exists.");
 		} catch (RemoteException e) {
