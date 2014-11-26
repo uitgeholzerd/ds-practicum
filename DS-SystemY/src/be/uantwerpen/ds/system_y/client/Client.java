@@ -358,7 +358,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 				FileRecord newRecord = new FileRecord(fileName, fileHash);
 				// Check if file exists in records
 				for (FileRecord localRecord : ownedFiles) {
-					if(newRecord == localRecord){
+					if(newRecord.equals(localRecord)){
 						hasTheFile = true;
 						break;
 					}
