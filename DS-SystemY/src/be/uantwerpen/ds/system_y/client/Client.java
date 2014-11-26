@@ -141,10 +141,10 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			// set up UDP socket and receive messages
 			System.out.println("Connecting to network...");
 			udp = new DatagramHandler(UDP_CLIENT_PORT, this);
-			messageHandler = new MessageHandler(this, udp);
 			// join multicast group
 			group = new MulticastHandler(this);
 			this.name = getAddress().getHostName();
+			messageHandler = new MessageHandler(this, udp, group);
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
 
 			// If the namesever isn't set after a certain period, assume the connection has failed
@@ -283,13 +283,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		String[] message = data.split(" ");
 		Protocol command = Protocol.valueOf(message[0]);
 		switch (command) {
-		case DISCOVER:
-			int next = getNextNodeHash();
-			messageHandler.processDISCOVER(sender, message);
-			// If the nextNodeHash has changed, check if this new node should be owner of any of the owned files
-			if (next != getNextNodeHash()) {
-				recheckOwnedFiles();
-			}
+		case NODE_JOINED:
+			messageHandler.processNODE_JOINED(sender, message);
 			break;
 
 		case DISCOVER_ACK:
@@ -439,7 +434,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * This method is triggered when a new node join the system The current node checks if the new node should be the owner of any of the current node's owned files
 	 * 
 	 */
-	private void recheckOwnedFiles() {
+	public void recheckOwnedFiles() {
 		InetAddress owner;
 		String fileName;
 		for (FileRecord record : ownedFiles) {
