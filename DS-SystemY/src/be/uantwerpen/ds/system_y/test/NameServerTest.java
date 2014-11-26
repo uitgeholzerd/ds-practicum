@@ -80,7 +80,7 @@ public class NameServerTest {
 			if (command == null || command.isEmpty()) {
 				continue;
 			} else if (command.equals("dump")) {
-				System.out.println("Nodes in map:\n" + ns.debugDumpMap());
+				System.out.println(ns.debugDumpMap());
 			} else if (command.equals("clear")) {
 				ns.debugClearMap();
 				System.out.println("Map cleared");
