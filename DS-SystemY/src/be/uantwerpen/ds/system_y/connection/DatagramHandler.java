@@ -18,7 +18,6 @@ public class DatagramHandler implements Runnable {
 	private byte[] buffer;
 	private PacketListener listener;
 	private Thread listenThread;
-	private boolean isRunning;
 
 	/**
 	 * @param port
@@ -33,9 +32,7 @@ public class DatagramHandler implements Runnable {
 			System.err.println("Failed to open UDP socket: " + e.getMessage());
 			throw e;
 		}
-		isRunning = true;
-		listenThread = new Thread(this);
-		listenThread.setName("DatagramHandler");
+		listenThread = new Thread(this, "DatagramHandler");
 		listenThread.start();
 	}
 
@@ -48,12 +45,12 @@ public class DatagramHandler implements Runnable {
 		buffer = new byte[1024];
 		// Listen for UDP datagrams
 		System.out.println("UDP socket listening on port " + socket.getLocalPort());
-		while (isRunning) {
+		while (!listenThread.isInterrupted()) {
 			inPacket = new DatagramPacket(buffer, buffer.length);
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
-				if (isRunning)
+				if (!listenThread.isInterrupted())
 					System.err.println("Failed to receive UDP datagram: " + e.getMessage());
 			}
 			if (inPacket != null && inPacket.getAddress() != null) {
@@ -84,8 +81,13 @@ public class DatagramHandler implements Runnable {
 	 * Closes the socket of the client
 	 */
 	public void closeClient() {
-		isRunning = false;
-		socket.close();
+		listenThread.interrupt();
+		try {
+			socket.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		socket = null;
 		listenThread = null;
 	}
