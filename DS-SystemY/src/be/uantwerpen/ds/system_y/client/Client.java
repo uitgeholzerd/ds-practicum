@@ -83,10 +83,6 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		return name;
 	}
 
-	private void setName(String name) {
-		this.name = name;
-	}
-
 	public INameServer getNameServer() {
 		return nameServer;
 	}
@@ -149,7 +145,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 			
 			// join multicast group
 			group = new MulticastHandler(this);
-			setName(getAddress().getHostName());
+			this.name = getAddress().getHostName();
 			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
 
 			// If the namesever isn't set after a certain period, assume the connection has failed

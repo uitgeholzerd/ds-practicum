@@ -7,6 +7,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import be.uantwerpen.ds.system_y.agent.TestAgent;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.server.INameServer;
 import be.uantwerpen.ds.system_y.server.NameServer;
@@ -87,6 +88,7 @@ public class MessageHandler {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
 			client.setPreviousNodeHash(client.getHash());
+			client.receiveAgent(new TestAgent());
 		}
 	}
 	

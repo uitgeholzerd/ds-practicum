@@ -21,7 +21,7 @@
   </interface>  
   <class id="3" language="java" name="be.uantwerpen.ds.system_y.client.Client" project="DS-SystemY" 
     file="/DS-SystemY/src/be/uantwerpen/ds/system_y/client/Client.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="147" y="383"/>    
+    <position height="-1" width="-1" x="811" y="372"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" accessors="true" 
       visibility="true">      
       <attributes public="true" package="false" protected="false" private="false" static="true"/>      
@@ -59,38 +59,38 @@
   </class>  
   <association id="7">    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="8" name="nameServer"/>      
+      <attribute id="8" name="udp"/>      
       <multiplicity id="9" minimum="0" maximum="1"/>    
     </end>    
-    <end type="TARGET" refId="2" navigable="true"/>    
+    <end type="TARGET" refId="5" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="10">    
-    <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="11" name="group"/>      
+    <end type="SOURCE" refId="1" navigable="false">      
+      <attribute id="11" name="udp"/>      
       <multiplicity id="12" minimum="0" maximum="1"/>    
     </end>    
-    <end type="TARGET" refId="6" navigable="true"/>    
+    <end type="TARGET" refId="5" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="13">    
     <end type="SOURCE" refId="1" navigable="false">      
-      <attribute id="14" name="udp"/>      
+      <attribute id="14" name="group"/>      
       <multiplicity id="15" minimum="0" maximum="1"/>    
     </end>    
-    <end type="TARGET" refId="5" navigable="true"/>    
+    <end type="TARGET" refId="6" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="16">    
     <end type="SOURCE" refId="3" navigable="false">      
-      <attribute id="17" name="udp"/>      
+      <attribute id="17" name="nameServer"/>      
       <multiplicity id="18" minimum="0" maximum="1"/>    
     </end>    
-    <end type="TARGET" refId="5" navigable="true"/>    
+    <end type="TARGET" refId="2" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
   <association id="19">    
-    <end type="SOURCE" refId="1" navigable="false">      
+    <end type="SOURCE" refId="3" navigable="false">      
       <attribute id="20" name="group"/>      
       <multiplicity id="21" minimum="0" maximum="1"/>    
     </end>    
