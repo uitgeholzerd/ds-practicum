@@ -179,6 +179,9 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 	}
 	
+	/**
+	 * Bind this client to the location and port on its address for RMI
+	 */
 	private void rmiBind() {
 		try {
 			LocateRegistry.createRegistry(rmiPort);
@@ -209,6 +212,10 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 	}
 
+	/**
+	 * Creates a directory needed for the program if it does not exist yet
+	 * @param dir	Name of the directory
+	 */
 	private void createDirectory(String dir) {
 		filedir = Paths.get(dir);
 		if (!Files.exists(filedir)) {
@@ -260,8 +267,8 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
-	 * different actions
+	 * This method is triggered when a package is sent to this client (uni- or multicast)
+	 * Depending on the command contained in the message, the client will perform different actions
 	 * 
 	 * @param address IP of the sender
 	 * @param port Data containing the command and a message
@@ -659,49 +666,49 @@ public class Client implements PacketListener, FileReceiver, IClient {
 
 	@Override
 	public void receiveAgent(final IAgent agent) {
-		Runnable run = null;
-		
-		try {
-			final Client thisClient = this;
-			final String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+		final Client thisClient = this;
 
-			run = new Runnable() {
-				public void run() {
-					try {
-						boolean sendAgent = agent.setCurrentClient(thisClient);
-						
-						Thread agentThread = new Thread(agent);
-						agentThread.start();
-						agentThread.join();
-						
-						if (sendAgent) {
-							agent.prepareToSend();
-							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
-							IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
-							nextClient.receiveAgent(agent);
-						}
-					} catch (InterruptedException e) {
-						System.err.println("Interrupted while waiting for agent thread");
-					} catch (RemoteException e) {
-						System.err.println("Error while locating registry or client");
-						e.printStackTrace();
-					} catch (NotBoundException e) {
-						System.err.println("Error while looking up remote client");
-						e.printStackTrace();
+		Runnable run = new Runnable() {
+			public void run() {
+				try {
+					String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+					
+					
+					boolean sendAgent = agent.setCurrentClient(thisClient);
+
+					Thread agentThread = new Thread(agent);
+					agentThread.start();
+					agentThread.join();
+					
+					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
+						Thread.sleep(30000);
+						nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
 					}
 
+					if (sendAgent) {
+						agent.prepareToSend();
+						Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
+						IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
+						nextClient.receiveAgent(agent);
+					}
+				} catch (InterruptedException e) {
+					System.err.println("Interrupted while waiting for agent thread");
+				} catch (RemoteException e) {
+					System.err.println("Error while locating registry or client");
+					e.printStackTrace();
+				} catch (NotBoundException e) {
+					System.err.println("Error while looking up remote client");
+					e.printStackTrace();
 				}
-			};
-		} catch (RemoteException e1) {
-			System.err.println("Error while looking up next client address");
-			e1.printStackTrace();
-		}
-		 
-		if (run != null) {
-			Thread wrapperThread = new Thread(run);
-			wrapperThread.start();
-		}
+
+			}
+		};
+		
+		Thread wrapperThread = new Thread(run);
+		wrapperThread.start();
+		
 	}
+	
 	public String debugInfo() {
 		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
 	}
