@@ -72,6 +72,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		localFiles = Collections.synchronizedSet(new TreeSet<String>());
 		availableFiles = new TreeMap<String, Boolean>();
 		lockRequests = new TreeMap<String, Boolean>();
+		rmiBind();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
@@ -157,9 +158,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				}
 			}, 3 * 1000);
 			tcp = new TCPHandler(TCP_CLIENT_PORT, this);
-			
-			//Bind the client for RMI
-			rmiBind();
 			
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask() {
