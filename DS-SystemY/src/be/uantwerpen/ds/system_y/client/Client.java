@@ -14,6 +14,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,8 +37,9 @@ import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class Client implements PacketListener, FileReceiver, IClient {
+public class Client extends UnicastRemoteObject implements PacketListener, FileReceiver, IClient {
 
+	private static final long serialVersionUID = 5234233628726984521L;
 	public static final int UDP_CLIENT_PORT = 3456;
 	public static final int TCP_CLIENT_PORT = 4567;
 	public static final String LOCAL_FILE_PATH = "files/";
@@ -63,7 +65,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	private List<String> receivedPings;
 	private Path filedir;
 
-	public Client() {
+	public Client() throws RemoteException {
 		timer = new Timer();
 		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
 		receivedPings = Collections.synchronizedList(new ArrayList<String>());
@@ -178,6 +180,9 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 	}
 	
+	/**
+	 * Bind this client to the location and port on its address for RMI
+	 */
 	private void rmiBind() {
 		try {
 			LocateRegistry.createRegistry(rmiPort);
@@ -208,6 +213,10 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 	}
 
+	/**
+	 * Creates a directory needed for the program if it does not exist yet
+	 * @param dir	Name of the directory
+	 */
 	private void createDirectory(String dir) {
 		filedir = Paths.get(dir);
 		if (!Files.exists(filedir)) {
@@ -259,8 +268,8 @@ public class Client implements PacketListener, FileReceiver, IClient {
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
-	 * different actions
+	 * This method is triggered when a package is sent to this client (uni- or multicast)
+	 * Depending on the command contained in the message, the client will perform different actions
 	 * 
 	 * @param address IP of the sender
 	 * @param port Data containing the command and a message
@@ -659,49 +668,51 @@ public class Client implements PacketListener, FileReceiver, IClient {
 
 	@Override
 	public void receiveAgent(final IAgent agent) {
-		Runnable run = null;
-		
-		try {
-			final Client thisClient = this;
-			final String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+		final Client thisClient = this;
 
-			run = new Runnable() {
-				public void run() {
-					try {
-						boolean sendAgent = agent.setCurrentClient(thisClient);
-						
-						Thread agentThread = new Thread(agent);
-						agentThread.start();
-						agentThread.join();
-						
-						if (sendAgent) {
-							agent.prepareToSend();
-							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
-							IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
-							nextClient.receiveAgent(agent);
-						}
-					} catch (InterruptedException e) {
-						System.err.println("Interrupted while waiting for agent thread");
-					} catch (RemoteException e) {
-						System.err.println("Error while locating registry or client");
-						e.printStackTrace();
-					} catch (NotBoundException e) {
-						System.err.println("Error while looking up remote client");
-						e.printStackTrace();
+		Runnable run = new Runnable() {
+			public void run() {
+				try {
+					String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+					
+					boolean sendAgent = agent.setCurrentClient(thisClient);
+
+					Thread agentThread = new Thread(agent);
+					agentThread.start();
+					agentThread.join();
+					
+					System.out.println("This client address: " + thisClient.getAddress().getHostAddress());
+					//As long as there are no other nodes in the network, don't send the agent
+					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
+						Thread.sleep(10000);
+						nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+						System.out.println("Next client address:" + nextClientAddress);
 					}
 
+					if (sendAgent) {
+						agent.prepareToSend();
+						Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
+						IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
+						nextClient.receiveAgent(agent);
+					}
+				} catch (InterruptedException e) {
+					System.err.println("Interrupted while waiting for agent thread");
+				} catch (RemoteException e) {
+					System.err.println("Error while locating registry or client");
+					e.printStackTrace();
+				} catch (NotBoundException e) {
+					System.err.println("Error while looking up remote client");
+					e.printStackTrace();
 				}
-			};
-		} catch (RemoteException e1) {
-			System.err.println("Error while looking up next client address");
-			e1.printStackTrace();
-		}
-		 
-		if (run != null) {
-			Thread wrapperThread = new Thread(run);
-			wrapperThread.start();
-		}
+
+			}
+		};
+		
+		Thread wrapperThread = new Thread(run);
+		wrapperThread.start();
+		
 	}
+	
 	public String debugInfo() {
 		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
 	}

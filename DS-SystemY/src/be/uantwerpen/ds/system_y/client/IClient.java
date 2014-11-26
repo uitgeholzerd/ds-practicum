@@ -1,6 +1,7 @@
 package be.uantwerpen.ds.system_y.client;
 
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.system_y.agent.IAgent;
 
@@ -12,5 +13,5 @@ public interface IClient extends Remote {
 	 * 
 	 * @param agent
 	 */
-	public void receiveAgent(IAgent agent);
+	public void receiveAgent(IAgent agent) throws RemoteException;
 }
