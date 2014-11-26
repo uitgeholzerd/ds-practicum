@@ -44,7 +44,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	public static final int TCP_CLIENT_PORT = 4567;
 	public static final String LOCAL_FILE_PATH = "files/";
 	public static final String OWNED_FILE_PATH = "files/owned/";
-	public static final int rmiPort = 1200;
+	public static final int rmiPort = 1098;
 	private static final String bindLocation = "Client";
 
 	private MulticastHandler group;
@@ -183,18 +183,14 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 */
 	private void rmiBind() {
 		try {
-			System.out.println("Host address: " + getAddress().getHostAddress());
-			System.out.println("RMI port: " + rmiPort);
-			System.out.println("Bindlocation: " + bindLocation);
-			
 			LocateRegistry.createRegistry(Client.rmiPort);
 			System.out.println("Registry located");
+			System.out.println("Bind location: " + "//" + getAddress().getHostAddress() + "/" + Client.bindLocation);
 			Naming.bind("//" + getAddress().getHostAddress() + "/" + Client.bindLocation, this);
 			System.out.println("Client bound");
 		} catch (MalformedURLException | AlreadyBoundException e) {
 			System.err.println("java RMI registry already exists.");
 		} catch (RemoteException e) {
-			System.out.println("Jwz");
 			System.err.println("RemoteException: " + e.getMessage());
 		}
 	}
