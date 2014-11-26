@@ -71,7 +71,6 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		availableFiles = new TreeMap<String, Boolean>();
 		lockRequests = new TreeMap<String, Boolean>();
 		connect();
-		messageHandler = new MessageHandler(this, udp);
 		System.out.println("Client started on " + getAddress().getHostName());
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
@@ -140,7 +139,7 @@ public class Client implements PacketListener, FileReceiver, IClient {
 			// set up UDP socket and receive messages
 			System.out.println("Connecting to network...");
 			udp = new DatagramHandler(UDP_CLIENT_PORT, this);
-			
+			messageHandler = new MessageHandler(this, udp);
 			// join multicast group
 			group = new MulticastHandler(this);
 			this.name = getAddress().getHostName();
