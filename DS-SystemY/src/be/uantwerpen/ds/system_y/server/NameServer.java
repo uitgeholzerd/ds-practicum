@@ -278,7 +278,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 				System.err.println("Failed to respond to client DISCOVER: " + e.getMessage());
 			}
 			break;
-
+		case NODE_JOINED:
+			break;
 		default:
 			System.err.println("Command not found");
 			break;
