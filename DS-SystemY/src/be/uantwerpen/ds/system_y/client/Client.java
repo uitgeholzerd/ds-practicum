@@ -680,9 +680,11 @@ public class Client implements PacketListener, FileReceiver, IClient {
 					agentThread.start();
 					agentThread.join();
 					
+					System.out.println("This clietn address: " + thisClient.getAddress().getHostAddress());
 					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
 						Thread.sleep(30000);
 						nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+						System.out.println("Next client address:" + nextClientAddress);
 					}
 
 					if (sendAgent) {
