@@ -17,6 +17,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -436,16 +437,18 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 */
 	public void recheckOwnedFiles() {
+		System.out.println("Rechecking owned files...");
 		InetAddress owner;
 		String fileName;
-		for (FileRecord record : ownedFiles) {
-			try {
+		for (Iterator<FileRecord> iterator = ownedFiles.iterator(); iterator.hasNext();) {
+			FileRecord record = (FileRecord) iterator.next();
+						try {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
 				if (!this.getAddress().equals(owner)) {
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(owner, file, true);
-					ownedFiles.remove(record);
+					iterator.remove();
 					file.delete();
 				}
 			} catch (RemoteException e) {
@@ -453,6 +456,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				e.printStackTrace();
 			}
 		}
+
 	}
 
 	/**
