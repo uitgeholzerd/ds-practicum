@@ -24,10 +24,12 @@ public class FileAgent implements IAgent {
 	}
 
 	@Override
-	public void run() {		
+	public void run() {	
+		System.out.println("FileAgent started on " + client.getName());
 		// Add new files to the list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
+			System.out.println("FileAgent found file  " + fileRecord.getFileName());
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				client.getAvailableFiles().put(fileRecord.getFileName(), false);
 				availableFiles.put(fileRecord.getFileName(), false);
