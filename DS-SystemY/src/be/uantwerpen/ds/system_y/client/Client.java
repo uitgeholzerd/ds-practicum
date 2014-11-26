@@ -193,6 +193,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		} catch (MalformedURLException | AlreadyBoundException e) {
 			System.err.println("java RMI registry already exists.");
 		} catch (RemoteException e) {
+			System.out.println("Jwz");
 			System.err.println("RemoteException: " + e.getMessage());
 		}
 	}
