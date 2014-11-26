@@ -93,7 +93,7 @@ public class MessageHandler {
 			//client.receiveAgent(new TestAgent());
 		} else { 
 			try {
-				group.sendMessage(Protocol.DISCOVER, client.getName() + " " + client.getAddress().getHostAddress());
+				group.sendMessage(Protocol.NODE_JOINED, client.getName() + " " + client.getAddress().getHostAddress());
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
