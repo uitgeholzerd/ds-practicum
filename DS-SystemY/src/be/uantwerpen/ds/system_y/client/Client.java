@@ -185,8 +185,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 */
 	private void rmiBind() {
 		try {
-			LocateRegistry.createRegistry(rmiPort);
-			Naming.bind("//" + getAddress().getHostAddress() + "/" + bindLocation, this);
+			LocateRegistry.createRegistry(Client.rmiPort);
+			Naming.bind("//" + getAddress().getHostAddress() + "/" + Client.bindLocation, this);
 			System.out.println("Host address: " + getAddress().getHostAddress());
 			System.out.println("RMI port: " + rmiPort);
 			System.out.println("Bindlocation: " + bindLocation);
