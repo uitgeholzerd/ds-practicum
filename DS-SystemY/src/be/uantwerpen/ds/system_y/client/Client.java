@@ -644,4 +644,8 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 		
 	}
+
+	public String debugInfo() {
+		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
+	}
 }
