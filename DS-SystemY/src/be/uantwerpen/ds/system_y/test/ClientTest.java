@@ -61,6 +61,8 @@ public class ClientTest {
 				} else { 
 					System.out.println(client.debugFile(cmd[1]));
 				}
+			} else if (command.equals("info")) {
+				System.out.println(client.debugInfo());
 			} else if (command.equals("local")) {
 				System.out.println(client.debugLocalFiles());
 			} else if (command.equals("owned")) {
