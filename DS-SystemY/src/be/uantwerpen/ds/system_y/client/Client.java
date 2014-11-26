@@ -183,13 +183,14 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 */
 	private void rmiBind() {
 		try {
+			System.out.println("Host address: " + getAddress().getHostAddress());
+			System.out.println("RMI port: " + rmiPort);
+			System.out.println("Bindlocation: " + bindLocation);
+			
 			LocateRegistry.createRegistry(Client.rmiPort);
 			System.out.println("Registry located");
 			Naming.bind("//" + getAddress().getHostAddress() + "/" + Client.bindLocation, this);
 			System.out.println("Client bound");
-			System.out.println("Host address: " + getAddress().getHostAddress());
-			System.out.println("RMI port: " + rmiPort);
-			System.out.println("Bindlocation: " + bindLocation);
 		} catch (MalformedURLException | AlreadyBoundException e) {
 			System.err.println("java RMI registry already exists.");
 		} catch (RemoteException e) {
