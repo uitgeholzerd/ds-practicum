@@ -1,6 +1,5 @@
 package be.uantwerpen.ds.system_y.agent;
 
-import java.io.Serializable;
 import java.net.InetAddress;
 import java.rmi.RemoteException;
 
@@ -9,7 +8,7 @@ import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class FailureAgent implements Serializable, Runnable, IAgent {
+public class FailureAgent implements IAgent {
 
 	/**
 	 * Generated serial ID

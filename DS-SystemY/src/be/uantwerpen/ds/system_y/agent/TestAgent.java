@@ -4,6 +4,7 @@ import be.uantwerpen.ds.system_y.client.Client;
 
 public class TestAgent implements IAgent {
 	
+	private static final long serialVersionUID = 4834357296019854379L;
 	Client client;
 
 	@Override

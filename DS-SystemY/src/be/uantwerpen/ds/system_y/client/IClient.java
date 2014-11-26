@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.system_y.agent.IAgent;
 
-public interface IClient extends Remote {
+public interface IClient extends Remote{
 
 	
 	/**

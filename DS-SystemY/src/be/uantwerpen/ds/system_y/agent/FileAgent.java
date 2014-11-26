@@ -1,6 +1,5 @@
 package be.uantwerpen.ds.system_y.agent;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -8,7 +7,7 @@ import java.util.TreeMap;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 
-public class FileAgent implements Runnable, Serializable, IAgent {
+public class FileAgent implements IAgent {
 
 	private static final long serialVersionUID = -7644508104728738008L;
 
