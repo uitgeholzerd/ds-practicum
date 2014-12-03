@@ -62,7 +62,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private int nextNodeHash;
 	private Set<String> localFiles;
 	private List<FileRecord> ownedFiles;
-	private TreeMap<String, Boolean> availableFiles;
+	private TreeMap<String, Boolean> availableFiles; //TODO moet dit een map zijn??
 	private TreeMap<String, Boolean> lockRequests;
 	private List<String> receivedPings;
 	private Path filedir;
