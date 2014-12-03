@@ -17,9 +17,9 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
@@ -62,7 +62,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private int nextNodeHash;
 	private Set<String> localFiles;
 	private List<FileRecord> ownedFiles;
-	private TreeMap<String, Boolean> availableFiles; //TODO moet dit een map zijn??
+	private HashSet<String> availableFiles;
 	private TreeMap<String, Boolean> lockRequests;
 	private List<String> receivedPings;
 	private Path filedir;
@@ -71,7 +71,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
 		receivedPings = Collections.synchronizedList(new ArrayList<String>());
 		localFiles = Collections.synchronizedSet(new TreeSet<String>());
-		availableFiles = new TreeMap<String, Boolean>();
+		availableFiles = new HashSet<String>();
 		lockRequests = new TreeMap<String, Boolean>();
 		rmiBind();
 		connect();
@@ -120,11 +120,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		return ownedFiles;
 	}
 	
-	public TreeMap<String, Boolean> getAvailableFiles() {
+	public HashSet<String> getAvailableFiles() {
 		return availableFiles;
 	}
 	
-	public void setAvailableFiles(TreeMap<String, Boolean> files){
+	public void setAvailableFiles(HashSet<String> files){
 		this.availableFiles = files;
 	}
 	
@@ -546,8 +546,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	
 	public String debugAvailableFiles() {
 		String result = "Available files:\n";
-		for (Map.Entry<String, Boolean> entry : getAvailableFiles().entrySet()) {
-			result += entry.getKey() + "=" + entry.getValue() + "\n";
+		for (String entry : getAvailableFiles()) {
+			result += entry + "\n";
 		}
 		return result;
 	}

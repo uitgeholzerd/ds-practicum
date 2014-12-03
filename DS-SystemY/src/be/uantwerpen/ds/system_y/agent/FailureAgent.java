@@ -30,10 +30,11 @@ public class FailureAgent implements IAgent {
 	 * @param failureHash The node that failed
 	 * @param clientHash The node on which the agent started
 	 */
-	public FailureAgent(int clientHash, String failedNodeName) {
+	public FailureAgent(int clientHash, String failedNodeName, InetAddress failedNodeLocation) {
 		firstRun = true;
 		this.startNodeHash = clientHash;
 		this.failedNodeName = failedNodeName;
+		this.failedNodeLocation = failedNodeLocation;
 	}
 
 	public boolean setCurrentClient(Client client) {
@@ -51,13 +52,21 @@ public class FailureAgent implements IAgent {
 	@Override
 	public void run() {
 		try {
-			if (failedNodeLocation == null) {
-				failedNodeLocation = nameServer.lookupNode(failedNodeName);
-			}
 			InetAddress fileLocation;
 			InetAddress newOwner;
 			
 			for (FileRecord record : client.getOwnedFiles()) {
+				if (record.getNodes().contains(failedNodeLocation)) {
+					if (record.getNodes().size() == 1) {
+						//TODO zorgen dat bestand ergens anders gerepliceerd wordt
+					}
+					else {
+						record.getNodes().remove(failedNodeLocation);
+					}
+				}
+					
+				
+				
 				fileLocation = nameServer.getFilelocation(record.getFileName());
 
 				if (fileLocation.equals(failedNodeLocation)) {
