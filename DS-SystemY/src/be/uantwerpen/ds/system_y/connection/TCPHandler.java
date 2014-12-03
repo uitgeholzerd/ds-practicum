@@ -50,7 +50,7 @@ public class TCPHandler implements Runnable{
 					}
 			}
 		}
-		
+		System.out.println("UDP socket closed ");
 	}
 	
 	/**

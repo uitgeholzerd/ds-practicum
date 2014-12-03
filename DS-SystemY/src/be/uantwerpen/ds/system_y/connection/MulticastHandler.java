@@ -36,13 +36,13 @@ public class MulticastHandler implements Runnable {
 	public void run() {
 		// Listen for packets
 		System.out.println("Multicast socket listening on port " + socket.getLocalPort());
-		while (isRunning) {
+		while (!listenThread.isInterrupted()) {
 			inBuffer = new byte[1024];
 			inPacket = new DatagramPacket(inBuffer, inBuffer.length);
 			try {
 				socket.receive(inPacket);
 			} catch (IOException e) {
-				if (isRunning)
+				if (!listenThread.isInterrupted())
 					System.err.println("Failed to receive multicast packet: " + e.getMessage());
 			}
 			if (inPacket != null && inPacket.getAddress() != null) {
@@ -76,14 +76,13 @@ public class MulticastHandler implements Runnable {
 	 * Closes the socket of the client
 	 */
 	public void closeClient() {
-		isRunning = false;
+		listenThread.interrupt();
 		try {
 			socket.leaveGroup(InetAddress.getByName(MULTICAST_ADDRESS));
+			socket.close();
 		} catch (IOException e) {
 			System.err.println("Failed to leave multicast group: " + e.getMessage());
 		}
-
-		socket.close();
 		socket = null;
 		listenThread = null;
 
