@@ -75,6 +75,20 @@ public class ClientTest {
 				System.out.println(client.debugOwnedFiles());
 			} else if (command.equals("avail")) {
 				System.out.println(client.debugAvailableFiles());
+			} else if (command.equals("lock")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to file.");
+				} else { 
+					System.out.println(client.debugRequestLock(cmd[1]));
+				}
+			} else if (command.equals("unlock")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to file.");
+				} else { 
+					System.out.println(client.debugRemoveLock(cmd[1]));
+				}
+			} else if (command.equals("locks")) {
+				System.out.println(client.debugLocks());
 			} else if (command.equals("send")) {
 				if (cmd[2] == null) {
 					System.err.println("Need 2 arguments to send.");
