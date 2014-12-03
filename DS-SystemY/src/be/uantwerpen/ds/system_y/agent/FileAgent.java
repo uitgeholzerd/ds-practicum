@@ -1,6 +1,5 @@
 package be.uantwerpen.ds.system_y.agent;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -8,7 +7,7 @@ import java.util.TreeMap;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 
-public class FileAgent implements Runnable, Serializable, IAgent {
+public class FileAgent implements IAgent {
 
 	private static final long serialVersionUID = -7644508104728738008L;
 
@@ -25,10 +24,12 @@ public class FileAgent implements Runnable, Serializable, IAgent {
 	}
 
 	@Override
-	public void run() {		
+	public void run() {	
+		System.out.println("FileAgent started on " + client.getName());
 		// Add new files to the list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
+			System.out.println("FileAgent found file  " + fileRecord.getFileName());
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				client.getAvailableFiles().put(fileRecord.getFileName(), false);
 				availableFiles.put(fileRecord.getFileName(), false);

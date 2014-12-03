@@ -688,14 +688,16 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					agentThread.start();
 					agentThread.join();
 					
-					System.out.println("This client address: " + thisClient.getAddress().getHostAddress());
+					//TODO hoe lang slapen?
+					
 					//As long as there are no other nodes in the network, don't send the agent
 					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
 						Thread.sleep(10000);
 						nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
-						System.out.println("Next client address:" + nextClientAddress);
 					}
 
+					//TODO Hier ook nog slapen om te voorkomen dat agent constant heen en weer wordt gestuurd?
+					Thread.sleep(10000);
 					if (sendAgent) {
 						agent.prepareToSend();
 						Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
