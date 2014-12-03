@@ -27,6 +27,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import be.uantwerpen.ds.system_y.agent.FailureAgent;
 import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
 import be.uantwerpen.ds.system_y.connection.FileReceiver;
@@ -78,7 +79,15 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		createDirectory(LOCAL_FILE_PATH);
 		createDirectory(OWNED_FILE_PATH);
 	}
-
+	public TCPHandler getTCPHandler(){
+		return tcp;
+	}
+	public DatagramHandler getUDPHandler(){
+		return udp;
+	}
+	public Set<String> getLocalFiles(){
+		return localFiles;
+	}
 	public String getName() {
 		return name;
 	}
@@ -318,8 +327,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		case PING_ACK:
 			receivedPings.add(message[1]);
 			break;
-		case UPDATE_FILERECORD:
-			updateOwnedFiles(message[1], message[2]);
+		case FILE_UNAVAILABLE:
+			removeFileCopy(message[1], message[2]);
+			break;
+		case FILE_AVAILABLE:
+			addFileCopy(message[1], message[2]);
 			break;
 		case DOWNLOAD_REQUEST:
 			File file = Paths.get(OWNED_FILE_PATH + message[1]).toFile();
@@ -348,8 +360,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
 			nameServer.unregisterNode(nodeName);
-			// Initilizes and starts the FailureAgent
-			//FailureAgent failureAgent = new FailureAgent(this.hash, nodeName);
+			
+			// Initilize and start the FailureAgent
+			receiveAgent(new FailureAgent(this.hash, nodeName));
 		} catch (IOException e) {
 			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
 			e.printStackTrace();
@@ -588,7 +601,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			for (String fileName : localFiles) {
 				// First let owner of file update file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
-				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.UPDATE_FILERECORD, name + " " + fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_UNAVAILABLE, name + " " + fileName);
 			}
 		} catch (IOException e) {
 			System.err.println("Unable to contact nameServer");
@@ -625,7 +638,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 * @param otherNode Address of node that is shutting down
 	 */
-	private void updateOwnedFiles(String disconnectingNode, String fileName) {
+	private void removeFileCopy(String otherNode, String fileName) {
 		try {
 			for(FileRecord record : ownedFiles){
 				// Search for file in owned files list
@@ -638,7 +651,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					}
 					// Remove download location of file
 					else {
-						InetAddress dcNode = nameServer.lookupNode(disconnectingNode);
+						InetAddress dcNode = nameServer.lookupNode(otherNode);
 						record.removeNode(dcNode);
 					}
 				}
@@ -649,7 +662,21 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		}
 	}
 
-	
+	private void addFileCopy(String otherNode, String fileName){
+		try {
+			for(FileRecord record : ownedFiles){
+				// Search for file in owned files list
+				if(record.getFileName() == fileName){
+
+						InetAddress dcNode = nameServer.lookupNode(otherNode);
+						record.addNode(dcNode);
+				}
+			}
+		} catch (RemoteException e) {
+			System.err.println("Unable to contact nameServer");
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * Request a download by placing a lock on a file and waiting for the FileAgent to initiate the download
 	 * @param fileName	Name of the file
