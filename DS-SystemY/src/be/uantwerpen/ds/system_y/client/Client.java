@@ -734,9 +734,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		return "Placed lock on file: " + filename;
 	}
 	
-	public String debugRemoveLock(String fileName){
-		lockRequests.remove(fileName);
-		return "Removed lock from file: " + fileName;
+	public String debugRequestUnlock(String filename){
+		lockRequests.put(filename, false);
+		return "Removed lock from file: " + filename;
 	}
 
 }

@@ -85,7 +85,7 @@ public class ClientTest {
 				if (cmd[1] == null) {
 					System.err.println("Need 1 argument to file.");
 				} else { 
-					System.out.println(client.debugRemoveLock(cmd[1]));
+					System.out.println(client.debugRequestUnlock(cmd[1]));
 				}
 			} else if (command.equals("locks")) {
 				System.out.println(client.debugLocks());
