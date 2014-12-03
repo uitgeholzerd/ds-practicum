@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -62,7 +63,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private int nextNodeHash;
 	private Set<String> localFiles;
 	private List<FileRecord> ownedFiles;
-	private TreeMap<String, Boolean> availableFiles;
+	private TreeMap<String, Boolean> availableFiles; //TODO moet dit een map zijn??
 	private TreeMap<String, Boolean> lockRequests;
 	private List<String> receivedPings;
 	private Path filedir;
@@ -715,8 +716,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					agentThread.start();
 					agentThread.join();
 					
-					//TODO hoe lang slapen?
-					
 					//As long as there are no other nodes in the network, don't send the agent
 					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
 						Thread.sleep(10000);
@@ -751,6 +750,24 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	
 	public String debugInfo() {
 		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
+	}
+	
+	public String debugLocks(){
+		String result = "Locks: \n";
+		for (Entry<String, Boolean> request : lockRequests.entrySet()) {
+			result += "Filename :" + request.getKey() + " - " + request.getValue() + "\n";
+		}
+		return result;
+	}
+	
+	public String debugRequestLock(String filename){
+		lockRequests.put(filename, true);
+		return "Placed lock on file: " + filename;
+	}
+	
+	public String debugRequestUnlock(String filename){
+		lockRequests.put(filename, false);
+		return "Removed lock from file: " + filename;
 	}
 
 }
