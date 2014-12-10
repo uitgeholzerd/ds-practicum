@@ -89,8 +89,8 @@ public class MessageHandler {
 		if (nodeCount == 1) {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
-			client.setPreviousNodeHash(client.getHash());
-			//client.receiveAgent(new FileAgent());
+			client.setPreviousNodeHash(client.getHash()); 
+			client.receiveAgent(new FileAgent());
 		} else { 
 			try {
 				group.sendMessage(Protocol.NODE_JOINED, client.getName() + " " + client.getAddress().getHostAddress());
