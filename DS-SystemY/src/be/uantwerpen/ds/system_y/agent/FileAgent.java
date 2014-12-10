@@ -18,6 +18,7 @@ public class FileAgent implements IAgent {
 		availableFiles = new TreeMap<String, Boolean>();
 	}
 
+	@Override
 	public boolean setCurrentClient(Client client) {
 		this.client = client;
 		return true;
@@ -37,8 +38,8 @@ public class FileAgent implements IAgent {
 
 		// Update the clients file list
 		for (Entry<String, Boolean> entry : availableFiles.entrySet()) {
-			if (!client.getAvailableFiles().containsKey(entry.getKey())) {
-				client.getAvailableFiles().put(entry.getKey(), false);
+			if (!client.getAvailableFiles().contains(entry.getKey())) {
+				client.getAvailableFiles().add(entry.getKey());
 			}
 		}
 		
@@ -48,17 +49,18 @@ public class FileAgent implements IAgent {
 		for (Entry<String, Boolean> entry : clientLockrequests.entrySet()) {
 			if (entry.getValue() == null || availableFiles.get(entry.getKey()) == null) {
 				// This if-statement is included to prevent the next ones from failing when the value is null
+				// The value of the entry.getValue() is null when the file agent has granted the node a lock on the file
 			}
 			else if (entry.getValue() && !availableFiles.get(entry.getKey())) {
 				availableFiles.put(entry.getKey(), true);
 				clientLockrequests.put(entry.getKey(), null);
-				System.out.println("FileAgent locked file and started download");
-				//client.startDownload(entry.getKey());
+				System.out.println("FileAgent locked file '" + entry.getKey() + "' and started the download on client");
+				client.startDownload(entry.getKey());
 			}
 			else if (!entry.getValue()) {
 				availableFiles.put(entry.getKey(), false);
 				clientLockrequests.remove(entry.getKey());
-				System.out.println("FileAgent unlocked file");
+				System.out.println("FileAgent unlocked file '" + entry.getKey() + "'");
 			}
 		}
 	}

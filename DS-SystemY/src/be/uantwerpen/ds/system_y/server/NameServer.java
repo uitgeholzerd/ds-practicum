@@ -130,8 +130,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
 		boolean success;
-		// TODO like this it will refuse to re-register a node after its IP has
-		// changed
+		// TODO like this it will refuse to re-register a node after its IP has changed
 		if (!nodeMap.containsKey(hash)) {
 			nodeMap.put(hash, address);
 			success = true;
@@ -144,12 +143,12 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return success;
 	}
 
-	public boolean unregisterNode(String name) {
-		int hash = getShortHash(name);
+	@Override
+	public boolean unregisterNode(int nodeHash) {
 		boolean success;
 
-		if (nodeMap.containsKey(hash)) {
-			nodeMap.remove(hash);
+		if (nodeMap.containsKey(nodeHash)) {
+			nodeMap.remove(nodeHash);
 			success = true;
 		} else {
 			success = false;
@@ -164,9 +163,9 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param name The name of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
-	public InetAddress lookupNode(String name) {
+	public InetAddress lookupNodeByName(String name) {
 		int hash = getShortHash(name);
-		return lookupNodeByHash(hash);
+		return lookupNode(hash);
 	}
 
 	/**
@@ -175,7 +174,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param hash The hash of the node
 	 * @return The address of the node, returns an empty string if the node was not found
 	 */
-	public InetAddress lookupNodeByHash(int hash) {
+	public InetAddress lookupNode(int hash) {
 		if (nodeMap.containsKey(hash)) {
 			try {
 				return InetAddress.getByName(nodeMap.get(hash));
@@ -189,17 +188,37 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 
 	@Override
-	public InetAddress getFilelocation(String fileName) {
+	public int reverseLookupNode(String address) throws RemoteException {
+		int hash = -1;
+		
+		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
+			if (entry.getValue().equals(address)) {
+				hash = entry.getKey();
+				break;
+			}
+		}
+		
+		return hash;
+	}
+	
+	/**
+	 * Calculates the location of the file in the given map
+	 * 
+	 * @param fileName
+	 * @param map
+	 * @return
+	 */
+	public InetAddress getFilelocationFromMap(String fileName, SortedMap<Integer, String> map) {
 		int hash = getShortHash(fileName);
 		String location = null;
 
 		// If the hash of the file is lower than the hash of the first node, the file can be found on the last node
-		if (hash < nodeMap.firstKey()) {
-			location = nodeMap.get(nodeMap.lastKey());
+		if (hash < map.firstKey()) {
+			location = map.get(map.lastKey());
 		}
 		// Else iterate over the map until the biggest node hash lower than the file hash is found
 		else {
-			for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
+			for (Map.Entry<Integer, String> entry : map.entrySet()) {
 				if (entry.getKey() < hash) {
 					location = entry.getValue();
 				}
@@ -213,15 +232,37 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 	}
 
+
 	@Override
-	public InetAddress[] lookupNeighbours(String name) {
-		int hash = getShortHash(name);
+	public InetAddress getFilelocation(String fileName) {
+		return getFilelocationFromMap(fileName, nodeMap);
+	}
+	
+	@Override
+	public boolean isFileOwner(int nodeHash, InetAddress nodeLocation, String fileName) throws RemoteException {
+		SortedMap<Integer, String> clonedMap = new TreeMap<Integer, String>();
+		nodeMap.putAll(clonedMap);
+		clonedMap.put(nodeHash, nodeLocation.getHostAddress());
+		
+		InetAddress location = getFilelocationFromMap(fileName, clonedMap);
+		return nodeLocation.equals(location);
+	}
+	
+	
+
+	@Override
+	public InetAddress[] lookupNeighbours(int nodeHash) {
 		String previousNode, nextNode;
 		int index = 0;
+		
+		// If the node was not found, return null
+		if (!nodeMap.containsKey(nodeHash)) {
+			return null;
+		}
 
 		// Interate over the map until the node is found
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
-			if (entry.getKey() == hash) {
+			if (entry.getKey() == nodeHash) {
 				break;
 			}
 			index++;
@@ -289,7 +330,12 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 
 	@Override
 	public int getShortHash(Object o) {
-		return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		if (o == null) {
+			return -1;
+		}
+		else {
+			return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		}
 	}
 
 	@Override
@@ -304,6 +350,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		return address;
 	}
+	
 
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public String debugDumpMap() {
@@ -314,7 +361,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return result;
 	}
 
-	// TODO waarvoor nodig?
+	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public void debugClearMap() {
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>());
 	}

@@ -12,15 +12,14 @@ import java.net.Socket;
 import be.uantwerpen.ds.system_y.client.IClient;
 
 
-
 public class TCPHandler implements Runnable{
 	private int port;
 	private Socket sendSocket;
 	private ServerSocket listenSocket; 
 	private Thread listenThread;
-	private IClient listener;
+	private FileReceiver listener;
 	
-	public TCPHandler(int port, IClient listener) {
+	public TCPHandler(int port, FileReceiver listener) {
 		this.port = port;
 		this.listener = listener;
 		try {
@@ -64,7 +63,7 @@ public class TCPHandler implements Runnable{
 			sendSocket = new Socket(address, port);
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			in = new DataInputStream(sendSocket.getInputStream());
-			out.writeUTF(Protocol.CHECK_OWNER + fileName);
+			out.writeUTF(Protocol.CHECK_OWNER +" "+ fileName);
 			result = in.readBoolean();
 			System.out.printf("Check if %s owns %s: %s%n", address.getHostAddress(), fileName, result);
 			
@@ -96,28 +95,31 @@ public class TCPHandler implements Runnable{
 	 * @param address	Address of the receiver
 	 * @param file	Name of the file
 	 * @param filehash	Hash of the file
+	 * 
+	 * @throws IOException This is throw if the address cannot be reached
 	 */
-	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) {
+	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) throws IOException {
 		System.out.print("Sending file " + file +"... ");
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		
+		sendSocket = new Socket(address, port);
+		
 		try {
-			sendSocket = new Socket(address, port);
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			fis = new FileInputStream(file);
 			byte[] fileByteArray = new byte[1024];
 			
 			
-			out.writeUTF(Protocol.SEND_FILE + file.getName());
-			//out.flush();
+			out.writeUTF(Protocol.SEND_FILE + " " + file.getName());
+			out.flush();
 			
 			out.writeBoolean(receiverIsOwner);
 			
-		//	out.flush();
+			out.flush();
 			
 			int count;
-			// While there are bytes available, write then to the outputstream
+			// While there are bytes available, write them to the outputstream
 			while ((count = fis.read(fileByteArray)) >= 0) {
 				out.write(fileByteArray, 0, count);
 			}
