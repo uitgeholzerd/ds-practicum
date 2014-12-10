@@ -1,23 +1,36 @@
 package be.uantwerpen.ds.system_y.test;
 
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 public class Test {
 	public static void main(String[] args) throws Exception {
-		TreeMap<String, Boolean> lockRequests = new TreeMap<String, Boolean>();
-		lockRequests.put("test", true);
-		lockRequests.put("lol", false);
-		lockRequests.put("a", null);
+		TreeMap<String, String> test = new TreeMap<String, String>();
+		test.put("test", "123");
+		test.put("lol", "roflmao");
+		test.put("a", "z");
 		
-		System.out.println("test found: " + lockRequests.containsKey("test"));
-		System.out.println("test value: " + lockRequests.get("test"));
-		System.out.println("lol found: " + lockRequests.containsKey("lol"));
-		System.out.println("lol value: " + lockRequests.get("lol"));
-		System.out.println("a found: " + lockRequests.containsKey("a"));
-		System.out.println("a value: " + lockRequests.get("a"));
+		System.out.println("Print original");
+		for (Entry<String, String> entry : test.entrySet()) {
+			System.out.println(entry.getKey() + " - " + entry.getValue());
+		}
 		
-		if (lockRequests.get("a") != null && lockRequests.get("a")) {
-			System.out.println("true test");
+		TreeMap<String, String> clone = new TreeMap<String, String>();
+		test.putAll(clone);
+		clone.put("New", "!!!");
+		clone.put("test", "???");
+		clone.remove("a");
+
+		System.out.println("\n*****************************");
+		System.out.println("Print clone");
+		for (Entry<String, String> entry : clone.entrySet()) {
+			System.out.println(entry.getKey() + " - " + entry.getValue());
+		}
+
+		System.out.println("\n*****************************");
+		System.out.println("Print original2");
+		for (Entry<String, String> entry : test.entrySet()) {
+			System.out.println(entry.getKey() + " - " + entry.getValue());
 		}
 	}
 

@@ -7,8 +7,6 @@ import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.connection.Protocol;
-import be.uantwerpen.ds.system_y.connection.TCPHandler;
-import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class FailureAgent implements IAgent {
@@ -20,10 +18,9 @@ public class FailureAgent implements IAgent {
 
 	private Client client;
 	private INameServer nameServer;
-	private TCPHandler tcp;
 
 	private InetAddress failedNodeLocation;
-	private String failedNodeName;
+	private int failedNodeHash;
 	private int startNodeHash;
 
 	private boolean firstRun;
@@ -33,19 +30,20 @@ public class FailureAgent implements IAgent {
 	 * @param failureHash The node that failed
 	 * @param clientHash The node on which the agent started
 	 */
-	public FailureAgent(int clientHash, String failedNodeName) {
+	public FailureAgent(int clientHash, int failedNodeHash, InetAddress failedNodeLocation) {
 		firstRun = true;
 		this.startNodeHash = clientHash;
-		this.failedNodeName = failedNodeName;
+		this.failedNodeHash = failedNodeHash;
+		this.failedNodeLocation = failedNodeLocation;
 	}
 
+	@Override
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
 			return false;
 		} else {
 			this.client = client;
 			this.nameServer = client.getNameServer();
-			//this.tcp = tcp = new TCPHandler(Client.TCP_CLIENT_PORT, this);
 			firstRun = false;
 			return true;
 		}
@@ -54,28 +52,34 @@ public class FailureAgent implements IAgent {
 	@Override
 	public void run() {
 		try {
-			if (failedNodeLocation == null) {
-				failedNodeLocation = nameServer.lookupNode(failedNodeName);
-			}
-			InetAddress fileLocation;
-			InetAddress newOwner;
+			InetAddress newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
+			boolean isOwner;
 			
+			//Remove failed node from available file locations
+			client.removeFileLocation(failedNodeLocation);
+			
+			//If the failed node was owner of any of the local files, send the files to the new owner
 			for (String file : client.getLocalFiles()) {
-				fileLocation = nameServer.getFilelocation(file);
+				isOwner = nameServer.isFileOwner(failedNodeHash, failedNodeLocation, file);
 
-				if (fileLocation.equals(failedNodeLocation)) {
-					newOwner = nameServer.lookupNeighbours(failedNodeName)[0];
+				if (isOwner) {
+					newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
 					// TODO hoe controleren of nieuwe eigenaar al eigenaar is?
 					if (client.getTCPHandler().checkFileOwner(newOwner, file)) {
 						try {
-							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_AVAILABLE, file);
+							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, file);
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
+							System.err.println("Error while sending UDP message");
 							e.printStackTrace();
 						}
 					} else {
-						client.getTCPHandler().sendFile(newOwner, new File(file), true);
-						
+						try {
+							client.getTCPHandler().sendFile(newOwner, new File(file), true);
+						} catch (IOException e) {
+							e.printStackTrace();
+							// Remote node could not be reached and should be removed
+							client.removeFailedNode(nameServer.reverseLookupNode(newOwner.getHostAddress()));
+						}
 					}
 
 				}

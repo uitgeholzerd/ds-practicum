@@ -18,6 +18,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import java.util.UUID;
 import be.uantwerpen.ds.system_y.agent.FailureAgent;
 import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
+import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
@@ -40,7 +42,7 @@ import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class Client extends UnicastRemoteObject implements PacketListener, IClient {
+public class Client extends UnicastRemoteObject implements PacketListener, FileReceiver, IClient {
 
 	private static final long serialVersionUID = 5234233628726984521L;
 	public static final int UDP_CLIENT_PORT = 3456;
@@ -63,32 +65,37 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	private int nextNodeHash;
 	private Set<String> localFiles;
 	private List<FileRecord> ownedFiles;
-	private TreeMap<String, Boolean> availableFiles; //TODO moet dit een map zijn??
+	private HashSet<String> availableFiles;
 	private TreeMap<String, Boolean> lockRequests;
 	private List<String> receivedPings;
 	private Path filedir;
 
 	public Client() throws RemoteException {
-		ownedFiles =  Collections.synchronizedList(new ArrayList<FileRecord>());
+		super();
+		ownedFiles = Collections.synchronizedList(new ArrayList<FileRecord>());
 		receivedPings = Collections.synchronizedList(new ArrayList<String>());
 		localFiles = Collections.synchronizedSet(new TreeSet<String>());
-		availableFiles = new TreeMap<String, Boolean>();
+		availableFiles = new HashSet<String>();
 		lockRequests = new TreeMap<String, Boolean>();
+		createDirectory(LOCAL_FILE_PATH);
+		createDirectory(OWNED_FILE_PATH);
 		rmiBind();
 		connect();
 		System.out.println("Client started on " + getAddress().getHostName());
-		createDirectory(LOCAL_FILE_PATH);
-		createDirectory(OWNED_FILE_PATH);
 	}
-	public TCPHandler getTCPHandler(){
+
+	public TCPHandler getTCPHandler() {
 		return tcp;
 	}
-	public DatagramHandler getUDPHandler(){
+
+	public DatagramHandler getUDPHandler() {
 		return udp;
 	}
-	public Set<String> getLocalFiles(){
+
+	public Set<String> getLocalFiles() {
 		return localFiles;
 	}
+
 	public String getName() {
 		return name;
 	}
@@ -128,24 +135,22 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	public List<FileRecord> getOwnedFiles() {
 		return ownedFiles;
 	}
-	
-	public TreeMap<String, Boolean> getAvailableFiles() {
+
+	public HashSet<String> getAvailableFiles() {
 		return availableFiles;
 	}
-	
-	public void setAvailableFiles(TreeMap<String, Boolean> files){
+
+	public void setAvailableFiles(HashSet<String> files) {
 		this.availableFiles = files;
 	}
-	
+
 	public TreeMap<String, Boolean> getLockRequests() {
 		return lockRequests;
 	}
-	
-	
 
 	/**
-	 * Joins the multicast group, sends a discovery message and starts listening for replies.
-	 * Check the connections with the nameserver after a delay and start the regular scanning for new files
+	 * Joins the multicast group, sends a discovery message and starts listening for replies. Check the connections with the nameserver after a delay and start the
+	 * regular scanning for new files
 	 */
 	public void connect() {
 		try {
@@ -168,7 +173,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 				}
 			}, 3 * 1000);
 			tcp = new TCPHandler(TCP_CLIENT_PORT, this);
-			
+
 			// After 4 seconds, scan for files. Repeat this task every 60 seconds
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
@@ -187,7 +192,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Bind this client to the location and port on its address for RMI
 	 */
@@ -223,7 +228,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 
 	/**
 	 * Creates a directory needed for the program if it does not exist yet
-	 * @param dir	Name of the directory
+	 * 
+	 * @param dir Name of the directory
 	 */
 	private void createDirectory(String dir) {
 		filedir = Paths.get(dir);
@@ -254,23 +260,26 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 			warnFileOwner();
 
 			// Make previous node and next node neighbours
-			InetAddress prevNode = nameServer.lookupNodeByHash(getPreviousNodeHash());
+			InetAddress prevNode = nameServer.lookupNode(getPreviousNodeHash());
 			udp.sendMessage(prevNode, UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, Integer.toString(getNextNodeHash()));
 
-			InetAddress nextNode = nameServer.lookupNodeByHash(getNextNodeHash());
+			InetAddress nextNode = nameServer.lookupNode(getNextNodeHash());
 			udp.sendMessage(nextNode, UDP_CLIENT_PORT, Protocol.SET_PREVNODE, Integer.toString(getPreviousNodeHash()));
 
 			// Unregister the node on the nameserver
-			nameServer.unregisterNode(getName());
+			nameServer.unregisterNode(this.hash);
 		} catch (IOException e) {
 			System.err.println("Disconnect failed: " + e.getMessage());
 			e.printStackTrace();
 		} finally {
 			// Close connections
 			try {
-				if (udp != null) udp.closeClient();
-				if (group != null) group.closeClient();
-				if (tcp != null) tcp.closeClient();
+				if (udp != null)
+					udp.closeClient();
+				if (group != null)
+					group.closeClient();
+				if (tcp != null)
+					tcp.closeClient();
 			} catch (Exception e) {
 				System.out.println("Closing sockets failed: " + e.getMessage());
 			}
@@ -283,8 +292,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	}
 
 	/**
-	 * This method is triggered when a package is sent to this client (uni- or multicast)
-	 * Depending on the command contained in the message, the client will perform different actions
+	 * This method is triggered when a package is sent to this client (uni- or multicast) Depending on the command contained in the message, the client will perform
+	 * different actions
 	 * 
 	 * @param address IP of the sender
 	 * @param port Data containing the command and a message
@@ -325,18 +334,34 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		case PING:
 			messageHandler.processPING(sender, message);
 			break;
+			
 		case PING_ACK:
 			receivedPings.add(message[1]);
 			break;
-		case FILE_UNAVAILABLE:
-			removeFileCopy(message[1], message[2]);
+			
+		case FILE_LOCATION_UNAVAILABLE:
+			removeFileLocation(message[1]);
 			break;
-		case FILE_AVAILABLE:
+			
+		case FILE_LOCATION_AVAILABLE:
 			addFileCopy(message[1], message[2]);
 			break;
+			
 		case DOWNLOAD_REQUEST:
 			File file = Paths.get(OWNED_FILE_PATH + message[1]).toFile();
-			tcp.sendFile(sender, file, false);
+			try {
+				tcp.sendFile(sender, file, false);
+			} catch (IOException e) {
+				e.printStackTrace();
+				
+				try {
+					// Remote node could not be reached and should be removed
+					removeFailedNode(nameServer.reverseLookupNode(sender.getHostAddress()));
+				} catch (RemoteException e1) {
+					System.err.println("Error while contacting nameServer");
+					e1.printStackTrace();
+				}
+			}
 			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
@@ -350,22 +375,26 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	 * 
 	 * @param nodeName Name of the failed node
 	 */
-	private void removeFailedNode(String nodeName) {
+	public void removeFailedNode(int nodeHash) {
 		try {
-			InetAddress[] neighbours = nameServer.lookupNeighbours(nodeName);
-			InetAddress prevNodeAddress = neighbours[0];
-			InetAddress nextNodeAddress = neighbours[1];
+			InetAddress[] neighbours = nameServer.lookupNeighbours(1);
+			if (neighbours != null) {
+				InetAddress prevNodeAddress = neighbours[0];
+				InetAddress nextNodeAddress = neighbours[1];
 
-			// Send the previous node of the failed node to the next node of the failed note and vice versa
-			udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-			udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+				// Send the previous node of the failed node to the next node of the failed note and vice versa
+				udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
+				udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
 
-			nameServer.unregisterNode(nodeName);
-			
-			// Initilize and start the FailureAgent
-			receiveAgent(new FailureAgent(this.hash, nodeName));
+				//Retrieve the location of the failed node, then remove it from the nameserver
+				InetAddress failedNodeLocation = nameServer.lookupNode(nodeHash);
+				nameServer.unregisterNode(nodeHash);
+
+				// Initilize and start the FailureAgent
+				receiveAgent(new FailureAgent(this.hash, nodeHash, failedNodeLocation));
+			}
 		} catch (IOException e) {
-			System.err.println("Failed to remediate failed node " + nodeName + ": " + e.getMessage());
+			System.err.println("Failed to remediate failed node (hash) " + nodeHash + ": " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
@@ -381,16 +410,22 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 				FileRecord newRecord = new FileRecord(fileName, fileHash);
 				// Check if file exists in records
 				for (FileRecord localRecord : ownedFiles) {
-					if(newRecord.equals(localRecord)){
+					if (newRecord.equals(localRecord)) {
 						hasTheFile = true;
 						break;
 					}
 				}
 				// If file already exists in records, replicate this file to previous node
-				if(hasTheFile){
-					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
+				if (hasTheFile) {
+					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
-					tcp.sendFile(previousNode, file, false);
+					try {
+						tcp.sendFile(previousNode, file, false);
+					} catch (IOException e) {
+						// Remote node could not be reached and should be removed
+						removeFailedNode(nameServer.reverseLookupNode(sender.getHostAddress()));
+					}
+					
 				}
 				// Else create record and add sender to downloadlocations
 				else {
@@ -402,9 +437,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 			else {
 				localFiles.add(fileName);
 			}
-			
-			
-			//If this node requested a lock for the file, request a release
+
+			// If this node requested a lock for the file, request a release
 			if (lockRequests.containsKey(fileName) && (lockRequests.get(fileName) == null)) {
 				lockRequests.put(fileName, false);
 			}
@@ -412,7 +446,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	/**
@@ -433,15 +467,27 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 				FileRecord record = new FileRecord(fileName, fileHash);
 
 				if (this.hash != previousNodeHash) {
-					InetAddress previousNode = nameServer.lookupNodeByHash(previousNodeHash);
-					tcp.sendFile(previousNode, file, false);
+					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
+					try {
+						tcp.sendFile(previousNode, file, false);
+					} catch (IOException e) {
+						e.printStackTrace();
+						// Remote node could not be reached and should be removed
+						removeFailedNode(previousNodeHash);
+					}
 					record.addNode(previousNode);
 				}
 
 				ownedFiles.add(record);
 				file.renameTo(new File(OWNED_FILE_PATH + fileName));
 			} else {
-				tcp.sendFile(fileOwner, file, true);
+				try {
+					tcp.sendFile(fileOwner, file, true);
+				} catch (IOException e) {
+					e.printStackTrace();
+					// Remote node could not be reached and should be removed
+					removeFailedNode(nameServer.reverseLookupNode(fileOwner.getHostAddress()));
+				}
 			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
@@ -459,12 +505,17 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		String fileName;
 		for (Iterator<FileRecord> iterator = ownedFiles.iterator(); iterator.hasNext();) {
 			FileRecord record = (FileRecord) iterator.next();
-						try {
+			try {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
 				if (!this.getAddress().equals(owner)) {
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
-					tcp.sendFile(owner, file, true);
+					try {
+						tcp.sendFile(owner, file, true);
+					} catch (IOException e) {
+						e.printStackTrace();
+						removeFailedNode(nameServer.reverseLookupNode(owner.getHostAddress()));
+					}
 					iterator.remove();
 					file.delete();
 				}
@@ -491,13 +542,14 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	public void pingNode(final String nodeName) throws IOException {
 		if (nameServer == null)
 			throw new IOException("Not connected to RMI server");
-		InetAddress host = nameServer.lookupNode(nodeName);
+		InetAddress host = nameServer.lookupNodeByName(nodeName);
 		if (udp == null) {
 			System.err.println("Can't ping if not connected!");
 			return;
 		}
 
 		final String uuid = UUID.randomUUID().toString();
+		final int nodeHash = nameServer.getShortHash(nodeName);
 		udp.sendMessage(host, UDP_CLIENT_PORT, Protocol.PING, uuid);
 		timer.schedule(new TimerTask() {
 			@Override
@@ -506,7 +558,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 					System.out.println("Ping reply from " + nodeName);
 				} else {
 					System.err.println("Ping timeout from " + nodeName);
-					removeFailedNode(nodeName);
+					removeFailedNode(nodeHash);
 				}
 			}
 		}, 3 * 1000);
@@ -544,7 +596,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	public String debugLookup(String name) {
 		InetAddress result = null;
 		try {
-			result = nameServer.lookupNode(name);
+			result = nameServer.lookupNodeByName(name);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -559,39 +611,47 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
 	public void debugSendFile(String client, String fileName) {
 		try {
-			InetAddress host = nameServer.lookupNode(client);
-			tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
+			InetAddress host = nameServer.lookupNodeByName(client);
+			try {
+				tcp.sendFile(host, new File(filedir.toFile(), fileName), true);
+			} catch (IOException e) {
+				e.printStackTrace();
+				removeFailedNode(nameServer.reverseLookupNode(host.getHostAddress()));
+			}
 		} catch (RemoteException e) {
 			System.err.println("Unable to contact nameServer");
 			e.printStackTrace();
 		}
 	}
-	
+
 	public String debugAvailableFiles() {
 		String result = "Available files:\n";
-		for (Map.Entry<String, Boolean> entry : getAvailableFiles().entrySet()) {
-			result += entry.getKey() + "=" + entry.getValue() + "\n";
-		}
-		return result;
-	}
-	public String debugLocalFiles() {
-		String result = "Local files:\n";
-		for (String entry : localFiles){
+		for (String entry : getAvailableFiles()) {
 			result += entry + "\n";
 		}
 		return result;
 	}
+
+	public String debugLocalFiles() {
+		String result = "Local files:\n";
+		for (String entry : localFiles) {
+			result += entry + "\n";
+		}
+		return result;
+	}
+
 	public String debugOwnedFiles() {
 		String result = "Owned files:\n";
-		for (FileRecord entry : ownedFiles){
+		for (FileRecord entry : ownedFiles) {
 			result += entry.getFileName() + ": " + entry.getNodes().toString() + "\n";
 		}
 		return result;
 	}
+
 	public String debugFile(String name) {
 		String result = "";
-		for (FileRecord entry : ownedFiles){
-			if (entry.getFileName().equalsIgnoreCase(name)){
+		for (FileRecord entry : ownedFiles) {
+			if (entry.getFileName().equalsIgnoreCase(name)) {
 				result += "File record:\n";
 				result += " Name:" + entry.getFileName() + "\n";
 				result += " Hash:" + entry.getFileHash() + "\n";
@@ -600,6 +660,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		}
 		return result;
 	}
+
 	/**
 	 * This method makes sure the owners of the replicated files update their file records by sending a udp message
 	 */
@@ -608,7 +669,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 			for (String fileName : localFiles) {
 				// First let owner of file update file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
-				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_UNAVAILABLE, name + " " + fileName);
+				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_UNAVAILABLE, name);
 			}
 		} catch (IOException e) {
 			System.err.println("Unable to contact nameServer");
@@ -620,14 +681,14 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	 * This method moves all of its owned files to the previous node
 	 */
 	private void moveFilesToNode(int nodeHash) {
-		if (nodeHash == getHash()){
+		if (nodeHash == getHash()) {
 			System.out.println("Not moving files to myself. Am I the last node?");
 		} else {
 			try {
 				for (FileRecord record : ownedFiles) {
 					String fileName = record.getFileName();
-	
-					InetAddress nodeLocation = nameServer.lookupNodeByHash(nodeHash);
+
+					InetAddress nodeLocation = nameServer.lookupNode(nodeHash);
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					tcp.sendFile(nodeLocation, file, true);
 				}
@@ -637,30 +698,50 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 			}
 		}
 	}
+	
+	/**
+	 * Removes the given node from the list of available locations of the owned files
+	 * 
+	 * @param dcNode Address of node unavailable node
+	 */
+	public void removeFileLocation(InetAddress dcNode) {
+			for (FileRecord record : ownedFiles) {
+				// Remove download location of file
+				record.removeNode(dcNode);
+
+				// Remove file from owned files list + file itself
+				if (record.getNodes().isEmpty()) {
+					ownedFiles.remove(record);
+					File file = Paths.get(OWNED_FILE_PATH + record.getFileName()).toFile();
+					file.delete();
+				}
+			}
+	}
 
 	/**
-	 * 
-	 * This method is triggered when another node shuts down, checks if own list of download locations on the file record is empty, either removes file itself or
-	 * removes address of node that is shutting down if list is not empty
+	 * Removes the given node from the list of available locations of the owned files
 	 * 
 	 * @param otherNode Address of node that is shutting down
 	 */
-	private void removeFileCopy(String otherNode, String fileName) {
+	public void removeFileLocation(String otherNode) {
 		try {
-			for(FileRecord record : ownedFiles){
+			InetAddress dcNode = nameServer.lookupNodeByName(otherNode);
+			removeFileLocation(dcNode);
+			
+		} catch (RemoteException e) {
+			System.err.println("Unable to contact nameServer");
+			e.printStackTrace();
+		}
+	}
+
+	private void addFileCopy(String otherNode, String fileName) {
+		try {
+			for (FileRecord record : ownedFiles) {
 				// Search for file in owned files list
-				if(record.getFileName() == fileName){
-					// Remove file from owned files list + file itself
-					if(record.getNodes().isEmpty()){
-						ownedFiles.remove(record);
-						File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
-						file.delete();
-					}
-					// Remove download location of file
-					else {
-						InetAddress dcNode = nameServer.lookupNode(otherNode);
-						record.removeNode(dcNode);
-					}
+				if (record.getFileName() == fileName) {
+
+					InetAddress node = nameServer.lookupNodeByName(otherNode);
+					record.addNode(node);
 				}
 			}
 		} catch (RemoteException e) {
@@ -669,24 +750,10 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		}
 	}
 
-	private void addFileCopy(String otherNode, String fileName){
-		try {
-			for(FileRecord record : ownedFiles){
-				// Search for file in owned files list
-				if(record.getFileName() == fileName){
-
-						InetAddress dcNode = nameServer.lookupNode(otherNode);
-						record.addNode(dcNode);
-				}
-			}
-		} catch (RemoteException e) {
-			System.err.println("Unable to contact nameServer");
-			e.printStackTrace();
-		}
-	}
 	/**
 	 * Request a download by placing a lock on a file and waiting for the FileAgent to initiate the download
-	 * @param fileName	Name of the file
+	 * 
+	 * @param fileName Name of the file
 	 */
 	public void requestDownload(String fileName) {
 		lockRequests.put(fileName, true);
@@ -695,7 +762,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 	/**
 	 * This method will be called by the FileAgent when the client can download a file
 	 * 
-	 * @param fileName	Name of the file
+	 * @param fileName Name of the file
 	 */
 	public void startDownload(String fileName) {
 		try {
@@ -714,22 +781,21 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		Runnable run = new Runnable() {
 			public void run() {
 				try {
-					String nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
-					
+					String nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
+					System.out.printf("receiveAgent: next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
 					boolean sendAgent = agent.setCurrentClient(thisClient);
 
 					Thread agentThread = new Thread(agent);
 					agentThread.start();
 					agentThread.join();
-					
-					//As long as there are no other nodes in the network, don't send the agent
+
+					// As long as there are no other nodes in the network, don't send the agent
 					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
 						Thread.sleep(10000);
-						nextClientAddress = nameServer.lookupNodeByHash(nextNodeHash).getHostAddress();
+						nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
 					}
-
-					//TODO Hier ook nog slapen om te voorkomen dat agent constant heen en weer wordt gestuurd?
-					Thread.sleep(10000);
+					
+					Thread.sleep(5000);
 					if (sendAgent) {
 						agent.prepareToSend();
 						Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
@@ -745,33 +811,39 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 					System.err.println("Error while looking up remote client");
 					e.printStackTrace();
 				}
+				//TODO
+				/*
+				 finally {
+				 	this.receiveAgent(new FileAgent());
+				 }
+				 */
 
 			}
 		};
-		
+
 		Thread wrapperThread = new Thread(run);
 		wrapperThread.start();
-		
+
 	}
-	
+
 	public String debugInfo() {
 		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
 	}
-	
-	public String debugLocks(){
+
+	public String debugLocks() {
 		String result = "Locks: \n";
 		for (Entry<String, Boolean> request : lockRequests.entrySet()) {
 			result += "Filename :" + request.getKey() + " - " + request.getValue() + "\n";
 		}
 		return result;
 	}
-	
-	public String debugRequestLock(String filename){
+
+	public String debugRequestLock(String filename) {
 		lockRequests.put(filename, true);
 		return "Placed lock on file: " + filename;
 	}
-	
-	public String debugRequestUnlock(String filename){
+
+	public String debugRequestUnlock(String filename) {
 		lockRequests.put(filename, false);
 		return "Removed lock from file: " + filename;
 	}

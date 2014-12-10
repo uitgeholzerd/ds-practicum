@@ -89,6 +89,6 @@ public class DatagramHandler implements Runnable {
 			e.printStackTrace();
 		}
 		socket = null;
-		listenThread = null;
+		//listenThread = null;
 	}
 }

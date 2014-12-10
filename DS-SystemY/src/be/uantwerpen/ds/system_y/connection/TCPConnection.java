@@ -19,9 +19,9 @@ public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
 	private DataOutputStream out;
-	private IClient client;
+	private FileReceiver client;
 
-	public TCPConnection(Socket clientSocket, IClient client) {
+	public TCPConnection(Socket clientSocket, FileReceiver client) {
 		this.clientSocket = clientSocket;
 		this.client = client;
 		try {
@@ -35,16 +35,16 @@ public class TCPConnection implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("Incoming TCP connection");
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
-
-			String[] command = in.readUTF().split(" ");
-			if (command[0].equals(Protocol.SEND_FILE)) {
-				
-				String fileName = command[1];
+			String[] message = in.readUTF().split(" ");
+			Protocol command = Protocol.valueOf(message[0]);
+			String fileName = message[1];
+			switch (command){
+			case SEND_FILE:
 				boolean owner = in.readBoolean();
-				System.out.print(fileName);
 				System.out.printf("Receiving file %s (owner=%s)%n", fileName, owner);
 				Path file;
 				if (owner) {
@@ -61,12 +61,15 @@ public class TCPConnection implements Runnable {
 				}
 				fos.flush();
 				client.fileReceived(sender, fileName, owner);
-			} else if (command[0].equals(Protocol.CHECK_OWNER)) {
-				String fileName = command[1];
+				break;
+			case CHECK_OWNER:
+				System.out.println("CHECK_OWNER");
 				out.writeBoolean(client.isFileOwner(fileName));
+				break;
+			default:
+				System.out.println("Unknown command: "+ command);
 			}
 
-			// System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -76,6 +79,7 @@ public class TCPConnection implements Runnable {
 					fos.close();
 				}
 				in.close();
+				out.close();
 				clientSocket.close();
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
