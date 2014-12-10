@@ -64,7 +64,7 @@ public class TCPHandler implements Runnable{
 			sendSocket = new Socket(address, port);
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			in = new DataInputStream(sendSocket.getInputStream());
-			out.writeUTF(Protocol.CHECK_OWNER + fileName);
+			out.writeUTF(Protocol.CHECK_OWNER +" "+ fileName);
 			result = in.readBoolean();
 			System.out.printf("Check if %s owns %s: %s%n", address.getHostAddress(), fileName, result);
 			
@@ -109,7 +109,7 @@ public class TCPHandler implements Runnable{
 			byte[] fileByteArray = new byte[1024];
 			
 			
-			out.writeUTF(Protocol.SEND_FILE + file.getName());
+			out.writeUTF(Protocol.SEND_FILE + " " + file.getName());
 			//out.flush();
 			
 			out.writeBoolean(receiverIsOwner);
