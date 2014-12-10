@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.system_y.client.Client;
 
@@ -13,7 +14,12 @@ public class ClientTest {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		client = new Client();
+		try {
+			client = new Client();
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 
 		// read commands from stdio
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -50,13 +56,39 @@ public class ClientTest {
 					System.err.println("Failed to send ping: " + e.getMessage());
 				}
 			} else if (command.equals("lookup")) {
-				System.out.println(client.debugLookup(cmd[0]));
-			}else if (command.equals("local")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to lookup.");
+				} else { 
+					System.out.println(client.debugLookup(cmd[1]));
+				}
+			} else if (command.equals("file")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to file.");
+				} else { 
+					System.out.println(client.debugFile(cmd[1]));
+				}
+			} else if (command.equals("info")) {
+				System.out.println(client.debugInfo());
+			} else if (command.equals("local")) {
 				System.out.println(client.debugLocalFiles());
-			}else if (command.equals("owned")) {
+			} else if (command.equals("owned")) {
 				System.out.println(client.debugOwnedFiles());
-			}else if (command.equals("avail")) {
+			} else if (command.equals("avail")) {
 				System.out.println(client.debugAvailableFiles());
+			} else if (command.equals("lock")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to file.");
+				} else { 
+					System.out.println(client.debugRequestLock(cmd[1]));
+				}
+			} else if (command.equals("unlock")) {
+				if (cmd[1] == null) {
+					System.err.println("Need 1 argument to file.");
+				} else { 
+					System.out.println(client.debugRequestUnlock(cmd[1]));
+				}
+			} else if (command.equals("locks")) {
+				System.out.println(client.debugLocks());
 			} else if (command.equals("send")) {
 				if (cmd[2] == null) {
 					System.err.println("Need 2 arguments to send.");

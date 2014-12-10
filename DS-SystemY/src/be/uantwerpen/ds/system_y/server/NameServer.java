@@ -34,7 +34,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	private static final long serialVersionUID = -1957228712436209754L;
 	private static final String fileLocation = "./names.xml";
 	private static final String bindLocation = "NameServer";
-	private static final int rmiPort = 1099;
+	public static final int rmiPort = 1099;
 	private static final int udpServerPort = 2345;
 
 	private SortedMap<Integer, String> nodeMap;
@@ -278,7 +278,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 				System.err.println("Failed to respond to client DISCOVER: " + e.getMessage());
 			}
 			break;
-
+		case NODE_JOINED:
+			break;
 		default:
 			System.err.println("Command not found");
 			break;

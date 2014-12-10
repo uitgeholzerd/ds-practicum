@@ -2,6 +2,7 @@ package be.uantwerpen.ds.system_y.connection;
 
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -12,55 +13,60 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import be.uantwerpen.ds.system_y.client.Client;
+import be.uantwerpen.ds.system_y.client.IClient;
 
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
-	private FileReceiver client;
-	
-	public TCPConnection(Socket clientSocket, FileReceiver client) {
+	private DataOutputStream out;
+	private IClient client;
+
+	public TCPConnection(Socket clientSocket, IClient client) {
 		this.clientSocket = clientSocket;
 		this.client = client;
 		try {
 			in = new DataInputStream(clientSocket.getInputStream());
-			
+			out = new DataOutputStream(clientSocket.getOutputStream());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
+
 	@Override
 	public void run() {
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
-			System.out.print("Receiving file... ");
-			String fileName =  in.readUTF();
-			System.out.print(fileName);
-			boolean owner = in.readBoolean();
-			System.out.println(" owner=" + owner );
-			Path file;
-			
-			if (owner) {
-				file = Paths.get(Client.OWNED_FILE_PATH + fileName);
-			}
-			else {
-				file = Paths.get(Client.LOCAL_FILE_PATH + fileName);
+
+			String[] command = in.readUTF().split(" ");
+			if (command[0].equals(Protocol.SEND_FILE)) {
+				
+				String fileName = command[1];
+				boolean owner = in.readBoolean();
+				System.out.print(fileName);
+				System.out.printf("Receiving file %s (owner=%s)%n", fileName, owner);
+				Path file;
+				if (owner) {
+					file = Paths.get(Client.OWNED_FILE_PATH + fileName);
+				} else {
+					file = Paths.get(Client.LOCAL_FILE_PATH + fileName);
+				}
+				OpenOption[] options = { StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE };
+				fos = new BufferedOutputStream(Files.newOutputStream(file, options));
+				byte[] buffer = new byte[1024];
+				int count;
+				while ((count = in.read(buffer)) >= 0) {
+					fos.write(buffer, 0, count);
+				}
+				fos.flush();
+				client.fileReceived(sender, fileName, owner);
+			} else if (command[0].equals(Protocol.CHECK_OWNER)) {
+				String fileName = command[1];
+				out.writeBoolean(client.isFileOwner(fileName));
 			}
 
-			OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
-			fos = new BufferedOutputStream(Files.newOutputStream(file, options));
-			byte[] buffer = new byte[1024];
-			System.out.println("reading data... ");
-			int count;
-			while ((count = in.read(buffer)) >= 0 ){
-				fos.write(buffer, 0, count);
-			}
-			fos.flush();
-			System.out.println("FIle written...");
-			client.fileReceived(sender, fileName, owner);
-			System.out.println("Received file " + fileName);
+			// System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -76,7 +82,7 @@ public class TCPConnection implements Runnable {
 				e1.printStackTrace();
 			}
 		}
-		
+
 	}
 
 }

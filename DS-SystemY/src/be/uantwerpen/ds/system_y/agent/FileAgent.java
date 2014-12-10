@@ -1,6 +1,5 @@
-package be.uantwerpen.ds.system_y.agents;
+package be.uantwerpen.ds.system_y.agent;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -8,7 +7,7 @@ import java.util.TreeMap;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 
-public class FileAgent implements Runnable, Serializable, IAgent {
+public class FileAgent implements IAgent {
 
 	private static final long serialVersionUID = -7644508104728738008L;
 
@@ -25,15 +24,21 @@ public class FileAgent implements Runnable, Serializable, IAgent {
 	}
 
 	@Override
-	public void run() {
-		TreeMap<String, Boolean> clientAvailableFiles = client.getAvailableFiles();
-		
-		// Add new files to the list
+	public void run() {	
+		System.out.println("FileAgent started on " + client.getName());
+		// Add new files to the file agents list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
-				clientAvailableFiles.put(fileRecord.getFileName(), false);
+				System.out.println("FileAgent found new file  " + fileRecord.getFileName());
 				availableFiles.put(fileRecord.getFileName(), false);
+			}
+		}
+
+		// Update the clients file list
+		for (Entry<String, Boolean> entry : availableFiles.entrySet()) {
+			if (!client.getAvailableFiles().containsKey(entry.getKey())) {
+				client.getAvailableFiles().put(entry.getKey(), false);
 			}
 		}
 		
@@ -41,19 +46,26 @@ public class FileAgent implements Runnable, Serializable, IAgent {
 		//If the node has a unlock request, release the lock
 		TreeMap<String, Boolean> clientLockrequests = client.getLockRequests();
 		for (Entry<String, Boolean> entry : clientLockrequests.entrySet()) {
-			if (entry.getValue() == null) {
+			if (entry.getValue() == null || availableFiles.get(entry.getKey()) == null) {
 				// This if-statement is included to prevent the next ones from failing when the value is null
 			}
 			else if (entry.getValue() && !availableFiles.get(entry.getKey())) {
 				availableFiles.put(entry.getKey(), true);
 				clientLockrequests.put(entry.getKey(), null);
-				client.startDownload(entry.getKey());
+				System.out.println("FileAgent locked file and started download");
+				//client.startDownload(entry.getKey());
 			}
 			else if (!entry.getValue()) {
 				availableFiles.put(entry.getKey(), false);
-				clientLockrequests.remove(entry);
+				clientLockrequests.remove(entry.getKey());
+				System.out.println("FileAgent unlocked file");
 			}
 		}
+	}
+	
+	@Override
+	public void prepareToSend() {
+		this.client = null;
 	}
 
 }

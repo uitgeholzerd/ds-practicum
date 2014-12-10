@@ -7,18 +7,21 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
+import be.uantwerpen.ds.system_y.agent.FileAgent;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.server.INameServer;
+import be.uantwerpen.ds.system_y.server.NameServer;
 
 public class MessageHandler {
 	Client client;
 	DatagramHandler udp;
+	MulticastHandler group;
 	
 	
-	public MessageHandler(Client client, DatagramHandler udp){
+	public MessageHandler(Client client, DatagramHandler udp, MulticastHandler group){
 		this.client = client;
 		this.udp = udp;
-
+		this.group = group;
 	}
 	
 	/**
@@ -27,7 +30,7 @@ public class MessageHandler {
 	 * @param sender Host that sent the message
 	 * @param message Message cotaining the data
 	 */
-	public void processDISCOVER(InetAddress sender, String[] message) {
+	public void processNODE_JOINED(InetAddress sender, String[] message) {
 		//
 		
 		if (client.getNameServer() == null) {
@@ -43,6 +46,7 @@ public class MessageHandler {
 				System.out.println("It's between me and the next node!");
 				udp.sendMessage(sender, Client.UDP_CLIENT_PORT, Protocol.SET_NODES, client.getHash() + " " + client.getNextNodeHash());
 				client.setNextNodeHash(newNodeHash);
+				client.recheckOwnedFiles();
 			}
 			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
 					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
@@ -65,7 +69,7 @@ public class MessageHandler {
 	public void processDISCOVER_ACK(InetAddress sender, String[] message) {
 		int nodeCount = Integer.parseInt(message[2]);
 		try {
-			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), 1099);
+			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), NameServer.rmiPort);
 			client.setNameServer((INameServer) registry.lookup(message[1]));
 			InetAddress registeredAddress = client.getNameServer().lookupNode(client.getName());
 			InetAddress localAddress = client.getAddress();
@@ -80,12 +84,20 @@ public class MessageHandler {
 			System.err.println("RMI setup failed: " + e.getMessage());
 			e.printStackTrace();
 		}
-		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		
+		// If this is the only client in the system, it is its own neighbours. Else wait for answer from neighbour (= do nothing)
 		if (nodeCount == 1) {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
 			client.setPreviousNodeHash(client.getHash());
+			client.receiveAgent(new FileAgent());
+		} else { 
+			try {
+				group.sendMessage(Protocol.NODE_JOINED, client.getName() + " " + client.getAddress().getHostAddress());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 	

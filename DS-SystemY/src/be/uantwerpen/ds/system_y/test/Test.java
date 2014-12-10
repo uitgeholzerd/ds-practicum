@@ -14,7 +14,7 @@ public class Test {
 		System.out.println("lol found: " + lockRequests.containsKey("lol"));
 		System.out.println("lol value: " + lockRequests.get("lol"));
 		System.out.println("a found: " + lockRequests.containsKey("a"));
-		System.out.println("lol value: " + lockRequests.get("a"));
+		System.out.println("a value: " + lockRequests.get("a"));
 		
 		if (lockRequests.get("a") != null && lockRequests.get("a")) {
 			System.out.println("true test");
