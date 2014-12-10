@@ -63,7 +63,7 @@ public class FailureAgent implements IAgent {
 				isOwner = nameServer.isFileOwner(failedNodeHash, failedNodeLocation, file);
 
 				if (isOwner) {
-					newOwner = nameServer.lookupNeighbours(failedNodeName)[0];
+					newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
 					// TODO hoe controleren of nieuwe eigenaar al eigenaar is?
 					if (client.getTCPHandler().checkFileOwner(newOwner, file)) {
 						try {
@@ -73,8 +73,13 @@ public class FailureAgent implements IAgent {
 							e.printStackTrace();
 						}
 					} else {
-						client.getTCPHandler().sendFile(newOwner, new File(file), true);
-						
+						try {
+							client.getTCPHandler().sendFile(newOwner, new File(file), true);
+						} catch (IOException e) {
+							e.printStackTrace();
+							// Remote node could not be reached and should be removed
+							client.removeFailedNode(nameServer.reverseLookupNode(newOwner.getHostAddress()));
+						}
 					}
 
 				}

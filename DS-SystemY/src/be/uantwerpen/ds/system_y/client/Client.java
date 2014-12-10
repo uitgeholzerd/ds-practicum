@@ -374,7 +374,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 * @param nodeName Name of the failed node
 	 */
-	private void removeFailedNode(int nodeHash) {
+	public void removeFailedNode(int nodeHash) {
 		try {
 			InetAddress[] neighbours = nameServer.lookupNeighbours(1);
 			if (neighbours != null) {
