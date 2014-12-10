@@ -26,7 +26,7 @@ public class View {
         //buttons
         logOutBtn = new JButton("Log out");
         openBtn = new JButton("Open file");
-        deleteBtn = new JButton("Delete file");
+        deleteBtn = new JButton("Delete network file");
         deleteLocalBtn = new JButton("Delete local file");
         
         //list
@@ -80,8 +80,8 @@ public class View {
     public void setListModel(DefaultListModel<String> newmodel, int index){
     	this.listmodel = newmodel;
     	list.setModel(listmodel);
-    	//list.setSelectedIndex(index-1);
-    	//list.ensureIndexIsVisible(index);
+    	list.setSelectedIndex(index);
+    	list.ensureIndexIsVisible(index);
     }
     
     public JList<String> getList(){

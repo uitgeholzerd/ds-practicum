@@ -53,7 +53,7 @@ public class FileAgent implements IAgent {
 				availableFiles.put(entry.getKey(), true);
 				clientLockrequests.put(entry.getKey(), null);
 				System.out.println("FileAgent locked file and started download");
-				//client.startDownload(entry.getKey());
+				client.startDownload(entry.getKey());
 			}
 			else if (!entry.getValue()) {
 				availableFiles.put(entry.getKey(), false);

@@ -1,5 +1,6 @@
 package be.uantwerpen.ds.system_y.client;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -752,7 +753,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		wrapperThread.start();
 		
 	}
-}
 	
 	public String debugInfo() {
 		return "Name: " + this.getName() + " Hash: " + this.getHash() + " IP: " + this.getAddress().getHostAddress();
@@ -794,9 +794,14 @@ public class Client extends UnicastRemoteObject implements PacketListener, IClie
 		return false;
 	}
 	
-	public void openDownloadedFile(String fileName){
+	public String openFile(String fileName){
 		File file = new File(LOCAL_FILE_PATH + fileName);
-		//TODO open file
+		try {
+			Desktop.getDesktop().open(file);
+			return null;
+		} catch (Exception e) {
+			return "Failed to open file. " + e.getMessage();
+		}
 	}
 
 }

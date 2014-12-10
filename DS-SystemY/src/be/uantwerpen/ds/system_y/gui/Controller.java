@@ -48,26 +48,27 @@ public class Controller {
     	};
     	deleteOwnedFileAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                deleteOwnedFile();
+                deleteLocalFile();
             }
     	};
     	listSL = new ListSelectionListener() {
     		@Override
 			public void valueChanged(ListSelectionEvent e) {
+    			JList<String> list = (JList<String>)e.getSource();
+    		    int selected = list.getSelectedIndex();
+    		    String sel = list.getSelectedValue();
     			if (e.getValueIsAdjusting() == false) {
     	            if (view.getList().getSelectedIndex() == -1) {
     	            	//System.out.println("No selection");
     	            	
     	            } else {
     	            	//System.out.println("Selected");
-    	            	//TODO haal files uit DB + update lijst
-    	            	JList<String> list = (JList<String>)e.getSource();
-    	    		    int selected = list.getSelectedIndex();
-    	    		    String sel = list.getSelectedValue();
+    	            	
     	            	view.setListModel(model.getList(), selected);
     	            	selectedFile = sel;
     	            	view.setLabel(selectedFile);
-    	            	view.setDeleteLocalButton(model.isOwnedFile(selectedFile));
+    	            	//view.setDeleteLocalButton(model.isOwnedFile(selectedFile));
+    	            	checkButtonVisibility();
     	            }
     	        }
 			}
@@ -86,7 +87,10 @@ public class Controller {
     	if(!model.isAvailable(selectedFile)){
     		view.popUp("File is locked. Try again.");
     	} else {
-			model.openFile(selectedFile);
+    		String s = model.openFile(selectedFile);
+    		if(s!=null){
+    			view.popUp(s);
+    		}
     	}
     }
     
@@ -94,7 +98,16 @@ public class Controller {
     	//System.out.println("Delete file");
     }
     
-    private void deleteOwnedFile(){ 
+    private void deleteLocalFile(){ 
     	//System.out.println("Delete owned file");
+    }
+    
+    private void checkButtonVisibility(){
+    	if (model.fileOnSystem(selectedFile) && !model.isOwnedFile(selectedFile)){
+    		view.setDeleteLocalButton(true);
+    	}
+    	else{
+    		view.setDeleteLocalButton(false);
+    	}
     }
 }
