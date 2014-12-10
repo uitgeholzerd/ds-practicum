@@ -18,6 +18,7 @@ public class FileAgent implements IAgent {
 		availableFiles = new TreeMap<String, Boolean>();
 	}
 
+	@Override
 	public boolean setCurrentClient(Client client) {
 		this.client = client;
 		return true;

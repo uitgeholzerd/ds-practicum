@@ -71,7 +71,7 @@ public class MessageHandler {
 		try {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), NameServer.rmiPort);
 			client.setNameServer((INameServer) registry.lookup(message[1]));
-			InetAddress registeredAddress = client.getNameServer().lookupNode(client.getName());
+			InetAddress registeredAddress = client.getNameServer().lookupNodeByName(client.getName());
 			InetAddress localAddress = client.getAddress();
 			client.setHash(client.getNameServer().getShortHash(client.getName()));
 			if (registeredAddress.equals(localAddress)) {

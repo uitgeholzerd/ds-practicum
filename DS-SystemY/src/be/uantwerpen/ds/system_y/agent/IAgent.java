@@ -9,6 +9,7 @@ public interface IAgent extends Runnable, Serializable  {
 	
 	/**
 	 * Set the client for the agent to work with
+	 * 
 	 * @param client The client object
 	 * @return	Boolean if the agent should be sent to the next client
 	 */

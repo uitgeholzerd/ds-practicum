@@ -9,7 +9,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 
-
 public class TCPHandler implements Runnable{
 	private int port;
 	private Socket sendSocket;
@@ -59,14 +58,17 @@ public class TCPHandler implements Runnable{
 	 * @param address	Address of the receiver
 	 * @param file	Name of the file
 	 * @param filehash	Hash of the file
+	 * 
+	 * @throws IOException This is throw if the address cannot be reached
 	 */
-	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) {
+	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) throws IOException {
 		System.out.print("Sending file " + file +"... ");
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 		
+		sendSocket = new Socket(address, port);
+		
 		try {
-			sendSocket = new Socket(address, port);
 			fis = new FileInputStream(file);
 			byte[] fileByteArray = new byte[1024];
 			out = new DataOutputStream(sendSocket.getOutputStream());
@@ -79,7 +81,7 @@ public class TCPHandler implements Runnable{
 		//	out.flush();
 			
 			int count;
-			// While there are bytes available, write then to the outputstream
+			// While there are bytes available, write them to the outputstream
 			while ((count = fis.read(fileByteArray)) >= 0) {
 				out.write(fileByteArray, 0, count);
 			}
