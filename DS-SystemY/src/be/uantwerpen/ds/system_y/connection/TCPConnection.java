@@ -39,9 +39,11 @@ public class TCPConnection implements Runnable {
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
-			String[] command = in.readUTF().split(" ");
-			if (command[0].equals(Protocol.SEND_FILE)) {
-				String fileName = command[1];
+			String[] message = in.readUTF().split(" ");
+			Protocol command = Protocol.valueOf(message[0]);
+			String fileName = message[1];
+			switch (command){
+			case SEND_FILE:
 				boolean owner = in.readBoolean();
 				System.out.printf("Receiving file %s (owner=%s)%n", fileName, owner);
 				Path file;
@@ -59,15 +61,15 @@ public class TCPConnection implements Runnable {
 				}
 				fos.flush();
 				client.fileReceived(sender, fileName, owner);
-			} else if (command[0].equals(Protocol.CHECK_OWNER)) {
+				break;
+			case CHECK_OWNER:
 				System.out.println("CHECK_OWNER");
-				String fileName = command[1];
 				out.writeBoolean(client.isFileOwner(fileName));
-			}	else {
-				System.out.println(command[0]);
+				break;
+			default:
+				System.out.println("Unknown command: "+ command);
 			}
 
-			// System.out.println("Received file " + fileName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -77,6 +79,7 @@ public class TCPConnection implements Runnable {
 					fos.close();
 				}
 				in.close();
+				out.close();
 				clientSocket.close();
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
