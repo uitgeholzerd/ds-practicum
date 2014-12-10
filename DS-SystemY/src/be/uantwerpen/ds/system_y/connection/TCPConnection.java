@@ -41,10 +41,9 @@ public class TCPConnection implements Runnable {
 
 			String[] command = in.readUTF().split(" ");
 			if (command[0].equals(Protocol.SEND_FILE)) {
-				
+				System.out.println("SEND_FILE");
 				String fileName = command[1];
 				boolean owner = in.readBoolean();
-				System.out.print(fileName);
 				System.out.printf("Receiving file %s (owner=%s)%n", fileName, owner);
 				Path file;
 				if (owner) {
@@ -62,6 +61,7 @@ public class TCPConnection implements Runnable {
 				fos.flush();
 				client.fileReceived(sender, fileName, owner);
 			} else if (command[0].equals(Protocol.CHECK_OWNER)) {
+				System.out.println("CHECK_OWNER");
 				String fileName = command[1];
 				out.writeBoolean(client.isFileOwner(fileName));
 			}

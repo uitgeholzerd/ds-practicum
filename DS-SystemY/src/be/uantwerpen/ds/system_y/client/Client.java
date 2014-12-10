@@ -338,6 +338,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			File file = Paths.get(OWNED_FILE_PATH + message[1]).toFile();
 			tcp.sendFile(sender, file, false);
 			break;
+		case DISCOVER:
+			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
 			break;
