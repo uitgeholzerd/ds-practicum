@@ -35,10 +35,10 @@ public class TCPConnection implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("Incoming TCP connection");
 		BufferedOutputStream fos = null;
 		InetAddress sender = clientSocket.getInetAddress();
 		try {
-
 			String[] command = in.readUTF().split(" ");
 			if (command[0].equals(Protocol.SEND_FILE)) {
 				System.out.println("SEND_FILE");
