@@ -781,7 +781,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			public void run() {
 				try {
 					String nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
-
+					System.out.printf("receiveAgent: next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
 					boolean sendAgent = agent.setCurrentClient(thisClient);
 
 					Thread agentThread = new Thread(agent);
