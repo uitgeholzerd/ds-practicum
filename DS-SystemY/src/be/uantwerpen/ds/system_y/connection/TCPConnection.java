@@ -19,9 +19,9 @@ public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
 	private DataOutputStream out;
-	private IClient client;
+	private FileReceiver client;
 
-	public TCPConnection(Socket clientSocket, IClient client) {
+	public TCPConnection(Socket clientSocket, FileReceiver client) {
 		this.clientSocket = clientSocket;
 		this.client = client;
 		try {

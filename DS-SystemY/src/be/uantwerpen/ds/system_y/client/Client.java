@@ -31,6 +31,7 @@ import java.util.UUID;
 import be.uantwerpen.ds.system_y.agent.FailureAgent;
 import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
+import be.uantwerpen.ds.system_y.connection.FileReceiver;
 import be.uantwerpen.ds.system_y.connection.MessageHandler;
 import be.uantwerpen.ds.system_y.connection.MulticastHandler;
 import be.uantwerpen.ds.system_y.connection.PacketListener;
@@ -39,7 +40,7 @@ import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
-public class Client extends UnicastRemoteObject implements PacketListener, IClient {
+public class Client extends UnicastRemoteObject implements PacketListener, FileReceiver, IClient {
 
 	private static final long serialVersionUID = 5234233628726984521L;
 	public static final int UDP_CLIENT_PORT = 3456;

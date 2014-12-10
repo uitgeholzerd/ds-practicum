@@ -1,6 +1,6 @@
 package be.uantwerpen.ds.system_y.client;
 
-import java.net.InetAddress;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
@@ -15,13 +15,5 @@ public interface IClient extends Remote {
 	 */
 	void receiveAgent(IAgent agent) throws RemoteException;
 
-	/**
-	 * This method is triggered when the TCPHandler receives a file and passes it to the FileReceiver
-	 * 
-	 * @param fileHash Hash of the file
-	 * @param fileName Name of the file
-	 */
-	void fileReceived(InetAddress sender, String fileName, boolean isOwner);
 
-	boolean isFileOwner(String fileName);
 }

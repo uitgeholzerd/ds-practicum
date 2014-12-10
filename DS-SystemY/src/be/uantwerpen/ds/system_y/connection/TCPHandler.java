@@ -18,9 +18,9 @@ public class TCPHandler implements Runnable{
 	private Socket sendSocket;
 	private ServerSocket listenSocket; 
 	private Thread listenThread;
-	private IClient listener;
+	private FileReceiver listener;
 	
-	public TCPHandler(int port, IClient listener) {
+	public TCPHandler(int port, FileReceiver listener) {
 		this.port = port;
 		this.listener = listener;
 		try {
