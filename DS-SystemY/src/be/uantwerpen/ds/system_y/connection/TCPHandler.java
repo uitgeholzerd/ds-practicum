@@ -110,11 +110,11 @@ public class TCPHandler implements Runnable{
 			
 			
 			out.writeUTF(Protocol.SEND_FILE + " " + file.getName());
-			//out.flush();
+			out.flush();
 			
 			out.writeBoolean(receiverIsOwner);
 			
-		//	out.flush();
+			out.flush();
 			
 			int count;
 			// While there are bytes available, write then to the outputstream

@@ -41,7 +41,6 @@ public class TCPConnection implements Runnable {
 		try {
 			String[] command = in.readUTF().split(" ");
 			if (command[0].equals(Protocol.SEND_FILE)) {
-				System.out.println("SEND_FILE");
 				String fileName = command[1];
 				boolean owner = in.readBoolean();
 				System.out.printf("Receiving file %s (owner=%s)%n", fileName, owner);
