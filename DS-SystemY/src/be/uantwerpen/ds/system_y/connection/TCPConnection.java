@@ -64,6 +64,8 @@ public class TCPConnection implements Runnable {
 				System.out.println("CHECK_OWNER");
 				String fileName = command[1];
 				out.writeBoolean(client.isFileOwner(fileName));
+			}	else {
+				System.out.println(command[0]);
 			}
 
 			// System.out.println("Received file " + fileName);
