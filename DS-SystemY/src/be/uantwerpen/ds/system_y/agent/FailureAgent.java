@@ -66,15 +66,16 @@ public class FailureAgent implements IAgent {
 				if (fileLocation.equals(failedNodeLocation)) {
 					newOwner = nameServer.lookupNeighbours(failedNodeName)[0];
 					// TODO hoe controleren of nieuwe eigenaar al eigenaar is?
-					if (true) {
-							client.getTCPHandler().sendFile(newOwner, new File(file), true);
-					} else {
+					if (client.getTCPHandler().checkFileOwner(newOwner, file)) {
 						try {
 							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_AVAILABLE, file);
 						} catch (IOException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
+					} else {
+						client.getTCPHandler().sendFile(newOwner, new File(file), true);
+						
 					}
 
 				}
