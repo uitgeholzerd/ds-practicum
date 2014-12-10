@@ -633,4 +633,27 @@ public class Client implements PacketListener, FileReceiver, IClient {
 		}
 		
 	}
+	
+	public boolean checkOwnedFiles(String fileName) {
+		for (FileRecord record : ownedFiles) {
+			if (fileName == record.getFileName()){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean checkLocalFiles(String fileName) {
+		for (String file : localFiles) {
+			if (fileName == file){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public void openDownloadedFile(String fileName){
+		File file = new File(LOCAL_FILE_PATH + fileName);
+		//TODO open file
+	}
 }
