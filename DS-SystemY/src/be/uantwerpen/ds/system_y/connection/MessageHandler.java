@@ -89,7 +89,7 @@ public class MessageHandler {
 		if (nodeCount == 1) {
 			System.out.println("I'm all alone, setting next and previous node to myself ("+ client.getHash() + ")");
 			client.setNextNodeHash(client.getHash());
-			client.setPreviousNodeHash(client.getHash());
+			client.setPreviousNodeHash(client.getHash()); 
 			client.receiveAgent(new FileAgent());
 		} else { 
 			try {

@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
@@ -361,7 +362,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				}
 			}
 			break;
-			
 		default:
 			System.err.println("Command not found: " + message[0]);
 			break;
@@ -525,7 +525,13 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		}
 
 	}
-
+	public boolean isFileOwner(String fileName){
+		for (Iterator<FileRecord> iterator = ownedFiles.iterator(); iterator.hasNext();) {
+			FileRecord record = (FileRecord) iterator.next();
+			if (record.getFileName().equalsIgnoreCase(fileName)) return true;
+		}
+		return false;
+	}
 	/**
 	 * Sends a PING message to another client
 	 * 
