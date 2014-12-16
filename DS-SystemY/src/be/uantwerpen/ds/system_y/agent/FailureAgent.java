@@ -26,7 +26,7 @@ public class FailureAgent implements IAgent {
 	private boolean firstRun;
 
 	/**
-	 * 
+	 * Construtor for the failureAgent, save needed data in Agent:
 	 * @param failureHash The node that failed
 	 * @param clientHash The node on which the agent started
 	 */
@@ -38,6 +38,9 @@ public class FailureAgent implements IAgent {
 	}
 
 	@Override
+	/**
+	 * Set the agent on a client
+	 */
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
 			return false;
@@ -50,6 +53,16 @@ public class FailureAgent implements IAgent {
 	}
 
 	@Override
+	/**
+	 * Run from the agent, here he will do the next steps:
+	 * 		Get neighbours from failurenode
+	 * 		Remove file location from failurenode
+	 * 		Check for ownerfiles from failurenode
+	 * 			Lookup from nameserver
+	 * 			Check if owner or not
+	 * 			Change failureowner to newowner
+	 * 		Remove failurenode
+	 */
 	public void run() {
 		try {
 			InetAddress newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
@@ -92,6 +105,9 @@ public class FailureAgent implements IAgent {
 	}
 	
 	@Override
+	/**
+	 * Make ready to send from client
+	 */
 	public void prepareToSend() {
 		this.client = null;
 		//this.tcp = null;

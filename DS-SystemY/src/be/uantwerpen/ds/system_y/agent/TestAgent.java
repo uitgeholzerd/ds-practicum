@@ -8,6 +8,9 @@ public class TestAgent implements IAgent {
 	Client client;
 
 	@Override
+	/**
+	 * Run the agent and check when arrived at a client. 
+	 */
 	public void run() {
 		System.out.println("TestAgent aangekomen in client: " + client.getName() + " - " + client.getHash());
 		try {
@@ -20,12 +23,18 @@ public class TestAgent implements IAgent {
 	}
 
 	@Override
+	/**
+	 * Set the agent on current client
+	 */
 	public boolean setCurrentClient(Client client) {
 		this.client = client;
 		return true;
 	}
 
 	@Override
+	/**
+	 * Make ready to send from client
+	 */
 	public void prepareToSend() {
 		this.client = null;
 		

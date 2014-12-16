@@ -14,17 +14,26 @@ public class FileAgent implements IAgent {
 	private TreeMap<String, Boolean> availableFiles;
 	private Client client;
 
+	/**
+	 * Create a treemap from all the available files
+	 */
 	public FileAgent() {
 		availableFiles = new TreeMap<String, Boolean>();
 	}
 
 	@Override
+	/**
+	 * Set the agent on a client
+	 */
 	public boolean setCurrentClient(Client client) {
 		this.client = client;
 		return true;
 	}
 
 	@Override
+	/**
+	 * 
+	 */
 	public void run() {	
 		System.out.println("FileAgent started on " + client.getName());
 		// Add new files to the file agents list
@@ -66,6 +75,9 @@ public class FileAgent implements IAgent {
 	}
 	
 	@Override
+	/**
+	 * Make ready to send from client
+	 */
 	public void prepareToSend() {
 		this.client = null;
 	}
