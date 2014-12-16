@@ -1,5 +1,6 @@
 package be.uantwerpen.ds.system_y.client;
 
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -845,6 +846,34 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	public String debugRequestUnlock(String filename) {
 		lockRequests.put(filename, false);
 		return "Removed lock from file: " + filename;
+	}
+
+	public boolean checkOwnedFiles(String fileName) {
+		for (FileRecord record : ownedFiles) {
+			if (fileName == record.getFileName()){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public boolean checkLocalFiles(String fileName) {
+		for (String file : localFiles) {
+			if (fileName == file){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public String openFile(String fileName){
+		File file = new File(LOCAL_FILE_PATH + fileName);
+		try {
+			Desktop.getDesktop().open(file);
+			return null;
+		} catch (Exception e) {
+			return "Failed to open file. " + e.getMessage();
+		}
 	}
 
 }
