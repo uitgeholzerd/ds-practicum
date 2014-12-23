@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import be.uantwerpen.ds.system_y.client.Client;
-import be.uantwerpen.ds.system_y.client.IClient;
 
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
