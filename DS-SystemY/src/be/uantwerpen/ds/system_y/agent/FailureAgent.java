@@ -31,6 +31,7 @@ public class FailureAgent implements IAgent {
 	 * @param clientHash The node on which the agent started
 	 */
 	public FailureAgent(int clientHash, int failedNodeHash, InetAddress failedNodeLocation) {
+		System.out.printf("Failure agent created for node with hash %d (%s).%n", failedNodeHash, failedNodeLocation.getHostAddress());
 		firstRun = true;
 		this.startNodeHash = clientHash;
 		this.failedNodeHash = failedNodeHash;
@@ -101,6 +102,7 @@ public class FailureAgent implements IAgent {
 			System.err.println("Error while contacting nameserver");
 			e.printStackTrace();
 		}
+		System.out.println("Failure agent run complete.");
 
 	}
 	

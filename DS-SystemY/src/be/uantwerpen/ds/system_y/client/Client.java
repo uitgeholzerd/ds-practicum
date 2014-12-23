@@ -375,6 +375,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param nodeName Name of the failed node
 	 */
 	public void removeFailedNode(int nodeHash) {
+		System.out.printf("Removing failed node with hash %d", nodeHash);
 		try {
 			InetAddress[] neighbours = nameServer.lookupNeighbours(1);
 			if (neighbours != null) {
@@ -775,6 +776,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 	@Override
 	public void receiveAgent(final IAgent agent) {
+		System.out.printf("Received agent %s.", agent);
 		final Client thisClient = this;
 
 		Runnable run = new Runnable() {
