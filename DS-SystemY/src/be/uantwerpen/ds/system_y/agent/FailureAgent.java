@@ -24,6 +24,7 @@ public class FailureAgent implements IAgent {
 	private int startNodeHash;
 
 	private boolean firstRun;
+	private boolean lastRun;
 
 	/**
 	 * Construtor for the failureAgent, save needed data in Agent:
@@ -44,7 +45,7 @@ public class FailureAgent implements IAgent {
 	 */
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
-
+			lastRun = true;
 			return false;
 		} else {
 			this.client = client;
@@ -99,10 +100,14 @@ public class FailureAgent implements IAgent {
 
 				}
 			}
+		if (lastRun){
+				nameServer.unregisterNode(failedNodeHash);
+			}
 		} catch (RemoteException e) {
 			System.err.println("Error while contacting nameserver");
 			e.printStackTrace();
 		}
+
 		System.out.println("Failure agent run complete.");
 
 	}
