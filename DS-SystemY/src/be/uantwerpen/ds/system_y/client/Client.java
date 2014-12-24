@@ -363,6 +363,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				}
 			}
 			break;
+		case DISCOVER:
+			//ignore
+			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
 			break;

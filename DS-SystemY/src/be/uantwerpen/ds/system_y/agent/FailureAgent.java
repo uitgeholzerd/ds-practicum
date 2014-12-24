@@ -88,7 +88,7 @@ public class FailureAgent implements IAgent {
 						}
 					} else {
 						try {
-							client.getTCPHandler().sendFile(newOwner, new File(file), true);
+							client.getTCPHandler().sendFile(newOwner, new File(client.LOCAL_FILE_PATH + file), true);
 						} catch (IOException e) {
 							e.printStackTrace();
 							// Remote node could not be reached and should be removed
