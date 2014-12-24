@@ -44,6 +44,7 @@ public class FailureAgent implements IAgent {
 	 */
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
+
 			return false;
 		} else {
 			this.client = client;
