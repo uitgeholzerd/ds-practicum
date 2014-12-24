@@ -389,7 +389,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 				//Retrieve the location of the failed node, then remove it from the nameserver
 				InetAddress failedNodeLocation = nameServer.lookupNode(nodeHash);
-				nameServer.unregisterNode(nodeHash);
+				//nameServer.unregisterNode(nodeHash);
 
 				// Initilize and start the FailureAgent
 				receiveAgent(new FailureAgent(this.hash, nodeHash, failedNodeLocation));
@@ -777,7 +777,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 	@Override
 	public void receiveAgent(final IAgent agent) {
-		System.out.printf("Received agent %s.", agent);
+		System.out.printf("Received agent %s.%n", agent);
 		final Client thisClient = this;
 
 		Runnable run = new Runnable() {
