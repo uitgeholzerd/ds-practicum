@@ -384,12 +384,13 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				InetAddress nextNodeAddress = neighbours[1];
 
 				// Send the previous node of the failed node to the next node of the failed note and vice versa
-				udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-				udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+				
+				udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.reverseLookupNode(neighbours[1].getHostAddress()));
+				udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.reverseLookupNode(neighbours[0].getHostAddress()));
 
 				//Retrieve the location of the failed node, then remove it from the nameserver
 				InetAddress failedNodeLocation = nameServer.lookupNode(nodeHash);
-				//nameServer.unregisterNode(nodeHash);
+				nameServer.unregisterNode(nodeHash);
 
 				// Initilize and start the FailureAgent
 				receiveAgent(new FailureAgent(this.hash, nodeHash, failedNodeLocation));
