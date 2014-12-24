@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.AlreadyBoundException;
+import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -177,7 +178,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
 				public void run() {
-					System.out.println("Scanning files");
 					scanFiles(LOCAL_FILE_PATH);
 				}
 			}, 4 * 1000, 60 * 1000);
@@ -212,6 +212,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param path Path to scan
 	 */
 	private void scanFiles(String path) {
+		System.out.println("Scanning files");
 		File[] files = Paths.get(path).toFile().listFiles();
 		// If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
@@ -798,10 +799,16 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					
 					Thread.sleep(5000);
 					if (sendAgent) {
-						agent.prepareToSend();
-						Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
-						IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
-						nextClient.receiveAgent(agent);
+						
+						try {
+							agent.prepareToSend();
+							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
+							IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
+							nextClient.receiveAgent(agent);
+						} catch (ConnectException e) {
+							// assuming next client has failed
+							removeFailedNode(getNextNodeHash());
+						}
 					}
 				} catch (InterruptedException e) {
 					System.err.println("Interrupted while waiting for agent thread");
