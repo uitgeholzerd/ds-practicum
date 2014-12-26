@@ -5,6 +5,10 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
+/**
+ * Handles sending and receiving of UDP multicasts
+ *
+ */
 public class MulticastHandler implements Runnable {
 	private static final String MULTICAST_ADDRESS = "225.6.7.8";
 	private static final int MULTICAST_PORT = 5678;
@@ -63,7 +67,6 @@ public class MulticastHandler implements Runnable {
 	 */
 	public void sendMessage(Protocol command, String data) throws IOException {
 		// prepare packet & send to existing socket
-		// TODO: this might not work on the same socket used for listening
 		String message = command + " " + data;
 		DatagramPacket outPacket = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(MULTICAST_ADDRESS), MULTICAST_PORT);
 		socket.send(outPacket);

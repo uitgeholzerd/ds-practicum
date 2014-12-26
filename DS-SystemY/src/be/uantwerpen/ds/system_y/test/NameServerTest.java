@@ -52,8 +52,7 @@ public class NameServerTest {
 		 * 
 		 * if ((fileHash < node1Hash && !location.equals(node2Location)) ||
 		 * (fileHash > node1Hash && !location.equals(node1Location))) {
-		 * System.out.println("File lookup failed"); failed = true; } // TODO
-		 * test voor gelijktijd opvragen
+		 * System.out.println("File lookup failed"); failed = true; }
 		 * 
 		 * System.out.println(); if (failed) {
 		 * System.out.println("One or more tests failed"); } else {

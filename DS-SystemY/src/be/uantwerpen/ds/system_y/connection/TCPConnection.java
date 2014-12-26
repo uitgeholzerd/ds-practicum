@@ -14,6 +14,10 @@ import java.nio.file.StandardOpenOption;
 
 import be.uantwerpen.ds.system_y.client.Client;
 
+/**
+ * Thread that contains a single TCP connection
+ *
+ */
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
@@ -27,7 +31,7 @@ public class TCPConnection implements Runnable {
 			in = new DataInputStream(clientSocket.getInputStream());
 			out = new DataOutputStream(clientSocket.getOutputStream());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while creating TCP connection");
 			e.printStackTrace();
 		}
 	}
@@ -71,7 +75,7 @@ public class TCPConnection implements Runnable {
 			}
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error during TCP connection");
 			e.printStackTrace();
 		} finally {
 			try {
@@ -82,7 +86,7 @@ public class TCPConnection implements Runnable {
 				out.close();
 				clientSocket.close();
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
+				System.err.println("Error while closing TCP connection");
 				e1.printStackTrace();
 			}
 		}

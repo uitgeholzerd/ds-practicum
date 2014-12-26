@@ -88,7 +88,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * Saves the current map of nodes to the the hard disk
 	 * 
 	 */
-	// TODO de enige reden dat deze methode public is, is voor de tests
+	// TODO public voor debugging
 	public void saveMap() {
 		FileOutputStream fos = null;
 		XMLEncoder xml = null;
@@ -126,7 +126,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param address The address at which the node can be found
 	 * @return True if the node was added, false if the name already exists and the node was not added
 	 */
-	// TODO de enige reden dat deze methode public is, is voor de tests
+	// TODO public voor debugging
 	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
 		boolean success;
@@ -157,23 +157,13 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return success;
 	}
 
-	/**
-	 * Retrieve the address of the node given its name
-	 * 
-	 * @param name The name of the node
-	 * @return The address of the node, returns an empty string if the node was not found
-	 */
+	@Override
 	public InetAddress lookupNodeByName(String name) {
 		int hash = getShortHash(name);
 		return lookupNode(hash);
 	}
-
-	/**
-	 * Retrieve the address of the node given its hash
-	 * 
-	 * @param hash The hash of the node
-	 * @return The address of the node, returns an empty string if the node was not found
-	 */
+	
+	@Override
 	public InetAddress lookupNode(int hash) {
 		if (nodeMap.containsKey(hash)) {
 			try {
@@ -292,14 +282,6 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 	}
 
-	/**
-	 * This method is triggered when a package is sent to this server (uni- or multicast) Depending on the command contained in the message, the server will perform
-	 * different actions
-	 * 
-	 * @param address IP of the sender
-	 * @param port Data containing the command and a message
-	 */
-
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
 		System.out.println("Received message from " + sender + ": " + data);
@@ -352,7 +334,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	}
 	
 
-	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	//TODO debugging
 	public String debugDumpMap() {
 		String result = "Nodes in map:\n";
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
@@ -361,7 +343,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return result;
 	}
 
-	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	//TODO debugging
 	public void debugClearMap() {
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>());
 	}

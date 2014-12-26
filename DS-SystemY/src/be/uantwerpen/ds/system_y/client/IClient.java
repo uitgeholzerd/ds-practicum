@@ -9,7 +9,7 @@ import be.uantwerpen.ds.system_y.agent.IAgent;
 public interface IClient extends Remote {
 
 	/**
-	 * Method for receiving agent from other clients. This method will run the agent and send it to the next client if needed.
+	 * Method for receiving agents from other clients. This method will run the agent and send it to the next client if needed.
 	 * 
 	 * @param agent
 	 */

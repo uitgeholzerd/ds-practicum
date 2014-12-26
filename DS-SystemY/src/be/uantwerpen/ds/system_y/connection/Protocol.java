@@ -4,17 +4,17 @@ package be.uantwerpen.ds.system_y.connection;
  * The protocol used for commands between nodes/server
  */
 public enum Protocol {
-	DISCOVER,
-	DISCOVER_ACK,
-	NODE_JOINED,
-	SET_NODES,
-	SET_PREVNODE,
-	SET_NEXTNODE,
-	PING,
-	PING_ACK,
-	FILE_LOCATION_AVAILABLE,
-	FILE_LOCATION_UNAVAILABLE,
-	SEND_FILE,
-	CHECK_OWNER,
-	DOWNLOAD_REQUEST
+	DISCOVER,						// Client is searching for the name server in the network
+	DISCOVER_ACK,					// Name server acknowledges clients DISCOVER
+	NODE_JOINED,					// New node has joing the network
+	SET_NODES,						// Set neighbours to specified nodes 
+	SET_PREVNODE,					// Set previous neighbour to specified node
+	SET_NEXTNODE,					// Set next neighbour to specified node
+	PING,							// Ping node
+	PING_ACK,						// Acknowlegde ping
+	FILE_LOCATION_AVAILABLE,		// Report file location available
+	FILE_LOCATION_UNAVAILABLE,		// Report file location unavailable
+	SEND_FILE,						// Incoming file transmision
+	CHECK_OWNER,					// Check if node owns file
+	DOWNLOAD_REQUEST				// Request file downlaod
 }

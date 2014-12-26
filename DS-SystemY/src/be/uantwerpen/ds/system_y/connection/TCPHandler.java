@@ -9,7 +9,10 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
+/**
+ * Handles TCP communication by spawning TCP connections
+ *
+ */
 public class TCPHandler implements Runnable{
 	private int port;
 	private Socket sendSocket;
@@ -152,7 +155,7 @@ public class TCPHandler implements Runnable{
 			listenSocket.close();
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while closing TCP handler");
 			e.printStackTrace();
 		}
 

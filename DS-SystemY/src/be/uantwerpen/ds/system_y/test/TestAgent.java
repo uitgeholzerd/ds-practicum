@@ -1,5 +1,6 @@
-package be.uantwerpen.ds.system_y.agent;
+package be.uantwerpen.ds.system_y.test;
 
+import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.client.Client;
 
 public class TestAgent implements IAgent {
@@ -16,7 +17,6 @@ public class TestAgent implements IAgent {
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

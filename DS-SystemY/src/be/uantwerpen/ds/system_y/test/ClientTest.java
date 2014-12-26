@@ -13,11 +13,9 @@ public class ClientTest {
 	private static Client client;
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		try {
 			client = new Client();
 		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 
@@ -50,7 +48,7 @@ public class ClientTest {
 					if (cmd[1] == null) {
 						System.err.println("Need 1 argument to ping.");
 					} else { 
-						client.pingNode(cmd[1]);
+						client.pingNodeName(cmd[1]);
 					}
 				} catch (IOException e) {
 					System.err.println("Failed to send ping: " + e.getMessage());

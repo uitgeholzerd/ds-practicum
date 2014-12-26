@@ -14,6 +14,10 @@ import java.util.Date;
 
 import be.uantwerpen.ds.system_y.client.Client;
 
+/**
+ * Unused class, alternative approach to periodically checking for new files (instead of TimerTask)
+ *
+ */
 public class FileWatcher implements Runnable {
 	private Client client;
 	private WatchService watcher;
