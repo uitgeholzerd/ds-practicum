@@ -869,9 +869,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					e.printStackTrace();
 				} finally { 
 					//TODO is dit goed?
-					if (agent instanceof FileAgent) {
-						thisClient.receiveAgent(new FileAgent()); 
-					}
+//					if (agent instanceof FileAgent) {
+//						thisClient.receiveAgent(new FileAgent()); 
+//					}
 				 }
 				 
 
