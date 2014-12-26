@@ -2,17 +2,13 @@ package be.uantwerpen.ds.system_y.gui;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.swing.DefaultListModel;
 
-import be.uantwerpen.ds.system_y.client.*;
-import be.uantwerpen.ds.system_y.file.FileRecord;
+import be.uantwerpen.ds.system_y.client.Client;
 
 public class Model {
 	Client client;

@@ -41,6 +41,7 @@ public class TCPConnection implements Runnable {
 			String[] message = in.readUTF().split(" ");
 			Protocol command = Protocol.valueOf(message[0]);
 			String fileName = message[1];
+			System.out.printf("TCP command: %s.%n", command);
 			switch (command){
 			case SEND_FILE:
 				boolean owner = in.readBoolean();
@@ -62,7 +63,7 @@ public class TCPConnection implements Runnable {
 				client.receiveFile(sender, fileName, owner);
 				break;
 			case CHECK_OWNER:
-				System.out.println("CHECK_OWNER");
+				System.out.printf("Check if I own %s.%n", fileName);
 				out.writeBoolean(client.isFileOwner(fileName));
 				break;
 			default:

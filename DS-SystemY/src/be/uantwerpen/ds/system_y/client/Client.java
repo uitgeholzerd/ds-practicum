@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.AlreadyBoundException;
+import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -177,7 +178,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			timer.scheduleAtFixedRate(new TimerTask() {
 				@Override
 				public void run() {
-					System.out.println("Scanning files");
 					scanFiles(LOCAL_FILE_PATH);
 				}
 			}, 4 * 1000, 60 * 1000);
@@ -212,6 +212,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param path Path to scan
 	 */
 	private void scanFiles(String path) {
+		System.out.println("Scanning files");
 		File[] files = Paths.get(path).toFile().listFiles();
 		// If the path is not a directory, then listFiles() returns null.
 		for (File file : files) {
@@ -362,6 +363,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				}
 			}
 			break;
+		case DISCOVER:
+			//ignore
+			break;
 		default:
 			System.err.println("Command not found: " + message[0]);
 			break;
@@ -375,19 +379,31 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param nodeName Name of the failed node
 	 */
 	public void removeFailedNode(int nodeHash) {
+		System.out.printf("Removing failed node with hash %d.%n", nodeHash);
 		try {
-			InetAddress[] neighbours = nameServer.lookupNeighbours(1);
+			InetAddress[] neighbours = nameServer.lookupNeighbours(nodeHash);
 			if (neighbours != null) {
 				InetAddress prevNodeAddress = neighbours[0];
 				InetAddress nextNodeAddress = neighbours[1];
 
 				// Send the previous node of the failed node to the next node of the failed note and vice versa
-				udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + nameServer.getShortHash(neighbours[1]));
-				udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + nameServer.getShortHash(neighbours[0]));
+				int failedNodeNextHash = nameServer.reverseLookupNode(neighbours[1].getHostAddress());
+				if (nodeHash == nextNodeHash){
+					nextNodeHash = failedNodeNextHash;
+				}
+				else{
+					udp.sendMessage(prevNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_NEXTNODE, "" + failedNodeNextHash);
+				}
+				int failedNodePrevHash = nameServer.reverseLookupNode(neighbours[0].getHostAddress());
+				if (nodeHash == previousNodeHash){
+					previousNodeHash = failedNodePrevHash;
+				} else {
+					udp.sendMessage(nextNodeAddress, Client.UDP_CLIENT_PORT, Protocol.SET_PREVNODE, "" + failedNodePrevHash);
+				}
 
 				//Retrieve the location of the failed node, then remove it from the nameserver
 				InetAddress failedNodeLocation = nameServer.lookupNode(nodeHash);
-				nameServer.unregisterNode(nodeHash);
+				//
 
 				// Initilize and start the FailureAgent
 				receiveAgent(new FailureAgent(this.hash, nodeHash, failedNodeLocation));
@@ -775,6 +791,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 	@Override
 	public void receiveAgent(final IAgent agent) {
+		System.out.printf("Received agent %s.%n", agent);
 		final Client thisClient = this;
 
 		Runnable run = new Runnable() {
@@ -796,10 +813,16 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					
 					Thread.sleep(5000);
 					if (sendAgent) {
-						agent.prepareToSend();
-						Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
-						IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
-						nextClient.receiveAgent(agent);
+						
+						try {
+							agent.prepareToSend();
+							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
+							IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
+							nextClient.receiveAgent(agent);
+						} catch (ConnectException e) {
+							// assuming next client has failed
+							removeFailedNode(getNextNodeHash());
+						}
 					}
 				} catch (InterruptedException e) {
 					System.err.println("Interrupted while waiting for agent thread");

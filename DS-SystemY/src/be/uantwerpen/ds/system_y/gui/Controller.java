@@ -54,7 +54,8 @@ public class Controller {
     	listSL = new ListSelectionListener() {
     		@Override
 			public void valueChanged(ListSelectionEvent e) {
-    			JList<String> list = (JList<String>)e.getSource();
+    			@SuppressWarnings("unchecked")
+				JList<String> list = (JList<String>)e.getSource();
     		    int selected = list.getSelectedIndex();
     		    String sel = list.getSelectedValue();
     			if (e.getValueIsAdjusting() == false) {

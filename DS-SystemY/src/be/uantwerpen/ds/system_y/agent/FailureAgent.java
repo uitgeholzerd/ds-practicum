@@ -24,6 +24,7 @@ public class FailureAgent implements IAgent {
 	private int startNodeHash;
 
 	private boolean firstRun;
+	private boolean lastRun;
 
 	/**
 	 * Construtor for the failureAgent, save needed data in Agent:
@@ -31,6 +32,7 @@ public class FailureAgent implements IAgent {
 	 * @param clientHash The node on which the agent started
 	 */
 	public FailureAgent(int clientHash, int failedNodeHash, InetAddress failedNodeLocation) {
+		System.out.printf("Failure agent created for node with hash %d (%s).%n", failedNodeHash, failedNodeLocation.getHostAddress());
 		firstRun = true;
 		this.startNodeHash = clientHash;
 		this.failedNodeHash = failedNodeHash;
@@ -43,6 +45,7 @@ public class FailureAgent implements IAgent {
 	 */
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
+			lastRun = true;
 			return false;
 		} else {
 			this.client = client;
@@ -87,7 +90,7 @@ public class FailureAgent implements IAgent {
 						}
 					} else {
 						try {
-							client.getTCPHandler().sendFile(newOwner, new File(file), true);
+							client.getTCPHandler().sendFile(newOwner, new File(client.LOCAL_FILE_PATH + file), true);
 						} catch (IOException e) {
 							e.printStackTrace();
 							// Remote node could not be reached and should be removed
@@ -97,10 +100,15 @@ public class FailureAgent implements IAgent {
 
 				}
 			}
+		if (lastRun){
+				nameServer.unregisterNode(failedNodeHash);
+			}
 		} catch (RemoteException e) {
 			System.err.println("Error while contacting nameserver");
 			e.printStackTrace();
 		}
+
+		System.out.println("Failure agent run complete.");
 
 	}
 

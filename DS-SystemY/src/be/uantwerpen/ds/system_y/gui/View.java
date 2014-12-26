@@ -1,11 +1,18 @@
 package be.uantwerpen.ds.system_y.gui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
 
-import javax.swing.*;
-import javax.swing.text.html.ListView;
-
-//import com.sun.xml.internal.ws.org.objectweb.asm.Label;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 
 public class View {
 	private JFrame frame;
