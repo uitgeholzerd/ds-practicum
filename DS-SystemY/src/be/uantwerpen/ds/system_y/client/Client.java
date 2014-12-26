@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -167,7 +168,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			group = new MulticastHandler(this);
 			this.name = getAddress().getHostName();
 			messageHandler = new MessageHandler(this, udp, group);
-			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress());
+			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress() + randomString());
 			timer = new Timer();
 			// If the namesever isn't set after a certain period, assume the connection has failed
 			timer.schedule(new TimerTask() {
@@ -196,6 +197,19 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			nameServer = null;
 			e.printStackTrace();
 		}
+	}
+
+	// TODO Debug
+	public String randomString() {
+		char[] chars = "abcdefghijklmnopqrstuvwxyz".toCharArray();
+		StringBuilder sb = new StringBuilder();
+		Random random = new Random();
+		for (int i = 0; i < random.nextInt(10) + 1; i++) {
+			char c = chars[random.nextInt(chars.length)];
+			sb.append(c);
+		}
+		String output = sb.toString();
+		return output;
 	}
 
 	/**
