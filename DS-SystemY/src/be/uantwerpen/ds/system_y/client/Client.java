@@ -168,7 +168,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			group = new MulticastHandler(this);
 			this.name = getAddress().getHostName();
 			messageHandler = new MessageHandler(this, udp, group);
-			group.sendMessage(Protocol.DISCOVER, getName() + " " + getAddress().getHostAddress() + randomString());
+			group.sendMessage(Protocol.DISCOVER, getName() + randomString() + " " + getAddress().getHostAddress());
 			timer = new Timer();
 			// If the namesever isn't set after a certain period, assume the connection has failed
 			timer.schedule(new TimerTask() {
