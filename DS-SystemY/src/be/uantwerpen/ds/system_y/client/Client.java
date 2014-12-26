@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Timer;
@@ -400,7 +399,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	}
 
 	@Override
-	public void fileReceived(InetAddress sender, String fileName, boolean isOwner) {
+	public void receiveFile(InetAddress sender, String fileName, boolean isOwner) {
 		try {
 			// If this node is the owner of the file and the file doesn't exist in the records, create a new record for it
 			// and add the sender to the list of nodes where it is available

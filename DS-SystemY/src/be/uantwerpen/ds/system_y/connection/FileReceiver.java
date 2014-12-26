@@ -9,7 +9,7 @@ public interface FileReceiver {
 	 * @param fileHash Hash of the file
 	 * @param fileName Name of the file
 	 */
-	void fileReceived(InetAddress sender, String fileName, boolean isOwner);
+	void receiveFile(InetAddress sender, String fileName, boolean isOwner);
 
 	boolean isFileOwner(String fileName);
 }

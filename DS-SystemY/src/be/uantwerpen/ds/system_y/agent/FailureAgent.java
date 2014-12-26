@@ -103,14 +103,10 @@ public class FailureAgent implements IAgent {
 		}
 
 	}
-	
+
 	@Override
-	/**
-	 * Make ready to send from client
-	 */
 	public void prepareToSend() {
 		this.client = null;
-		//this.tcp = null;
 	}
 	
 }

@@ -14,7 +14,6 @@ public class MulticastHandler implements Runnable {
 	private byte[] inBuffer;
 	private PacketListener listener;
 	private Thread listenThread;
-	private boolean isRunning;
 
 	public MulticastHandler(PacketListener listener) throws IOException {
 		this.listener = listener;
@@ -27,7 +26,6 @@ public class MulticastHandler implements Runnable {
 			throw e;
 		}
 
-		isRunning = true;
 		listenThread = new Thread(this);
 		listenThread.setName("MulticastHandler");
 		listenThread.start();

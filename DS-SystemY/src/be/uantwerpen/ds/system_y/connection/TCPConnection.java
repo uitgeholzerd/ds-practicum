@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import be.uantwerpen.ds.system_y.client.Client;
-import be.uantwerpen.ds.system_y.client.IClient;
 
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
@@ -60,7 +59,7 @@ public class TCPConnection implements Runnable {
 					fos.write(buffer, 0, count);
 				}
 				fos.flush();
-				client.fileReceived(sender, fileName, owner);
+				client.receiveFile(sender, fileName, owner);
 				break;
 			case CHECK_OWNER:
 				System.out.println("CHECK_OWNER");
