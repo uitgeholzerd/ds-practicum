@@ -6,13 +6,13 @@ public class Test {
 		String o;
 		int hash;
 		
-		o = "10.0.5.5emhty";
+		o = "10.0.5.5sb";
 		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 		System.out.println(o + " - " + hash);
-		o = "10.0.5.6wzh";
+		o = "10.0.5.6h";
 		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 		System.out.println(o + " - " + hash);
-		o = "10.0.5.7lwa";
+		o = "10.0.5.7idpdf";
 		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 		System.out.println(o + " - " + hash);
 		

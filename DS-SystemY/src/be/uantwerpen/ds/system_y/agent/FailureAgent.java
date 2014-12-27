@@ -43,14 +43,7 @@ public class FailureAgent implements IAgent {
 	@Override
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
-			/*
-			try {
-				nameServer.unregisterNode(failedNodeHash);
-			} catch (RemoteException e) {
-				System.err.println("Failed to contact name server");
-				e.printStackTrace();
-			}
-			*/
+			System.out.println("Failure agent stopped");
 			this.client = client;
 			return false;
 		} else {
