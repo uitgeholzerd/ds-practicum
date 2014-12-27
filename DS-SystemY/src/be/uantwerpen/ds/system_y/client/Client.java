@@ -549,12 +549,12 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				owner = nameServer.getFilelocation(fileName);
 				
 				System.out.println("*** Rechecking file:" + fileName);
-				System.out.println("*** New owner: " + !this.getAddress().equals(owner));
 				System.out.println("*** list empty: " + record.getNodeHashes().isEmpty());
 				System.out.println("*** different prev node hash: " + (this.hash != previousNodeHash));
 				
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				if (!this.getAddress().equals(owner)) {
+					System.out.println("*** New owner, sending file to :" + owner.getHostAddress());
 					try {
 						tcp.sendFile(owner, file, true);
 						
@@ -576,6 +576,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				// If this node is the file owner but the filed hasn't been cloned to it's previous neighbour yet, send it to them
 				else if (record.getNodeHashes().isEmpty() && this.hash != previousNodeHash) {
 					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
+					System.out.println("List empty and diff prev node hash, copying to " + previousNode.getHostAddress());
 					try {
 						tcp.sendFile(previousNode, file, false);
 					} catch (IOException e) {

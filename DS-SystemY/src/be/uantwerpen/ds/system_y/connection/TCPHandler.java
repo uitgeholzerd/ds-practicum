@@ -109,7 +109,7 @@ public class TCPHandler implements Runnable {
 	 * @throws IOException This is throw if the address cannot be reached
 	 */
 	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) throws IOException {
-		System.out.print("Sending file " + file + "... ");
+		System.out.print("Sending file " + file + "to " + address.getHostAddress() + "... ");
 		FileInputStream fis = null;
 		DataOutputStream out = null;
 
