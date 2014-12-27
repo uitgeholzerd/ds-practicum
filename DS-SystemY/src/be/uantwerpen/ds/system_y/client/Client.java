@@ -418,7 +418,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 				// Retrieve the location of the failed node, then remove it from the nameserver
 				InetAddress failedNodeLocation = nameServer.lookupNode(nodeHash);
-				//
+				nameServer.unregisterNode(nodeHash);
 
 				// Initilize and start the FailureAgent
 				receiveAgent(new FailureAgent(this.hash, nodeHash, failedNodeLocation));
@@ -511,7 +511,10 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				
 				System.out.println("Record added to owned files");
 				ownedFiles.add(record);
+				
+				// Add file to owned files directory and remove it from the local files
 				file.renameTo(new File(OWNED_FILE_PATH + fileName));
+				localFiles.remove(fileName);
 			} else {
 				try {
 					tcp.sendFile(fileOwner, file, true);

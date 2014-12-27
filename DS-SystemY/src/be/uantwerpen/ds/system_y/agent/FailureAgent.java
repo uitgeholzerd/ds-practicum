@@ -43,12 +43,14 @@ public class FailureAgent implements IAgent {
 	@Override
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
+			/*
 			try {
 				nameServer.unregisterNode(failedNodeHash);
 			} catch (RemoteException e) {
 				System.err.println("Failed to contact name server");
 				e.printStackTrace();
 			}
+			*/
 			return false;
 		} else {
 			this.client = client;
@@ -76,28 +78,28 @@ public class FailureAgent implements IAgent {
 		}
 		
 		try {
-			InetAddress newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
-			boolean isOwner;
+			boolean failedNodeWasOwner;
 			
 			//Remove failed node from available file locations
 			client.removeFileLocation(failedNodeHash);
 			
 			//If the failed node was owner of any of the local files, send the files to the new owner
-			for (String file : client.getLocalFiles()) {
-				isOwner = nameServer.isFileOwner(failedNodeHash, failedNodeLocation, file);
-
-				if (isOwner) {
-					newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
-					if (client.getTCPHandler().checkFileOwner(newOwner, file)) {
+			for (String fileName : client.getLocalFiles()) {
+				failedNodeWasOwner = nameServer.isFileOwner(failedNodeHash, failedNodeLocation, fileName);
+				InetAddress newOwner = nameServer.getFilelocation(fileName);
+				
+				if (failedNodeWasOwner) {
+					
+					if (client.getTCPHandler().checkFileOwner(newOwner, fileName)) {
 						try {
-							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, file);
+							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, fileName);
 						} catch (IOException e) {
 							System.err.println("Error while sending UDP message");
 							e.printStackTrace();
 						}
 					} else {
 						try {
-							client.getTCPHandler().sendFile(newOwner, new File(Client.LOCAL_FILE_PATH + file), true);
+							client.getTCPHandler().sendFile(newOwner, new File(Client.LOCAL_FILE_PATH + fileName), true);
 						} catch (IOException e) {
 							e.printStackTrace();
 							// Remote node could not be reached and should be removed
