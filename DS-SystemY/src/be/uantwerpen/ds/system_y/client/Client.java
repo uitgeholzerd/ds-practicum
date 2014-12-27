@@ -485,7 +485,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 * @param file The new file that has been found
 	 */
-	public void newFileFound(File file) {
+	private void newFileFound(File file) {
 		try {
 			String fileName = file.getName();
 			InetAddress fileOwner = nameServer.getFilelocation(fileName);

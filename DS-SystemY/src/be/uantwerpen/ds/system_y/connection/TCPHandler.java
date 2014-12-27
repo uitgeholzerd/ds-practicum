@@ -63,7 +63,7 @@ public class TCPHandler implements Runnable {
 	 * @param fileName Name of the file
 	 * @return
 	 */
-	public boolean checkFileOwner(InetAddress address, String fileName) {
+	public boolean checkHasOwnedFile(InetAddress address, String fileName) {
 		boolean result = false;
 		DataOutputStream out = null;
 		DataInputStream in = null;

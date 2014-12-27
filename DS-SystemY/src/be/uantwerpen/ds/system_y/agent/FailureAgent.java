@@ -7,6 +7,7 @@ import java.rmi.RemoteException;
 
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.connection.Protocol;
+import be.uantwerpen.ds.system_y.file.FileRecord;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 /**
@@ -44,7 +45,6 @@ public class FailureAgent implements IAgent {
 	@Override
 	public boolean setCurrentClient(Client client) {
 		if (!firstRun && client.getHash() == startNodeHash) {
-			System.out.println("Failure agent stopped");
 			this.client = client;
 			lastRun = true;
 			return false;
@@ -82,11 +82,21 @@ public class FailureAgent implements IAgent {
 			//If the failed node was owner of any of the local files, send the files to the new owner
 			for (String fileName : client.getLocalFiles()) {
 				failedNodeWasOwner = nameServer.isFileOwner(failedNodeHash, failedNodeLocation, fileName);
-				InetAddress newOwner = nameServer.getFilelocation(fileName);
 				
 				if (failedNodeWasOwner) {
-					// If the new owner already has the file, let him know the file is available at the current location
-					if (client.getTCPHandler().checkFileOwner(newOwner, fileName)) {
+					InetAddress newOwner = nameServer.getFilelocation(fileName);
+					// Check if the currect node is the file owner
+					if(client.getAddress().equals(newOwner)) {
+						int fileHash = nameServer.getShortHash(fileName);
+						client.getOwnedFiles().add(new FileRecord(fileName, fileHash));
+						
+						// Add file to owned files directory and remove it from the local files
+						(new File(Client.LOCAL_FILE_PATH + fileName)).renameTo(new File(Client.OWNED_FILE_PATH + fileName));
+						client.getLocalFiles().remove(fileName);
+						//TODO replicate to prev neighbour?
+					}
+					// Else check if the new owner already has the file and let him know the file is available at the current location
+					else if (client.getTCPHandler().checkHasOwnedFile(newOwner, fileName)) {
 						try {
 							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, client.getHash() + " " + fileName);
 						} catch (IOException e) {
@@ -94,7 +104,7 @@ public class FailureAgent implements IAgent {
 							e.printStackTrace();
 						}
 					} 
-					// If the new owner doesn't of the file yet, send it to him
+					// If the new owner doesn't have the file yet, send it to him
 					else {
 						try {
 							client.getTCPHandler().sendFile(newOwner, new File(Client.LOCAL_FILE_PATH + fileName), true);
@@ -111,9 +121,6 @@ public class FailureAgent implements IAgent {
 			System.err.println("Error while contacting nameserver");
 			e.printStackTrace();
 		}
-
-		System.out.println("Failure agent run complete.");
-
 	}
 
 	@Override
