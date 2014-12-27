@@ -447,9 +447,17 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					}
 				}
 				
-				// If file already exists in records, replicate this file to previous node (if that was not the sender)
+				
 				InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
-				if (hasTheFile && !sender.equals(previousNode)) {
+
+				// If file doesn't exists in records, create one and add sender to available locations
+				if (!hasTheFile){
+					FileRecord newRecord = new FileRecord(fileName, fileHash);
+					newRecord.addNode(senderHash);
+					ownedFiles.add(newRecord);
+				}
+				// Else file already exists in records, replicate this file to previous node (if that was not the sender)
+				else if (!sender.equals(previousNode)) {
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					try {
 						tcp.sendFile(previousNode, file, false);
@@ -458,12 +466,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						removeFailedNode(senderHash);
 					}
 
-				}
-				// Else create record and add sender to downloadlocations
-				else {
-					FileRecord newRecord = new FileRecord(fileName, fileHash);
-					newRecord.addNode(senderHash);
-					ownedFiles.add(newRecord);
 				}
 			}
 			// If node is not the owner, add the file to the replicated files

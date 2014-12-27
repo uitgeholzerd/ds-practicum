@@ -38,8 +38,7 @@ public class FileAgent implements IAgent {
 	/**
 	 * 
 	 */
-	public void run() {	
-		System.out.println("FileAgent started on " + client.getName());
+	public void run() {
 		// Add new files to the file agents list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {
