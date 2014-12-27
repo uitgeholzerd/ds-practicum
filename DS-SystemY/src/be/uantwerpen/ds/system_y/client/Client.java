@@ -850,7 +850,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				boolean failed = false;
 				try {
 					String nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
-					System.out.printf("receiveAgent: next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
 					boolean sendAgent = agent.setCurrentClient(thisClient);
 
 					Thread agentThread = new Thread(agent);
@@ -863,6 +862,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
 					}
 
+					System.out.printf("Sending agent to next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
 					Thread.sleep(5000);
 					//TODO ping next node?
 					if (sendAgent) {

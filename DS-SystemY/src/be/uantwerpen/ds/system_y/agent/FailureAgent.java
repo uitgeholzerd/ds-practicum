@@ -70,6 +70,11 @@ public class FailureAgent implements IAgent {
 	 */
 	@Override
 	public void run() {
+		// Dont perform actions if the cycle is complete (these actions were already performed during the first run)
+		if (!firstRun && client.getHash() == startNodeHash) {
+			return;
+		}
+		
 		try {
 			InetAddress newOwner = nameServer.lookupNeighbours(failedNodeHash)[0];
 			boolean isOwner;
