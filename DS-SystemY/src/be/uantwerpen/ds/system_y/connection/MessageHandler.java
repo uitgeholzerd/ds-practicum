@@ -46,17 +46,17 @@ public class MessageHandler {
 			System.out.println("New node joined with hash " + newNodeHash);
 
 			// Check if the new node is the previous and/or next neighbour of the current node
+			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
+					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
+				System.out.println("It's between me and the previous node!");
+				client.setPreviousNodeHash(newNodeHash);
+			}
 			if ((client.getHash() < newNodeHash && newNodeHash < client.getNextNodeHash()) || client.getNextNodeHash() == client.getHash()
 					|| (client.getNextNodeHash() < client.getHash() && (client.getHash() < newNodeHash || newNodeHash < client.getNextNodeHash()))) {
 				System.out.println("It's between me and the next node!");
 				udp.sendMessage(sender, Client.UDP_CLIENT_PORT, Protocol.SET_NODES, client.getHash() + " " + client.getNextNodeHash());
 				client.setNextNodeHash(newNodeHash);
 				client.recheckOwnedFiles();
-			}
-			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
-					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
-				System.out.println("It's between me and the previous node!");
-				client.setPreviousNodeHash(newNodeHash);
 			}
 
 		} catch (IOException e) {

@@ -547,17 +547,26 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			try {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
-				System.out.println("*** Rechecking files,This is owner: " + !this.getAddress().equals(owner));
+				
+				System.out.println("*** Rechecking file:" + fileName);
+				System.out.println("*** New owner: " + !this.getAddress().equals(owner));
 				System.out.println("*** list empty: " + record.getNodeHashes().isEmpty());
 				System.out.println("*** different prev node hash: " + (this.hash != previousNodeHash));
+				
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				if (!this.getAddress().equals(owner)) {
 					try {
 						tcp.sendFile(owner, file, true);
+						
+						// Pass the previously available locations to the new owner
+						for (Integer nodeHash : record.getNodeHashes()) {
+							udp.sendMessage(owner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, nodeHash + " " + fileName);
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
 						removeFailedNode(nameServer.reverseLookupNode(owner.getHostAddress()));
 					}
+					
 					iterator.remove();
 
 					// Add file to local files
@@ -782,8 +791,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 * @param dcNode Address of node unavailable node
 	 */
-	public void removeFileLocation(int nodeHash) {
-		synchronized (ownedFiles) {
+	public synchronized void removeFileLocation(int nodeHash) {
+		//synchronized (ownedFiles) {
 			for (FileRecord record : ownedFiles) {
 				// Remove download location of file
 				record.removeNode(nodeHash);
@@ -796,7 +805,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				}
 			}
 
-		}
+		//}
 	}
 
 	/**
@@ -871,7 +880,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 					Thread.sleep(5000);
 					if (sendAgent) {
-						System.out.printf("Sending agent to next client address=%s hash=%d%n", nextNodeAddress, nextNodeHash);
 						try {
 							agent.prepareToSend();
 							Registry registry = LocateRegistry.getRegistry(nextNodeAddress, Client.rmiPort);

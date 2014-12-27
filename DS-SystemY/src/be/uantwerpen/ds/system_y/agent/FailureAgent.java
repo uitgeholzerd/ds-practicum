@@ -93,7 +93,7 @@ public class FailureAgent implements IAgent {
 						// Add file to owned files directory and remove it from the local files
 						(new File(Client.LOCAL_FILE_PATH + fileName)).renameTo(new File(Client.OWNED_FILE_PATH + fileName));
 						client.getLocalFiles().remove(fileName);
-						//TODO replicate to prev neighbour?
+						//TODO bestand nog repliceren naar prev node?
 					}
 					// Else check if the new owner already has the file and let him know the file is available at the current location
 					else if (client.getTCPHandler().checkHasOwnedFile(newOwner, fileName)) {
