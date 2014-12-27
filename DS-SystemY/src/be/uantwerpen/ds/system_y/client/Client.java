@@ -534,13 +534,15 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		InetAddress owner;
 		String fileName;
 		
+		// For each owned, files check if the current node is still the owner
+		// If not, send the file to the new owner
 		for (Iterator<FileRecord> iterator = ownedFiles.iterator(); iterator.hasNext();) {
 			FileRecord record = (FileRecord) iterator.next();
 			try {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
+				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				if (!this.getAddress().equals(owner)) {
-					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					try {
 						tcp.sendFile(owner, file, true);
 					} catch (IOException e) {
@@ -549,6 +551,18 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					}
 					iterator.remove();
 					file.delete();
+				}
+				// If this node is the file owner but the filed hasn't been cloned to it's previous neighbour yet, send it to them
+				else if (record.getNodes().isEmpty()) {
+					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
+					try {
+						tcp.sendFile(previousNode, file, false);
+					} catch (IOException e) {
+						e.printStackTrace();
+						// Remote node could not be reached and should be removed
+						removeFailedNode(previousNodeHash);
+					}
+					record.addNode(previousNode);
 				}
 			} catch (RemoteException e) {
 				System.err.println("Unable to contact nameServer");
