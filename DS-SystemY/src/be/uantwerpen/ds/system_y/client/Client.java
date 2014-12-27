@@ -360,7 +360,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			break;
 
 		case FILE_LOCATION_AVAILABLE:
-			addFileCopy(message[1], message[2]);
+			addFileCopy(Integer.parseInt(message[1]), message[2]);
 			break;
 
 		case DOWNLOAD_REQUEST:
@@ -806,16 +806,16 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * This methodes will be called when a file is received.
 	 * The node will check if it's the owner of the file and if so, add the sender to the list of avialable location
 	 * 
-	 * @param otherNode File sender
+	 * @param nodeHash Hash of the node on which the file is available
 	 * @param fileName Name of the file
 	 */
-	private void addFileCopy(String otherNode, String fileName) {
+	private void addFileCopy(int nodeHash, String fileName) {
 		try {
 			for (FileRecord record : ownedFiles) {
 				// Search for file in owned files list
 				if (record.getFileName() == fileName) {
 
-					InetAddress node = nameServer.lookupNodeByName(otherNode);
+					InetAddress node = nameServer.lookupNode(nodeHash);
 					record.addNode(node);
 				}
 			}

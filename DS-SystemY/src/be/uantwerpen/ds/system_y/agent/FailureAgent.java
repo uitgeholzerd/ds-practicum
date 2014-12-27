@@ -93,7 +93,7 @@ public class FailureAgent implements IAgent {
 					// If the new owner already has the file, let him know the file is available at the current location
 					if (client.getTCPHandler().checkFileOwner(newOwner, fileName)) {
 						try {
-							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, fileName);
+							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, client.getHash() + " " + fileName);
 						} catch (IOException e) {
 							System.err.println("Error while sending UDP message");
 							e.printStackTrace();
