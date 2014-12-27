@@ -438,17 +438,18 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			if (isOwner) {
 				boolean hasTheFile = false;
 				int fileHash = nameServer.getShortHash(fileName);
-				FileRecord newRecord = new FileRecord(fileName, fileHash);
 				// Check if file exists in records
-				for (FileRecord localRecord : ownedFiles) {
-					if (newRecord.equals(localRecord)) {
+				for (FileRecord record : ownedFiles) {
+					if (fileName.equals(record.getFileName())) {
 						hasTheFile = true;
+						record.addNode(senderHash);
 						break;
 					}
 				}
-				// If file already exists in records, replicate this file to previous node
-				if (hasTheFile) {
-					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
+				
+				// If file already exists in records, replicate this file to previous node (if that was not the sender)
+				InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
+				if (hasTheFile && !sender.equals(previousNode)) {
 					File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 					try {
 						tcp.sendFile(previousNode, file, false);
@@ -460,6 +461,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				}
 				// Else create record and add sender to downloadlocations
 				else {
+					FileRecord newRecord = new FileRecord(fileName, fileHash);
 					newRecord.addNode(senderHash);
 					ownedFiles.add(newRecord);
 				}
@@ -549,8 +551,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				owner = nameServer.getFilelocation(fileName);
 				
 				System.out.println("*** Rechecking file:" + fileName);
-				System.out.println("*** list empty: " + record.getNodeHashes().isEmpty());
-				System.out.println("*** different prev node hash: " + (this.hash != previousNodeHash));
 				
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				if (!this.getAddress().equals(owner)) {
@@ -576,7 +576,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				// If this node is the file owner but the filed hasn't been cloned to it's previous neighbour yet, send it to them
 				else if (record.getNodeHashes().isEmpty() && this.hash != previousNodeHash) {
 					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
-					System.out.println("List empty and diff prev node hash, copying to " + previousNode.getHostAddress());
+					System.out.println("*** List empty and diff prev node hash, copying to " + previousNode.getHostAddress());
 					try {
 						tcp.sendFile(previousNode, file, false);
 					} catch (IOException e) {
