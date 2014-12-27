@@ -45,7 +45,7 @@ public class MessageHandler {
 			int newNodeHash = client.getNameServer().getShortHash(message[1]);
 			System.out.println("New node joined with hash " + newNodeHash);
 
-			// Check if the new node is the previous or next neighbour of the current node
+			// Check if the new node is the previous and/or next neighbour of the current node
 			if ((client.getHash() < newNodeHash && newNodeHash < client.getNextNodeHash()) || client.getNextNodeHash() == client.getHash()
 					|| (client.getNextNodeHash() < client.getHash() && (client.getHash() < newNodeHash || newNodeHash < client.getNextNodeHash()))) {
 				System.out.println("It's between me and the next node!");
@@ -53,7 +53,7 @@ public class MessageHandler {
 				client.setNextNodeHash(newNodeHash);
 				client.recheckOwnedFiles();
 			}
-			else if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
+			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
 					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
 				System.out.println("It's between me and the previous node!");
 				client.setPreviousNodeHash(newNodeHash);

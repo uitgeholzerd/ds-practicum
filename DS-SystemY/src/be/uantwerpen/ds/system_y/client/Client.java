@@ -849,25 +849,32 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			public void run() {
 				boolean failed = false;
 				try {
-					String nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
-					boolean sendAgent = agent.setCurrentClient(thisClient);
+					InetAddress nextNodeLocation = nameServer.lookupNode(nextNodeHash);
+					String nextNodeAddress;
+					if (nextNodeLocation == null) {
+						nextNodeAddress = thisClient.getAddress().getHostAddress();
+					}
+					else {
+						nextNodeAddress = nextNodeLocation.getHostAddress();
+					}
 
+					boolean sendAgent = agent.setCurrentClient(thisClient);
 					Thread agentThread = new Thread(agent);
 					agentThread.start();
 					agentThread.join();
 
 					// As long as there are no other nodes in the network, don't send the agent
-					while (thisClient.getAddress().getHostAddress().equals(nextClientAddress)) {
+					while (thisClient.getAddress().getHostAddress().equals(nextNodeAddress)) {
 						Thread.sleep(10000);
-						nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
+						nextNodeAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
 					}
 
 					Thread.sleep(5000);
 					if (sendAgent) {
-						System.out.printf("Sending agent to next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
+						System.out.printf("Sending agent to next client address=%s hash=%d%n", nextNodeAddress, nextNodeHash);
 						try {
 							agent.prepareToSend();
-							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);
+							Registry registry = LocateRegistry.getRegistry(nextNodeAddress, Client.rmiPort);
 							IClient nextClient = (IClient) registry.lookup(Client.bindLocation);
 							nextClient.receiveAgent(agent);
 						} catch (ConnectException e) {
