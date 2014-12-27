@@ -506,8 +506,10 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						removeFailedNode(previousNodeHash);
 					}
 					record.addNode(previousNode);
+					System.out.println(previousNode.getHostAddress() + " added to record " + fileName);
 				}
-
+				
+				System.out.println("Record added to owned files");
 				ownedFiles.add(record);
 				file.renameTo(new File(OWNED_FILE_PATH + fileName));
 			} else {
@@ -562,6 +564,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						// Remote node could not be reached and should be removed
 						removeFailedNode(previousNodeHash);
 					}
+					System.out.println(previousNode.getHostAddress() + " added to record " + fileName + " (recheck)");
 					record.addNode(previousNode);
 				}
 			} catch (RemoteException e) {
