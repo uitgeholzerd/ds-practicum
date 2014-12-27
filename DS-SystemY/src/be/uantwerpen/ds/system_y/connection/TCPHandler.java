@@ -125,7 +125,7 @@ public class TCPHandler implements Runnable{
 				out.write(fileByteArray, 0, count);
 			}
 			out.flush();
-			System.out.println("sent.");
+			System.out.println("File sent.");
 		} catch (IOException e) {
 			System.err.println("Error while sending file in TCPHandler");
 			e.printStackTrace();
@@ -146,6 +146,7 @@ public class TCPHandler implements Runnable{
 			}
 		}
 	}
+	
 	/**
 	 * Closes the socket of the client
 	 */

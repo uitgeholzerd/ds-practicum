@@ -759,16 +759,19 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		InetAddress nodeLocation;
 		try {
 			nodeLocation = nameServer.lookupNode(nodeHash);
-			for (FileRecord record : ownedFiles) {
-				// Remove download location of file
-				record.removeNode(nodeLocation);
-
-				// Remove file from owned files list + file itself
-				if (record.getNodes().isEmpty()) {
-					ownedFiles.remove(record);
-					File file = Paths.get(OWNED_FILE_PATH + record.getFileName()).toFile();
-					file.delete();
+			synchronized (ownedFiles){
+				for (FileRecord record : ownedFiles) {
+					// Remove download location of file
+					record.removeNode(nodeLocation);
+	
+					// Remove file from owned files list + file itself
+					if (record.getNodes().isEmpty()) {
+						ownedFiles.remove(record);
+						File file = Paths.get(OWNED_FILE_PATH + record.getFileName()).toFile();
+						file.delete();
+					}
 				}
+				
 			}
 		} catch (RemoteException e) {
 			System.err.println("Error while contacting name server");
@@ -830,6 +833,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 		Runnable run = new Runnable() {
 			public void run() {
+				boolean failed = false;
 				try {
 					String nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
 					System.out.printf("receiveAgent: next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
@@ -861,17 +865,21 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					}
 				} catch (InterruptedException e) {
 					System.err.println("Interrupted while waiting for agent thread");
+					e.printStackTrace();
+					failed = true;
 				} catch (RemoteException e) {
 					System.err.println("Error while locating registry or client");
 					e.printStackTrace();
+					failed = true;
 				} catch (NotBoundException e) {
 					System.err.println("Error while looking up remote client");
 					e.printStackTrace();
+					failed = true;
 				} finally { 
 					//TODO is dit goed?
-//					if (agent instanceof FileAgent) {
-//						thisClient.receiveAgent(new FileAgent()); 
-//					}
+					if (failed && agent instanceof FileAgent) {
+						thisClient.receiveAgent(new FileAgent()); 
+					}
 				 }
 				 
 
