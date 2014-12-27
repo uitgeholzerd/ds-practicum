@@ -434,6 +434,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		try {
 			// If this node is the owner of the file and the file doesn't exist in the records, create a new record for it
 			// and add the sender to the list of nodes where it is available
+			int senderHash = nameServer.reverseLookupNode(sender.getHostAddress());
 			if (isOwner) {
 				boolean hasTheFile = false;
 				int fileHash = nameServer.getShortHash(fileName);
@@ -453,13 +454,13 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						tcp.sendFile(previousNode, file, false);
 					} catch (IOException e) {
 						// Remote node could not be reached and should be removed
-						removeFailedNode(nameServer.reverseLookupNode(sender.getHostAddress()));
+						removeFailedNode(senderHash);
 					}
 
 				}
 				// Else create record and add sender to downloadlocations
 				else {
-					newRecord.addNode(sender);
+					newRecord.addNode(senderHash);
 					ownedFiles.add(newRecord);
 				}
 			}
@@ -505,7 +506,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						// Remote node could not be reached and should be removed
 						removeFailedNode(previousNodeHash);
 					}
-					record.addNode(previousNode);
+					record.addNode(previousNodeHash);
 					System.out.println(previousNode.getHostAddress() + " added to record " + fileName);
 				}
 				
@@ -546,6 +547,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			try {
 				fileName = record.getFileName();
 				owner = nameServer.getFilelocation(fileName);
+				System.out.println("*** Rechecking files,This is owner: " + !this.getAddress().equals(owner));
+				System.out.println("*** list empty: " + record.getNodeHashes().isEmpty());
+				System.out.println("*** different prev node hash: " + (this.hash != previousNodeHash));
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				if (!this.getAddress().equals(owner)) {
 					try {
@@ -561,7 +565,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					localFiles.add(fileName);
 				}
 				// If this node is the file owner but the filed hasn't been cloned to it's previous neighbour yet, send it to them
-				else if (record.getNodes().isEmpty() && this.hash != previousNodeHash) {
+				else if (record.getNodeHashes().isEmpty() && this.hash != previousNodeHash) {
 					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
 					try {
 						tcp.sendFile(previousNode, file, false);
@@ -570,7 +574,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						// Remote node could not be reached and should be removed
 						removeFailedNode(previousNodeHash);
 					}
-					record.addNode(previousNode);
+					record.addNode(previousNodeHash);
 				}
 			} catch (RemoteException e) {
 				System.err.println("Unable to contact nameServer");
@@ -705,7 +709,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	public String debugOwnedFiles() {
 		String result = "Owned files:\n";
 		for (FileRecord entry : ownedFiles) {
-			result += entry.getFileName() + ": " + entry.getNodes().toString() + "\n";
+			result += entry.getFileName() + ": " + entry.getNodeHashes().toString() + "\n";
 		}
 		return result;
 	}
@@ -718,7 +722,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				result += "File record:\n";
 				result += " Name:" + entry.getFileName() + "\n";
 				result += " Hash:" + entry.getFileHash() + "\n";
-				result += " Nodes:" + entry.getNodes().toString() + "\n";
+				result += " Nodes:" + entry.getNodeHashes().toString() + "\n";
 			}
 		}
 		return result;
@@ -779,26 +783,19 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param dcNode Address of node unavailable node
 	 */
 	public void removeFileLocation(int nodeHash) {
-		InetAddress nodeLocation;
-		try {
-			nodeLocation = nameServer.lookupNode(nodeHash);
-			synchronized (ownedFiles){
-				for (FileRecord record : ownedFiles) {
-					// Remove download location of file
-					record.removeNode(nodeLocation);
-	
-					// Remove file from owned files list + file itself
-					if (record.getNodes().isEmpty()) {
-						ownedFiles.remove(record);
-						File file = Paths.get(OWNED_FILE_PATH + record.getFileName()).toFile();
-						file.delete();
-					}
+		synchronized (ownedFiles) {
+			for (FileRecord record : ownedFiles) {
+				// Remove download location of file
+				record.removeNode(nodeHash);
+
+				// Remove file from owned files list + file itself
+				if (record.getNodeHashes().isEmpty()) {
+					ownedFiles.remove(record);
+					File file = Paths.get(OWNED_FILE_PATH + record.getFileName()).toFile();
+					file.delete();
 				}
-				
 			}
-		} catch (RemoteException e) {
-			System.err.println("Error while contacting name server");
-			e.printStackTrace();
+
 		}
 	}
 
@@ -810,18 +807,12 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param fileName Name of the file
 	 */
 	private void addFileCopy(int nodeHash, String fileName) {
-		try {
-			for (FileRecord record : ownedFiles) {
-				// Search for file in owned files list
-				if (record.getFileName() == fileName) {
+		for (FileRecord record : ownedFiles) {
+			// Search for file in owned files list
+			if (record.getFileName() == fileName) {
 
-					InetAddress node = nameServer.lookupNode(nodeHash);
-					record.addNode(node);
-				}
+				record.addNode(nodeHash);
 			}
-		} catch (RemoteException e) {
-			System.err.println("Unable to contact nameServer");
-			e.printStackTrace();
 		}
 	}
 

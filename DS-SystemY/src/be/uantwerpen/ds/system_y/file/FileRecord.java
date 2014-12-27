@@ -7,12 +7,12 @@ import java.util.ArrayList;
 public class FileRecord {
 	private String fileName;
 	private int fileHash;
-	private ArrayList<InetAddress> nodes;
+	private ArrayList<Integer> nodeHashes;
 	
 	public FileRecord(String fileName, int fileHash) {
 		this.fileName = fileName;
 		this.fileHash = fileHash;
-		this.nodes = new ArrayList<InetAddress>();
+		this.nodeHashes = new ArrayList<Integer>();
 	}
 	
 	public String getFileName() {
@@ -23,16 +23,16 @@ public class FileRecord {
 		return fileHash;
 	}
 
-	public boolean addNode(InetAddress node) {
-		return nodes.add(node);
+	public boolean addNode(Integer nodeHash) {
+		return nodeHashes.add(nodeHash);
 	}
 	
-	public boolean removeNode(InetAddress node) {
-		return nodes.remove(node);
+	public boolean removeNode(Integer nodeHash) {
+		return nodeHashes.remove(nodeHash);
 	}
 	
-	public ArrayList<InetAddress> getNodes() {
-		return nodes;
+	public ArrayList<Integer> getNodeHashes() {
+		return nodeHashes;
 	}
 	
 

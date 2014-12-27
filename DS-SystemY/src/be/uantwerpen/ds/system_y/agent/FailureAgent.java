@@ -26,6 +26,7 @@ public class FailureAgent implements IAgent {
 	private int startNodeHash;
 
 	private boolean firstRun;
+	private boolean lastRun;
 
 	/**
 	 * Construtor for the failureAgent, save needed data in Agent:
@@ -45,6 +46,7 @@ public class FailureAgent implements IAgent {
 		if (!firstRun && client.getHash() == startNodeHash) {
 			System.out.println("Failure agent stopped");
 			this.client = client;
+			lastRun = true;
 			return false;
 		} else {
 			this.client = client;
@@ -67,7 +69,7 @@ public class FailureAgent implements IAgent {
 	@Override
 	public void run() {
 		// Dont perform actions if the cycle is complete (these actions were already performed during the first run)
-		if (!firstRun && client.getHash() == startNodeHash) {
+		if (lastRun) {
 			return;
 		}
 		
