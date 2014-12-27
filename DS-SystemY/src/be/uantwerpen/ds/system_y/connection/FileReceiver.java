@@ -11,5 +11,11 @@ public interface FileReceiver {
 	 */
 	void receiveFile(InetAddress sender, String fileName, boolean isOwner);
 
-	boolean isFileOwner(String fileName);
+	/**
+	 * Check if the object has a file with the given name in its owned files list
+	 * 
+	 * @param fileName	Name of the file
+	 * @return	True if object has the owned file, false if not
+	 */
+	boolean hasOwnedFile(String fileName);
 }

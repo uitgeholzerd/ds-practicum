@@ -51,6 +51,7 @@ public class FailureAgent implements IAgent {
 				e.printStackTrace();
 			}
 			*/
+			this.client = client;
 			return false;
 		} else {
 			this.client = client;
@@ -89,7 +90,7 @@ public class FailureAgent implements IAgent {
 				InetAddress newOwner = nameServer.getFilelocation(fileName);
 				
 				if (failedNodeWasOwner) {
-					
+					// If the new owner already has the file, let him know the file is available at the current location
 					if (client.getTCPHandler().checkFileOwner(newOwner, fileName)) {
 						try {
 							client.getUDPHandler().sendMessage(newOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_AVAILABLE, fileName);
@@ -97,7 +98,9 @@ public class FailureAgent implements IAgent {
 							System.err.println("Error while sending UDP message");
 							e.printStackTrace();
 						}
-					} else {
+					} 
+					// If the new owner doesn't of the file yet, send it to him
+					else {
 						try {
 							client.getTCPHandler().sendFile(newOwner, new File(Client.LOCAL_FILE_PATH + fileName), true);
 						} catch (IOException e) {

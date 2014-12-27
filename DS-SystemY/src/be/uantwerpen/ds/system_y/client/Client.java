@@ -395,7 +395,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param nodeName Name of the failed node
 	 */
 	public void removeFailedNode(int nodeHash) {
-		System.out.printf("Removing failed node with hash %d.%n", nodeHash);
+		System.out.printf("Detected failed node with hash %d.%n", nodeHash);
 		try {
 			InetAddress[] neighbours = nameServer.lookupNeighbours(nodeHash);
 			if (neighbours != null) {
@@ -555,10 +555,13 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						removeFailedNode(nameServer.reverseLookupNode(owner.getHostAddress()));
 					}
 					iterator.remove();
-					file.delete();
+
+					// Add file to local files
+					file.renameTo(new File(LOCAL_FILE_PATH + fileName));
+					localFiles.add(fileName);
 				}
 				// If this node is the file owner but the filed hasn't been cloned to it's previous neighbour yet, send it to them
-				else if (record.getNodes().isEmpty()) {
+				else if (record.getNodes().isEmpty() && this.hash != previousNodeHash) {
 					InetAddress previousNode = nameServer.lookupNode(previousNodeHash);
 					try {
 						tcp.sendFile(previousNode, file, false);
@@ -567,7 +570,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						// Remote node could not be reached and should be removed
 						removeFailedNode(previousNodeHash);
 					}
-					System.out.println(previousNode.getHostAddress() + " added to record " + fileName + " (recheck)");
 					record.addNode(previousNode);
 				}
 			} catch (RemoteException e) {
@@ -578,7 +580,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 	}
 
-	public boolean isFileOwner(String fileName) {
+	@Override
+	public boolean hasOwnedFile(String fileName) {
 		for (Iterator<FileRecord> iterator = ownedFiles.iterator(); iterator.hasNext();) {
 			FileRecord record = (FileRecord) iterator.next();
 			if (record.getFileName().equalsIgnoreCase(fileName))
@@ -868,11 +871,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						nextClientAddress = nameServer.lookupNode(nextNodeHash).getHostAddress();
 					}
 
-					System.out.printf("Sending agent to next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
 					Thread.sleep(5000);
-					//TODO ping next node?
 					if (sendAgent) {
-
+						System.out.printf("Sending agent to next client address=%s hash=%d%n", nextClientAddress, nextNodeHash);
 						try {
 							agent.prepareToSend();
 							Registry registry = LocateRegistry.getRegistry(nextClientAddress, Client.rmiPort);

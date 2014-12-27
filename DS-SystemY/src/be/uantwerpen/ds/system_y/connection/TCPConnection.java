@@ -67,8 +67,8 @@ public class TCPConnection implements Runnable {
 				client.receiveFile(sender, fileName, owner);
 				break;
 			case CHECK_OWNER:
-				System.out.printf("Check if I own %s.%n", fileName);
-				out.writeBoolean(client.isFileOwner(fileName));
+				System.out.printf("Check if I already own %s.%n", fileName);
+				out.writeBoolean(client.hasOwnedFile(fileName));
 				break;
 			default:
 				System.out.println("Unknown command: "+ command);

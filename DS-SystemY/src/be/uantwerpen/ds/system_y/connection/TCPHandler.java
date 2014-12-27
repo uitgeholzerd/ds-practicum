@@ -74,7 +74,7 @@ public class TCPHandler implements Runnable {
 			in = new DataInputStream(sendSocket.getInputStream());
 			out.writeUTF(Protocol.CHECK_OWNER + " " + fileName);
 			result = in.readBoolean();
-			System.out.printf("Check if %s owns %s: %s%n", address.getHostAddress(), fileName, result);
+			System.out.printf("Check if %s already owns %s: %s%n", address.getHostAddress(), fileName, result);
 
 		} catch (IOException e) {
 			System.err.println("Error while checking owner TCPHandler");
