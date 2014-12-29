@@ -7,6 +7,10 @@ import java.util.TreeMap;
 import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 
+/**
+ * Agent that circulates the network, updates local file lists and handles locks/lockrequest
+ *
+ */
 public class FileAgent implements IAgent {
 
 	private static final long serialVersionUID = -7644508104728738008L;
@@ -34,8 +38,7 @@ public class FileAgent implements IAgent {
 	/**
 	 * 
 	 */
-	public void run() {	
-		System.out.println("FileAgent started on " + client.getName());
+	public void run() {
 		// Add new files to the file agents list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
 		for (FileRecord fileRecord : ownedFiles) {

@@ -1,37 +1,38 @@
 package be.uantwerpen.ds.system_y.test;
 
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 public class Test {
 	public static void main(String[] args) throws Exception {
-		TreeMap<String, String> test = new TreeMap<String, String>();
-		test.put("test", "123");
-		test.put("lol", "roflmao");
-		test.put("a", "z");
+		String o;
+		int hash;
 		
-		System.out.println("Print original");
-		for (Entry<String, String> entry : test.entrySet()) {
-			System.out.println(entry.getKey() + " - " + entry.getValue());
-		}
+		o = "10.0.5.5euftly";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
+		o = "10.0.5.6cdnd";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
+		o = "10.0.5.7kdcuo";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
 		
-		TreeMap<String, String> clone = new TreeMap<String, String>();
-		test.putAll(clone);
-		clone.put("New", "!!!");
-		clone.put("test", "???");
-		clone.remove("a");
-
-		System.out.println("\n*****************************");
-		System.out.println("Print clone");
-		for (Entry<String, String> entry : clone.entrySet()) {
-			System.out.println(entry.getKey() + " - " + entry.getValue());
-		}
-
-		System.out.println("\n*****************************");
-		System.out.println("Print original2");
-		for (Entry<String, String> entry : test.entrySet()) {
-			System.out.println(entry.getKey() + " - " + entry.getValue());
-		}
+		System.out.println();
+		
+		o = "lollies";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
+		o = "affa";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
+		o = "pap";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
+		o = "111";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
+		o = "zzz";
+		hash = Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
+		System.out.println(o + " - " + hash);
 	}
 
 }

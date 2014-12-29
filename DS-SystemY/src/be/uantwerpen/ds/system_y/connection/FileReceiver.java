@@ -9,7 +9,13 @@ public interface FileReceiver {
 	 * @param fileHash Hash of the file
 	 * @param fileName Name of the file
 	 */
-	void fileReceived(InetAddress sender, String fileName, boolean isOwner);
+	void receiveFile(InetAddress sender, String fileName, boolean isOwner);
 
-	boolean isFileOwner(String fileName);
+	/**
+	 * Check if the object has a file with the given name in its owned files list
+	 * 
+	 * @param fileName	Name of the file
+	 * @return	True if object has the owned file, false if not
+	 */
+	boolean hasOwnedFile(String fileName);
 }

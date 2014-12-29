@@ -13,8 +13,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import be.uantwerpen.ds.system_y.client.Client;
-import be.uantwerpen.ds.system_y.client.IClient;
 
+/**
+ * Thread that contains a single TCP connection
+ *
+ */
 public class TCPConnection implements Runnable {
 	private Socket clientSocket;
 	private DataInputStream in;
@@ -28,7 +31,7 @@ public class TCPConnection implements Runnable {
 			in = new DataInputStream(clientSocket.getInputStream());
 			out = new DataOutputStream(clientSocket.getOutputStream());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while creating TCP connection");
 			e.printStackTrace();
 		}
 	}
@@ -42,6 +45,7 @@ public class TCPConnection implements Runnable {
 			String[] message = in.readUTF().split(" ");
 			Protocol command = Protocol.valueOf(message[0]);
 			String fileName = message[1];
+			System.out.printf("TCP command: %s.%n", command);
 			switch (command){
 			case SEND_FILE:
 				boolean owner = in.readBoolean();
@@ -60,18 +64,18 @@ public class TCPConnection implements Runnable {
 					fos.write(buffer, 0, count);
 				}
 				fos.flush();
-				client.fileReceived(sender, fileName, owner);
+				client.receiveFile(sender, fileName, owner);
 				break;
 			case CHECK_OWNER:
-				System.out.println("CHECK_OWNER");
-				out.writeBoolean(client.isFileOwner(fileName));
+				System.out.printf("Check if I already own %s.%n", fileName);
+				out.writeBoolean(client.hasOwnedFile(fileName));
 				break;
 			default:
 				System.out.println("Unknown command: "+ command);
 			}
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error during TCP connection");
 			e.printStackTrace();
 		} finally {
 			try {
@@ -82,7 +86,7 @@ public class TCPConnection implements Runnable {
 				out.close();
 				clientSocket.close();
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
+				System.err.println("Error while closing TCP connection");
 				e1.printStackTrace();
 			}
 		}

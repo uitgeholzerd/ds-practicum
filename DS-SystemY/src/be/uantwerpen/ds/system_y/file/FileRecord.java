@@ -1,18 +1,17 @@
 package be.uantwerpen.ds.system_y.file;
 
-import java.net.InetAddress;
-import java.util.ArrayList;
+import java.util.TreeSet;
 
 
 public class FileRecord {
 	private String fileName;
 	private int fileHash;
-	private ArrayList<InetAddress> nodes;
+	private TreeSet<Integer> nodeHashes;
 	
 	public FileRecord(String fileName, int fileHash) {
 		this.fileName = fileName;
 		this.fileHash = fileHash;
-		this.nodes = new ArrayList<InetAddress>();
+		this.nodeHashes = new TreeSet<Integer>();
 	}
 	
 	public String getFileName() {
@@ -23,16 +22,16 @@ public class FileRecord {
 		return fileHash;
 	}
 
-	public boolean addNode(InetAddress node) {
-		return nodes.add(node);
+	public boolean addNode(Integer nodeHash) {
+		return nodeHashes.add(nodeHash);
 	}
 	
-	public boolean removeNode(InetAddress node) {
-		return nodes.remove(node);
+	public boolean removeNode(Integer nodeHash) {
+		return nodeHashes.remove(nodeHash);
 	}
 	
-	public ArrayList<InetAddress> getNodes() {
-		return nodes;
+	public TreeSet<Integer> getNodeHashes() {
+		return nodeHashes;
 	}
 	
 

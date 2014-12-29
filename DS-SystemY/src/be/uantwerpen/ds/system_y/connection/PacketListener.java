@@ -4,8 +4,7 @@ import java.net.InetAddress;
 
 public interface PacketListener {
 	/**
-	 * This method is triggered when a package is sent to the object the
-	 * implements this interface (uni- or multicast)
+	 * This method is triggered when a package is sent to the object that implements this interface (uni- or multicast)
 	 * 
 	 * @param sender The address of the sender of the packet
 	 * @param message The content of the packet

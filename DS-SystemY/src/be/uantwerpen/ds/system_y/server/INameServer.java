@@ -7,20 +7,18 @@ import java.rmi.RemoteException;
 public interface INameServer extends Remote {
 
 	/**
-	 * Get the location of a node by its hash
+	 * Get the address of the node by its hash
 	 * 
 	 * @param hash The hash of the node
-	 * @return The location (IP) at which the node can be found if it exists, else returns null
-	 * @throws RemoteException
+	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	InetAddress lookupNode(int hash) throws RemoteException;
 
 	/**
-	 * Get the location of a node by its hash
+	 * Get the address of the node by its name
 	 * 
 	 * @param name The name of the node
-	 * @return The location (IP) at which the node can be found if it exists, else returns null
-	 * @throws RemoteException
+	 * @return The address of the node, returns an empty string if the node was not found
 	 */
 	InetAddress lookupNodeByName(String name) throws RemoteException;
 	
@@ -60,7 +58,7 @@ public interface INameServer extends Remote {
 	int getShortHash(Object o) throws RemoteException;
 
 	/**
-	 * Searches the neighbours of the given node
+	 * Retrieves the neighbours of the given node
 	 * 
 	 * @param name The name of the node of whos the neighbours are being looked up
 	 * @return An array containing the names of previous and the next nodes. Returns null if the node was not found

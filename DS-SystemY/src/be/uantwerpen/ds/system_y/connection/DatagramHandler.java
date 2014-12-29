@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 
 /**
- * @author seb
+ * Handler for UDP communication, both sending and receiving
  *
  */
 
@@ -20,8 +20,7 @@ public class DatagramHandler implements Runnable {
 	private Thread listenThread;
 
 	/**
-	 * @param port
-	 *            UDP port to listen on
+	 * @param port	UDP port to listen on
 	 * @throws SocketException
 	 */
 	public DatagramHandler(int listenPort, PacketListener listener) throws SocketException {
@@ -55,6 +54,7 @@ public class DatagramHandler implements Runnable {
 			}
 			if (inPacket != null && inPacket.getAddress() != null) {
 				String msg = new String(buffer, 0, inPacket.getLength());
+				// Pass message contents to the receiver
 				listener.packetReceived(inPacket.getAddress(), msg);
 			}
 		}
@@ -85,10 +85,10 @@ public class DatagramHandler implements Runnable {
 		try {
 			socket.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while closing socket");
 			e.printStackTrace();
 		}
 		socket = null;
-		//listenThread = null;
+		listenThread = null;
 	}
 }

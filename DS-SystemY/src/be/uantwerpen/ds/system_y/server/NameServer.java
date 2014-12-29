@@ -88,7 +88,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * Saves the current map of nodes to the the hard disk
 	 * 
 	 */
-	// TODO de enige reden dat deze methode public is, is voor de tests
+	// TODO public voor debugging
 	public void saveMap() {
 		FileOutputStream fos = null;
 		XMLEncoder xml = null;
@@ -126,7 +126,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	 * @param address The address at which the node can be found
 	 * @return True if the node was added, false if the name already exists and the node was not added
 	 */
-	// TODO de enige reden dat deze methode public is, is voor de tests
+	// TODO public voor debugging
 	public boolean registerNode(String name, String address) {
 		int hash = getShortHash(name);
 		boolean success;
@@ -157,23 +157,13 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return success;
 	}
 
-	/**
-	 * Retrieve the address of the node given its name
-	 * 
-	 * @param name The name of the node
-	 * @return The address of the node, returns an empty string if the node was not found
-	 */
+	@Override
 	public InetAddress lookupNodeByName(String name) {
 		int hash = getShortHash(name);
 		return lookupNode(hash);
 	}
 
-	/**
-	 * Retrieve the address of the node given its hash
-	 * 
-	 * @param hash The hash of the node
-	 * @return The address of the node, returns an empty string if the node was not found
-	 */
+	@Override
 	public InetAddress lookupNode(int hash) {
 		if (nodeMap.containsKey(hash)) {
 			try {
@@ -190,17 +180,17 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	@Override
 	public int reverseLookupNode(String address) throws RemoteException {
 		int hash = -1;
-		
+
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
 			if (entry.getValue().equals(address)) {
 				hash = entry.getKey();
 				break;
 			}
 		}
-		
+
 		return hash;
 	}
-	
+
 	/**
 	 * Calculates the location of the file in the given map
 	 * 
@@ -232,29 +222,26 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 	}
 
-
 	@Override
 	public InetAddress getFilelocation(String fileName) {
 		return getFilelocationFromMap(fileName, nodeMap);
 	}
-	
+
 	@Override
 	public boolean isFileOwner(int nodeHash, InetAddress nodeLocation, String fileName) throws RemoteException {
 		SortedMap<Integer, String> clonedMap = new TreeMap<Integer, String>();
 		nodeMap.putAll(clonedMap);
 		clonedMap.put(nodeHash, nodeLocation.getHostAddress());
-		
+
 		InetAddress location = getFilelocationFromMap(fileName, clonedMap);
 		return nodeLocation.equals(location);
 	}
-	
-	
 
 	@Override
 	public InetAddress[] lookupNeighbours(int nodeHash) {
 		String previousNode, nextNode;
 		int index = 0;
-		
+
 		// If the node was not found, return null
 		if (!nodeMap.containsKey(nodeHash)) {
 			return null;
@@ -283,22 +270,14 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 
 		try {
-			InetAddress prev =  InetAddress.getByName(previousNode);
-			InetAddress next =  InetAddress.getByName(nextNode);
-			return new InetAddress[] {prev, next};
+			InetAddress prev = InetAddress.getByName(previousNode);
+			InetAddress next = InetAddress.getByName(nextNode);
+			return new InetAddress[] { prev, next };
 		} catch (UnknownHostException e) {
 			System.err.println("NameServer - Host not found");
 			return null;
 		}
 	}
-
-	/**
-	 * This method is triggered when a package is sent to this server (uni- or multicast) Depending on the command contained in the message, the server will perform
-	 * different actions
-	 * 
-	 * @param address IP of the sender
-	 * @param port Data containing the command and a message
-	 */
 
 	@Override
 	public void packetReceived(InetAddress sender, String data) {
@@ -332,8 +311,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 	public int getShortHash(Object o) {
 		if (o == null) {
 			return -1;
-		}
-		else {
+		} else {
 			return Math.abs(o.hashCode()) % (int) Math.pow(2, 15);
 		}
 	}
@@ -350,9 +328,8 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		}
 		return address;
 	}
-	
 
-	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	// TODO debugging
 	public String debugDumpMap() {
 		String result = "Nodes in map:\n";
 		for (Map.Entry<Integer, String> entry : nodeMap.entrySet()) {
@@ -361,7 +338,7 @@ public class NameServer extends UnicastRemoteObject implements INameServer, Pack
 		return result;
 	}
 
-	// TODO Wordt enkel voor testing gebruikt, mag uiteindelijk weg
+	// TODO debugging
 	public void debugClearMap() {
 		nodeMap = Collections.synchronizedSortedMap(new TreeMap<Integer, String>());
 	}

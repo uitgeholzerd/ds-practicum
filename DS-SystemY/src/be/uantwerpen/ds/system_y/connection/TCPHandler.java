@@ -9,16 +9,17 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import be.uantwerpen.ds.system_y.client.IClient;
-
-
-public class TCPHandler implements Runnable{
+/**
+ * Handles TCP communication by spawning TCP connections
+ * 
+ */
+public class TCPHandler implements Runnable {
 	private int port;
 	private Socket sendSocket;
-	private ServerSocket listenSocket; 
+	private ServerSocket listenSocket;
 	private Thread listenThread;
 	private FileReceiver listener;
-	
+
 	public TCPHandler(int port, FileReceiver listener) {
 		this.port = port;
 		this.listener = listener;
@@ -27,12 +28,12 @@ public class TCPHandler implements Runnable{
 			listenThread = new Thread(this);
 			listenThread.setName("TCPHandler");
 			listenThread.start();
-			
+
 		} catch (IOException e) {
 			System.err.println("Error while initializing TCPHandler socket");
 			e.printStackTrace();
 		}
-		
+
 	}
 
 	@Override
@@ -46,27 +47,35 @@ public class TCPHandler implements Runnable{
 				connection = new TCPConnection(connectionSocket, listener);
 				(new Thread(connection)).start();
 			} catch (IOException e) {
-				if(!listenThread.isInterrupted()) {
+				if (!listenThread.isInterrupted()) {
 					System.err.println("Error while listening for connections in TCPHandler");
 					e.printStackTrace();
-					}
+				}
 			}
 		}
 		System.out.println("TCP socket closed ");
 	}
-	public boolean checkFileOwner(InetAddress address, String fileName){
+
+	/**
+	 * Check if the node is already of of the file
+	 * 
+	 * @param address Address of the node
+	 * @param fileName Name of the file
+	 * @return
+	 */
+	public boolean checkHasOwnedFile(InetAddress address, String fileName) {
 		boolean result = false;
 		DataOutputStream out = null;
 		DataInputStream in = null;
-		
+
 		try {
 			sendSocket = new Socket(address, port);
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			in = new DataInputStream(sendSocket.getInputStream());
-			out.writeUTF(Protocol.CHECK_OWNER +" "+ fileName);
+			out.writeUTF(Protocol.CHECK_OWNER + " " + fileName);
 			result = in.readBoolean();
-			System.out.printf("Check if %s owns %s: %s%n", address.getHostAddress(), fileName, result);
-			
+			System.out.printf("Check if %s already owns %s: %s%n", address.getHostAddress(), fileName, result);
+
 		} catch (IOException e) {
 			System.err.println("Error while checking owner TCPHandler");
 			e.printStackTrace();
@@ -78,8 +87,8 @@ public class TCPHandler implements Runnable{
 				if (in != null) {
 					in.close();
 				}
-				if (sendSocket != null ){
-					//sendSocket.close();
+				if (sendSocket != null) {
+					// sendSocket.close();
 				}
 			} catch (Exception e) {
 				System.err.println("Error while closing TCPHandler resources");
@@ -89,42 +98,42 @@ public class TCPHandler implements Runnable{
 
 		return result;
 	}
+
 	/**
 	 * Send a file to the address per 1024 bytes
 	 * 
-	 * @param address	Address of the receiver
-	 * @param file	Name of the file
-	 * @param filehash	Hash of the file
+	 * @param address Address of the receiver
+	 * @param file Name of the file
+	 * @param filehash Hash of the file
 	 * 
 	 * @throws IOException This is throw if the address cannot be reached
 	 */
 	public void sendFile(InetAddress address, File file, boolean receiverIsOwner) throws IOException {
-		System.out.print("Sending file " + file +"... ");
+		System.out.print("Sending file " + file + " to " + address.getHostAddress() + "... ");
 		FileInputStream fis = null;
 		DataOutputStream out = null;
-		
+
 		sendSocket = new Socket(address, port);
-		
+
 		try {
 			out = new DataOutputStream(sendSocket.getOutputStream());
 			fis = new FileInputStream(file);
 			byte[] fileByteArray = new byte[1024];
-			
-			
+
 			out.writeUTF(Protocol.SEND_FILE + " " + file.getName());
 			out.flush();
-			
+
 			out.writeBoolean(receiverIsOwner);
-			
+
 			out.flush();
-			
+
 			int count;
 			// While there are bytes available, write them to the outputstream
 			while ((count = fis.read(fileByteArray)) >= 0) {
 				out.write(fileByteArray, 0, count);
 			}
 			out.flush();
-			System.out.println("sent.");
+			System.out.println("File sent.");
 		} catch (IOException e) {
 			System.err.println("Error while sending file in TCPHandler");
 			e.printStackTrace();
@@ -136,8 +145,8 @@ public class TCPHandler implements Runnable{
 				if (out != null) {
 					out.close();
 				}
-				if (sendSocket != null ){
-					//sendSocket.close();
+				if (sendSocket != null) {
+					// sendSocket.close();
 				}
 			} catch (Exception e) {
 				System.err.println("Error while closing TCPHandler resources");
@@ -145,6 +154,7 @@ public class TCPHandler implements Runnable{
 			}
 		}
 	}
+
 	/**
 	 * Closes the socket of the client
 	 */
@@ -152,9 +162,9 @@ public class TCPHandler implements Runnable{
 		listenThread.interrupt();
 		try {
 			listenSocket.close();
-			
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error while closing TCP handler");
 			e.printStackTrace();
 		}
 

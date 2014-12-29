@@ -12,6 +12,10 @@ import be.uantwerpen.ds.system_y.client.Client;
 import be.uantwerpen.ds.system_y.server.INameServer;
 import be.uantwerpen.ds.system_y.server.NameServer;
 
+/**
+ * Handles all complicated logic when a command is received
+ *
+ */
 public class MessageHandler {
 	Client client;
 	DatagramHandler udp;
@@ -41,17 +45,18 @@ public class MessageHandler {
 			int newNodeHash = client.getNameServer().getShortHash(message[1]);
 			System.out.println("New node joined with hash " + newNodeHash);
 
+			// Check if the new node is the previous and/or next neighbour of the current node
+			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
+					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
+				System.out.println("It's between me and the previous node!");
+				client.setPreviousNodeHash(newNodeHash);
+			}
 			if ((client.getHash() < newNodeHash && newNodeHash < client.getNextNodeHash()) || client.getNextNodeHash() == client.getHash()
 					|| (client.getNextNodeHash() < client.getHash() && (client.getHash() < newNodeHash || newNodeHash < client.getNextNodeHash()))) {
 				System.out.println("It's between me and the next node!");
 				udp.sendMessage(sender, Client.UDP_CLIENT_PORT, Protocol.SET_NODES, client.getHash() + " " + client.getNextNodeHash());
 				client.setNextNodeHash(newNodeHash);
 				client.recheckOwnedFiles();
-			}
-			if ((client.getPreviousNodeHash() < newNodeHash && newNodeHash < client.getHash()) || client.getPreviousNodeHash() == client.getHash()
-					|| (client.getPreviousNodeHash() > client.getHash() && (client.getHash() > newNodeHash || newNodeHash > client.getPreviousNodeHash()))) {
-				System.out.println("It's between me and the previous node!");
-				client.setPreviousNodeHash(newNodeHash);
 			}
 
 		} catch (IOException e) {
@@ -71,6 +76,7 @@ public class MessageHandler {
 		try {
 			Registry registry = LocateRegistry.getRegistry(sender.getHostAddress(), NameServer.rmiPort);
 			client.setNameServer((INameServer) registry.lookup(message[1]));
+			
 			InetAddress registeredAddress = client.getNameServer().lookupNodeByName(client.getName());
 			InetAddress localAddress = client.getAddress();
 			client.setHash(client.getNameServer().getShortHash(client.getName()));
@@ -95,7 +101,7 @@ public class MessageHandler {
 			try {
 				group.sendMessage(Protocol.NODE_JOINED, client.getName() + " " + client.getAddress().getHostAddress());
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				System.err.println("Error while sending group message in MessageHandler");
 				e.printStackTrace();
 			}
 		}
