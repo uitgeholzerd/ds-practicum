@@ -42,6 +42,8 @@ public class FileAgent implements IAgent {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				System.out.println("FileAgent found new file  " + fileRecord.getFileName());
 				availableFiles.put(fileRecord.getFileName(), false);
+				//TODO Observer gui
+				client.update();
 			}
 		}
 

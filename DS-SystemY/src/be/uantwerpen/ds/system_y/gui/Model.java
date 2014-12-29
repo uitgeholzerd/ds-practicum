@@ -4,6 +4,7 @@ import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -14,19 +15,20 @@ import javax.swing.DefaultListModel;
 import be.uantwerpen.ds.system_y.client.*;
 import be.uantwerpen.ds.system_y.file.FileRecord;
 
-public class Model {
+public class Model{
 	Client client;
-	TreeMap<String, Boolean> map;
+	HashSet<String> map;
 	DefaultListModel<String> list;
 	TreeSet<String> localfiles;
 	TreeSet<String> ownedfiles;
 	
-	public Model(){
-		map = new TreeMap<String, Boolean>();
+	public Model(Client client){
+		map = new HashSet<String>();
 		list = new DefaultListModel<String>();
 		localfiles = new TreeSet<String>();
 		ownedfiles = new TreeSet<String>();
-		addToTreemap(map);//for testing
+		this.client = client;
+		//addToTreemap(map);//for testing
 	}
 	
 	public void requestDisconnect(){
@@ -37,10 +39,12 @@ public class Model {
 	
 	private void getFilesFromDB(){
 		list.clear();
-		//TreeMap<String, Boolean> map = client.getAvailableFiles();
-		TreeMap<String, Boolean> map = getAvailableFiles(); //for testing
-		for (Map.Entry<String, Boolean> entry : map.entrySet()) {
-			list.addElement(entry.getKey());
+		HashSet<String> map = client.getAvailableFiles();
+		System.out.println(map);
+		//TreeMap<String, Boolean> map = getAvailableFiles(); //for testing
+		for (String entry : map) {
+			list.addElement(entry);
+			System.out.println(entry);
 		}
 	}
 	
@@ -49,32 +53,32 @@ public class Model {
 		return list;
 	}
 	
-	//for testing
-	public void addToTreemap(TreeMap<String, Boolean> map){
-		for(int i=0;i<10;i++){
-			map.put("File" + i + ".txt", true);
-			if(i%2==0){
-				setLocals("File" + i + ".txt");
-			}
-			else{
-				setOwneds("File" + i + ".txt");
-			}
-		}
-	}
+//	//for testing
+//	public void addToTreemap(TreeMap<String, Boolean> map){
+//		for(int i=0;i<10;i++){
+//			map.put("File" + i + ".txt", true);
+//			if(i%2==0){
+//				setLocals("File" + i + ".txt");
+//			}
+//			else{
+//				setOwneds("File" + i + ".txt");
+//			}
+//		}
+//	}
 	
 	public String openFile(String filename){
-		if (fileOnSystem(filename)){ // for testing
-			System.out.println("Opening local file"); // for testing
-			return openDownloadedFile(filename); // for testing
-		}
-		else{ // for testing
-			requestDownload(filename); // for testing
-			startDownload(filename); // for testing
-			return openDownloadedFile(filename); // for testing
-		}
+//		if (fileOnSystem(filename)){ // for testing
+//			System.out.println("Opening local file"); // for testing
+//			return openDownloadedFile(filename); // for testing
+//		}
+//		else{ // for testing
+//			requestDownload(filename); // for testing
+//			startDownload(filename); // for testing
+//			return openDownloadedFile(filename); // for testing
+//		}
 		
-		//client.requestDownload(filename);
-		//return client.openFile(filename); // geef error message mee voor client
+		client.requestDownload(filename);
+		return client.openFile(filename); // geef error message mee voor client
 	}
 	
 	/**
@@ -83,22 +87,22 @@ public class Model {
 	 * @param filename	filename to check
 	 * @return			return false if locked
 	 */
-	public boolean isAvailable(String filename){
-		boolean isAvailable = false;
-		TreeMap<String, Boolean> map = getAvailableFiles(); //for testing
-		for (Map.Entry<String, Boolean> entry : map.entrySet()) {
-			if(filename == entry.getKey()){
-				isAvailable = entry.getValue();
-			}
-		}
-		return isAvailable;
-	}
+//	public boolean isAvailable(String filename){
+//		boolean isAvailable = false;
+//		HashSet<String> map = client.getAvailableFiles(); //for testing
+//		for (Map.Entry<String> entry : map) {
+//			if(filename == entry.getKey()){
+//				isAvailable = entry.getValue();
+//			}
+//		}
+//		return isAvailable;
+//	}
 	
 	/**
 	 * This method gets the list of available files on the network
 	 * @return
 	 */
-	public TreeMap<String, Boolean> getAvailableFiles(){
+	private HashSet<String> getAvailableFiles(){
 		return map;
 	}
 	
@@ -110,8 +114,8 @@ public class Model {
 	 */
 	public boolean isOwnedFile(String filename){
 		getFilesFromDB();
-		//if(client.checkOwnedFiles(filename)){
-		if(checkOwnedFiles(filename)){ // for testing
+		if(client.checkOwnedFiles(filename)){
+		//if(checkOwnedFiles(filename)){ // for testing
 			return true;
 		}
 		return false;
@@ -120,8 +124,8 @@ public class Model {
 	// for testing opening file
 	public boolean fileOnSystem(String filename){
 		getFilesFromDB();
-		//if(client.checkLocalFiles(filename)){
-		if(checkLocalFiles(filename)){ // for testing
+		if(client.checkLocalFiles(filename)){
+		//if(checkLocalFiles(filename)){ // for testing
 			//System.out.println("File is on system!");
 			return true;
 		}

@@ -17,7 +17,7 @@ public class Controller {
     public Controller(Model model, View view){
         this.model = model;
         this.view = view;
-        view.setListModel(model.getList(), 1);
+        view.setListModel(model.getList());
     }
     
     public void control(){
@@ -55,7 +55,6 @@ public class Controller {
     		@Override
 			public void valueChanged(ListSelectionEvent e) {
     			JList<String> list = (JList<String>)e.getSource();
-    		    int selected = list.getSelectedIndex();
     		    String sel = list.getSelectedValue();
     			if (e.getValueIsAdjusting() == false) {
     	            if (view.getList().getSelectedIndex() == -1) {
@@ -64,7 +63,6 @@ public class Controller {
     	            } else {
     	            	//System.out.println("Selected");
     	            	
-    	            	view.setListModel(model.getList(), selected);
     	            	selectedFile = sel;
     	            	view.setLabel(selectedFile);
     	            	//view.setDeleteLocalButton(model.isOwnedFile(selectedFile));
@@ -84,13 +82,9 @@ public class Controller {
     
     private void openFile(){
     	//System.out.println("Open file");
-    	if(!model.isAvailable(selectedFile)){
-    		view.popUp("File is locked. Try again.");
-    	} else {
-    		String s = model.openFile(selectedFile);
-    		if(s!=null){
-    			view.popUp(s);
-    		}
+		String s = model.openFile(selectedFile);
+		if(s!=null){
+			view.popUp(s);
     	}
     }
     

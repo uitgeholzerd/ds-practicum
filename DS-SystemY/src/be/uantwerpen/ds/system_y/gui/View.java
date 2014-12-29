@@ -77,11 +77,9 @@ public class View {
     	this.deleteLocalBtn.setEnabled(enabled);
     }
     
-    public void setListModel(DefaultListModel<String> newmodel, int index){
+    public void setListModel(DefaultListModel<String> newmodel){
     	this.listmodel = newmodel;
     	list.setModel(listmodel);
-    	list.setSelectedIndex(index);
-    	list.ensureIndexIsVisible(index);
     }
     
     public JList<String> getList(){

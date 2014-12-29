@@ -30,6 +30,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import javax.swing.SwingUtilities;
+
 import be.uantwerpen.ds.system_y.agent.FailureAgent;
 import be.uantwerpen.ds.system_y.agent.IAgent;
 import be.uantwerpen.ds.system_y.connection.DatagramHandler;
@@ -40,6 +42,7 @@ import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
+import be.uantwerpen.ds.system_y.gui.*;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 public class Client extends UnicastRemoteObject implements PacketListener, FileReceiver, IClient {
@@ -69,6 +72,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private TreeMap<String, Boolean> lockRequests;
 	private List<String> receivedPings;
 	private Path filedir;
+	
+	private View view;
+	private Controller controller;
+	private Model model;
+	private Update update;
 
 	public Client() throws RemoteException {
 		super();
@@ -81,6 +89,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		createDirectory(OWNED_FILE_PATH);
 		rmiBind();
 		connect();
+		test();
 		System.out.println("Client started on " + getAddress().getHostName());
 	}
 
@@ -817,7 +826,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				 	this.receiveAgent(new FileAgent());
 				 }
 				 */
-
 			}
 		};
 
@@ -875,5 +883,21 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			return "Failed to open file. " + e.getMessage();
 		}
 	}
-
+	
+	public void test(){
+		final Client c = this;
+		SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                view = new View();
+                model = new Model(c);
+                controller = new Controller(model, view);
+                controller.control();
+            }
+        });
+	}
+	
+	public void update(){
+		update = new Update(model,view);
+	}
 }
