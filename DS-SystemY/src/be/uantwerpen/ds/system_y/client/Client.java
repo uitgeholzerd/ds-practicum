@@ -31,8 +31,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
 
-import javax.swing.SwingUtilities;
-
 import be.uantwerpen.ds.system_y.agent.FailureAgent;
 import be.uantwerpen.ds.system_y.agent.FileAgent;
 import be.uantwerpen.ds.system_y.agent.IAgent;
@@ -98,7 +96,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		createDirectory(OWNED_FILE_PATH);
 		rmiBind();
 		connect();
-		test();
 		System.out.println("Client started on " + getAddress().getHostName());
 	}
 
@@ -266,6 +263,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				if (newFile) {
 					System.out.println("File found: " + file.getName());
 					newFileFound(file);
+					updateGUI();
 				}
 			}
 		}
@@ -1041,22 +1039,15 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		}
 	}
 	
-	public void test(){
-		final Client c = this;
-		SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                view = new View();
-                model = new Model(c);
-                controller = new Controller(model, view);
-                controller.control();
-                updateGUI();
-            }
-        });
+	public void setGUI(View view, Model model, Controller controller){
+		this.view = view;
+		this.model = model;
+		this.controller = controller;
+		updateGUI();
 	}
 	
 	public void updateGUI(){
-		model.getList();
+		controller.updateView();
 	}
 	
 	/**

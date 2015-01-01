@@ -30,7 +30,6 @@ public class Model{
 	 * First clear the list, then add all the files that are available on the File Agent's list to the GUI list
 	 */
 	private void getFilesFromDB(){
-		list.clear();
 		HashSet<String> map = client.getAvailableFiles();
 		for (String entry : map) {
 			list.addElement(entry);
@@ -43,7 +42,9 @@ public class Model{
 	 * @return
 	 */
 	public DefaultListModel<String> getList(){
+		list.clear();
 		getFilesFromDB();
+		System.out.println(list);
 		return list;
 	}
 	

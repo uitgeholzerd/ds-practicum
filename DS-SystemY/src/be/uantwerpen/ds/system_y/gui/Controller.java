@@ -22,7 +22,7 @@ public class Controller {
     public Controller(Model model, View view){
         this.model = model;
         this.view = view;
-        view.setListModel(model.getList());
+        this.view.setListModel(model.getList());
     }
     
     public void control(){
@@ -106,5 +106,9 @@ public class Controller {
     		model.logOut();
     		System.exit(0);
 	    }
+    }
+    
+    public void updateView(){
+    	view.setListModel(model.getList());
     }
 }
