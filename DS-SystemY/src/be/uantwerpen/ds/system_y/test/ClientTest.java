@@ -34,9 +34,9 @@ public class ClientTest {
                 model = new Model(client);
                 controller = new Controller(model, view);
                 controller.control();
+                client.setGUI(view, model, controller);
             }
         });
-		client.setGUI(view, model, controller);
 
 		// read commands from stdio
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
