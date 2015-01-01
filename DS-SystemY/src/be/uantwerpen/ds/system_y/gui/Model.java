@@ -1,19 +1,11 @@
 package be.uantwerpen.ds.system_y.gui;
 
-import java.awt.Desktop;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import javax.swing.DefaultListModel;
 
 import be.uantwerpen.ds.system_y.client.*;
-import be.uantwerpen.ds.system_y.file.FileRecord;
 
 public class Model{
 	Client client;
@@ -28,161 +20,85 @@ public class Model{
 		localfiles = new TreeSet<String>();
 		ownedfiles = new TreeSet<String>();
 		this.client = client;
-		//addToTreemap(map);//for testing
 	}
 	
-	public void requestDisconnect(){
-		//TODO returnwaarde of niet?
-		//client.disconnect();
-		System.out.println("Disconnected"); // for testing
+	public void logOut(){
+		client.disconnect();
 	}
 	
+	/**
+	 * First clear the list, then add all the files that are available on the File Agent's list to the GUI list
+	 */
 	private void getFilesFromDB(){
 		list.clear();
 		HashSet<String> map = client.getAvailableFiles();
-		System.out.println(map);
-		//TreeMap<String, Boolean> map = getAvailableFiles(); //for testing
 		for (String entry : map) {
 			list.addElement(entry);
-			System.out.println(entry);
 		}
 	}
 	
+	/**
+	 * Getter for the files list
+	 * 
+	 * @return
+	 */
 	public DefaultListModel<String> getList(){
 		getFilesFromDB();
 		return list;
 	}
 	
-//	//for testing
-//	public void addToTreemap(TreeMap<String, Boolean> map){
-//		for(int i=0;i<10;i++){
-//			map.put("File" + i + ".txt", true);
-//			if(i%2==0){
-//				setLocals("File" + i + ".txt");
-//			}
-//			else{
-//				setOwneds("File" + i + ".txt");
-//			}
-//		}
-//	}
-	
-	public String openFile(String filename){
-//		if (fileOnSystem(filename)){ // for testing
-//			System.out.println("Opening local file"); // for testing
-//			return openDownloadedFile(filename); // for testing
-//		}
-//		else{ // for testing
-//			requestDownload(filename); // for testing
-//			startDownload(filename); // for testing
-//			return openDownloadedFile(filename); // for testing
-//		}
-		
-		client.requestDownload(filename);
-		return client.openFile(filename); // geef error message mee voor client
-	}
-	
 	/**
-	 * Checks if file is locked or not in list of files on network
+	 * Start the process at the client to lock the file and download it, eventually open the file
 	 * 
-	 * @param filename	filename to check
-	 * @return			return false if locked
-	 */
-//	public boolean isAvailable(String filename){
-//		boolean isAvailable = false;
-//		HashSet<String> map = client.getAvailableFiles(); //for testing
-//		for (Map.Entry<String> entry : map) {
-//			if(filename == entry.getKey()){
-//				isAvailable = entry.getValue();
-//			}
-//		}
-//		return isAvailable;
-//	}
-	
-	/**
-	 * This method gets the list of available files on the network
+	 * @param fileName
 	 * @return
 	 */
-	private HashSet<String> getAvailableFiles(){
-		return map;
+	public String openFile(String fileName){
+		client.requestDownload(fileName);
+		return client.openFile(fileName); // geef indien nodig error message mee voor gui
+	}
+	
+	public String deleteLocalFile(String fileName){
+		if(client.hasOwnedFile(fileName)){// if owned file
+			return "Your own file cannot be removed.";
+		}
+		else if (client.hasLocalFile(fileName)){// if local file
+			client.requestFileLocationDelete(fileName, client.getHash());
+			return "File " + fileName + " removed from your local files.";
+		}
+		else {
+			return "File cannot be removed.";
+		}
 	}
 	
 	/**
-	 * This method checks if a file is owned by the client (necessary for buttons)
+	 * Start the process at the client to lock the file and delete it all over the network
 	 * 
-	 * @param filename	file to check
-	 * @return			return true if owned
+	 * @param fileName
+	 * @return
 	 */
-	public boolean isOwnedFile(String filename){
-		getFilesFromDB();
-		if(client.checkOwnedFiles(filename)){
-		//if(checkOwnedFiles(filename)){ // for testing
-			return true;
+	public String deleteNetworkFile(String fileName){
+		if(client.hasOwnedFile(fileName)){// if owned file
+			return "Your own file cannot be removed.";
 		}
-		return false;
-	}
-	
-	// for testing opening file
-	public boolean fileOnSystem(String filename){
-		getFilesFromDB();
-		if(client.checkLocalFiles(filename)){
-		//if(checkLocalFiles(filename)){ // for testing
-			//System.out.println("File is on system!");
-			return true;
+		else{
+			client.requestDeletionNetworkFile(fileName);
+			return "Network file " + fileName + " delete request sent.";
 		}
-		//System.out.println("File is NOT on system!");
-		return false;
 	}
 	
-	//for testing
-	public boolean checkOwnedFiles(String filename) {
-		getFilesFromDB();
-		for (String file : ownedfiles) {
-			if (filename.compareTo(file)==0){
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	//for testing
-	private void requestDownload(String filename){
-		System.out.println("Locking file");
-	}
-	
-	//for testing
-	private void startDownload(String filename){
-		System.out.println("Downloading file...");
-	}
-	
-	// for testing
-	public boolean checkLocalFiles(String filename){
-		for (String file : localfiles) {
-			if (filename.compareTo(file)==0){
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	// for testing
-	public void setLocals(String addstr){
-		localfiles.add(addstr);
-	}
-	
-	// for testing
-	public void setOwneds(String addstr){
-		ownedfiles.add(addstr);
-	}
-	
-	// for testing
-	public String openDownloadedFile(String fileName){
-		File file = new File("files/" + fileName);
-		System.out.println("Opening downloaded file...");
-		try {
-			Desktop.getDesktop().open(file);
-			return null;
-		} catch (Exception e) {
-			return "Failed to open file. " + e.getMessage();
-		}
+	/**
+	 * Change the clickability of the button to delete a local file
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	public boolean changeDeleteLocalBtn(String fileName){
+		if (client.hasLocalFile(fileName) && !client.hasOwnedFile(fileName)){
+    		return true;
+    	}
+    	else{
+    		return false;
+    	}
 	}
 }

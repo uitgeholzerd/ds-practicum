@@ -20,13 +20,12 @@ public class View {
     private JToolBar topTB, bottomTB;
     private JList<String> list;
     private DefaultListModel<String> listmodel;
-    private String[] files = {"een", "twee", "drie"};
     private JLabel label;
     
     public View(){
         frame = new JFrame("System Y");
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setBounds(400, 400, 400, 200);
         frame.setVisible(true);
         
@@ -87,6 +86,10 @@ public class View {
     public void setListModel(DefaultListModel<String> newmodel){
     	this.listmodel = newmodel;
     	list.setModel(listmodel);
+    }
+    
+    public JFrame getFrame(){
+    	return this.frame;
     }
     
     public JList<String> getList(){

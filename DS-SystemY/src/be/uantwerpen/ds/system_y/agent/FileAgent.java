@@ -45,15 +45,14 @@ public class FileAgent implements IAgent {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				System.out.println("FileAgent found new file  " + fileRecord.getFileName());
 				availableFiles.put(fileRecord.getFileName(), false);
-				//TODO Observer gui
-				client.update();
 			}
 		}
 
-		// Update the clients file list
+		// UpdateGUI the clients file list
 		for (Entry<String, Boolean> entry : availableFiles.entrySet()) {
 			if (!client.getAvailableFiles().contains(entry.getKey())) {
 				client.getAvailableFiles().add(entry.getKey());
+				client.updateGUI();
 			}
 		}
 		
@@ -68,13 +67,29 @@ public class FileAgent implements IAgent {
 			else if (entry.getValue() && !availableFiles.get(entry.getKey())) {
 				availableFiles.put(entry.getKey(), true);
 				clientLockrequests.put(entry.getKey(), null);
-				System.out.println("FileAgent locked file '" + entry.getKey() + "' and started the download on client");
-				client.startDownload(entry.getKey());
+				if(client.getIsDownloading()){
+					System.out.println("FileAgent locked file '" + entry.getKey() + "' and started the download on client");
+					client.startDownload(entry.getKey());
+				}
+				if(client.getIsDeleting()){
+					System.out.println("FileAgent locked file '" + entry.getKey() + "' and started deleting it");
+					client.requestFileLocations(entry.getKey());
+				}
 			}
 			else if (!entry.getValue()) {
 				availableFiles.put(entry.getKey(), false);
 				clientLockrequests.remove(entry.getKey());
-				System.out.println("FileAgent unlocked file '" + entry.getKey() + "'");
+				if(client.getIsDownloading()){
+					client.setIsDownloading(false);
+					System.out.println("FileAgent unlocked file '" + entry.getKey() + "'");
+				}
+				if(client.getIsDeleting()){
+					client.setIsDeleting(false);
+					for (Entry<String, Boolean> deleted : availableFiles.entrySet()) {
+						availableFiles.remove(deleted);
+					}
+					System.out.println("FileAgent deleted file '" + entry.getKey() + "'");
+				}
 			}
 		}
 	}
