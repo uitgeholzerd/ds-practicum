@@ -42,6 +42,7 @@ import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
+import be.uantwerpen.ds.system_y.file.FileWatcher;
 import be.uantwerpen.ds.system_y.gui.*;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
@@ -84,6 +85,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private Model model;
 	private boolean isDownloading = false;
 	private boolean isDeleting = false;
+	private FileWatcher fw;
 
 	public Client() throws RemoteException {
 		super();
@@ -96,6 +98,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		createDirectory(OWNED_FILE_PATH);
 		rmiBind();
 		connect();
+		fw = new FileWatcher(this, OWNED_FILE_PATH);
 		System.out.println("Client started on " + getAddress().getHostName());
 	}
 
@@ -538,7 +541,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 * @param file The new file that has been found
 	 */
-	private void newFileFound(File file) {
+	public void newFileFound(File file) {
 		try {
 			String fileName = file.getName();
 			InetAddress fileOwner = nameServer.getFilelocation(fileName);
