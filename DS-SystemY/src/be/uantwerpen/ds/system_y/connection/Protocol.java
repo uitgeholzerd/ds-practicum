@@ -16,5 +16,9 @@ public enum Protocol {
 	FILE_LOCATION_UNAVAILABLE,		// Report file location unavailable
 	SEND_FILE,						// Incoming file transmision
 	CHECK_OWNER,					// Check if node owns file
-	DOWNLOAD_REQUEST				// Request file downlaod
+	DOWNLOAD_REQUEST,				// Request file downlaod
+	DELETE_LOCAL_REQUEST,			// Request deletion of downloadlocation
+	DELETE_NETWORK_REQUEST,			// Request deletion of file all over the network
+	FILE_LOCATIONS_REQUEST,			// Ask the owner for the locations of the file
+	FILE_LOCATIONS_ACK
 }

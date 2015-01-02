@@ -6,11 +6,19 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 
+import javax.swing.SwingUtilities;
+
 import be.uantwerpen.ds.system_y.client.Client;
+import be.uantwerpen.ds.system_y.gui.Controller;
+import be.uantwerpen.ds.system_y.gui.Model;
+import be.uantwerpen.ds.system_y.gui.View;
 
 public class ClientTest {
 
 	private static Client client;
+	private static View view;
+	private static Model model;
+	private static Controller controller;
 
 	public static void main(String[] args) {
 		try {
@@ -18,6 +26,17 @@ public class ClientTest {
 		} catch (RemoteException e1) {
 			e1.printStackTrace();
 		}
+		
+		SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                view = new View();
+                model = new Model(client);
+                controller = new Controller(model, view);
+                controller.control();
+                client.setGUI(view, model, controller);
+            }
+        });
 
 		// read commands from stdio
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));

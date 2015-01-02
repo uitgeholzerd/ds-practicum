@@ -16,17 +16,16 @@ import javax.swing.ListSelectionModel;
 
 public class View {
 	private JFrame frame;
-    private JButton logOutBtn, openBtn, deleteBtn, deleteLocalBtn;
+    private JButton logOutBtn, openBtn, deleteBtn, deleteLocalBtn, btn;
     private JToolBar topTB, bottomTB;
     private JList<String> list;
     private DefaultListModel<String> listmodel;
-    private String[] files = {"een", "twee", "drie"};
     private JLabel label;
     
     public View(){
         frame = new JFrame("System Y");
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setBounds(400, 400, 400, 200);
         frame.setVisible(true);
         
@@ -35,6 +34,7 @@ public class View {
         openBtn = new JButton("Open file");
         deleteBtn = new JButton("Delete network file");
         deleteLocalBtn = new JButton("Delete local file");
+        btn = new JButton("UPDATE");
         
         //list
         listmodel = new DefaultListModel<String>();
@@ -62,10 +62,15 @@ public class View {
         bottomTB.add(deleteBtn);
         bottomTB.add(deleteLocalBtn);
         bottomTB.add(label);
+        topTB.add(btn);
     }
         
     public JButton getLogOutButton(){
         return this.logOutBtn;
+    }
+    
+    public JButton getbtn(){
+        return this.btn;
     }
     
     public JButton getOpenButton(){
@@ -84,11 +89,13 @@ public class View {
     	this.deleteLocalBtn.setEnabled(enabled);
     }
     
-    public void setListModel(DefaultListModel<String> newmodel, int index){
+    public void setListModel(DefaultListModel<String> newmodel){
     	this.listmodel = newmodel;
     	list.setModel(listmodel);
-    	list.setSelectedIndex(index);
-    	list.ensureIndexIsVisible(index);
+    }
+    
+    public JFrame getFrame(){
+    	return this.frame;
     }
     
     public JList<String> getList(){

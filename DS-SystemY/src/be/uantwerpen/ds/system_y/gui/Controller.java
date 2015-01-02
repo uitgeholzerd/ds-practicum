@@ -2,22 +2,27 @@ package be.uantwerpen.ds.system_y.gui;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 public class Controller {
 	private Model model;
     private View view;
-    private ActionListener logOutAL, openFileAL, deleteFileAL, deleteOwnedFileAL;
+    private ActionListener logOutAL, openFileAL, deleteFileAL, deleteLocalFileAL, btnal;
+    private WindowListener windowCL;
     private ListSelectionListener listSL;
     private String selectedFile;
     
     public Controller(Model model, View view){
         this.model = model;
         this.view = view;
-        view.setListModel(model.getList(), 1);
+        this.view.setListModel(model.getList());
     }
     
     public void control(){
@@ -26,37 +31,58 @@ public class Controller {
         view.getLogOutButton().addActionListener(logOutAL);
         view.getOpenButton().addActionListener(openFileAL);
         view.getDeleteButton().addActionListener(deleteFileAL);
-        view.getDeleteLocalButton().addActionListener(deleteOwnedFileAL);
+        view.getDeleteLocalButton().addActionListener(deleteLocalFileAL);
         view.getList().addListSelectionListener(listSL);
+        view.getFrame().addWindowListener(windowCL);
+        view.getbtn().addActionListener(btnal);
     }
     
     private void initiateListeners(){
     	logOutAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                logOut();
+            	if (JOptionPane.showConfirmDialog(view.getFrame(), 
+        	            "Are you sure to close this window?", "Leaving System Y", 
+        	            JOptionPane.YES_NO_OPTION,
+        	            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+        	        
+            		model.logOut();
+            		System.exit(0);
+        	    }
+            }
+    	};
+    	btnal = new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+            	updateView();
             }
     	};
     	openFileAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                openFile();
+            	String s = model.openFile(selectedFile);
+        		if(s!=null){
+        			view.popUp(s);
+            	}
             }
     	};
     	deleteFileAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                deleteFile();
+            	String s = model.deleteNetworkFile(selectedFile);
+        		if(s!=null){
+        			view.popUp(s);
+            	}
             }
     	};
-    	deleteOwnedFileAL = new ActionListener() {
+    	deleteLocalFileAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-                deleteLocalFile();
+            	String s = model.deleteLocalFile(selectedFile);
+        		if(s!=null){
+        			view.popUp(s);
+            	}
             }
     	};
     	listSL = new ListSelectionListener() {
     		@Override
 			public void valueChanged(ListSelectionEvent e) {
-    			@SuppressWarnings("unchecked")
-				JList<String> list = (JList<String>)e.getSource();
-    		    int selected = list.getSelectedIndex();
+    			JList<String> list = (JList<String>)e.getSource();
     		    String sel = list.getSelectedValue();
     			if (e.getValueIsAdjusting() == false) {
     	            if (view.getList().getSelectedIndex() == -1) {
@@ -65,50 +91,24 @@ public class Controller {
     	            } else {
     	            	//System.out.println("Selected");
     	            	
-    	            	view.setListModel(model.getList(), selected);
     	            	selectedFile = sel;
     	            	view.setLabel(selectedFile);
-    	            	//view.setDeleteLocalButton(model.isOwnedFile(selectedFile));
-    	            	checkButtonVisibility();
+    	            	view.setDeleteLocalButton(model.changeDeleteLocalBtn(selectedFile));
     	            }
     	        }
 			}
     	};
+    	
+    	windowCL = new WindowAdapter() {
+    	    @Override
+    	    public void windowClosing(WindowEvent windowEvent) {
+	    		model.logOut();
+	    		System.exit(0);
+    	    }
+    	};
     }
     
-    private void logOut(){
-    	//TODO ook als window wordt gesloten
-    	model.requestDisconnect();
-    	System.exit(0);
-    	//System.out.println("Log out");
-    }
-    
-    private void openFile(){
-    	//System.out.println("Open file");
-    	if(!model.isAvailable(selectedFile)){
-    		view.popUp("File is locked. Try again.");
-    	} else {
-    		String s = model.openFile(selectedFile);
-    		if(s!=null){
-    			view.popUp(s);
-    		}
-    	}
-    }
-    
-    private void deleteFile(){ 
-    	//System.out.println("Delete file");
-    }
-    
-    private void deleteLocalFile(){ 
-    	//System.out.println("Delete owned file");
-    }
-    
-    private void checkButtonVisibility(){
-    	if (model.fileOnSystem(selectedFile) && !model.isOwnedFile(selectedFile)){
-    		view.setDeleteLocalButton(true);
-    	}
-    	else{
-    		view.setDeleteLocalButton(false);
-    	}
+    public void updateView(){
+    	view.setListModel(model.getList());
     }
 }

@@ -42,6 +42,8 @@ import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
+import be.uantwerpen.ds.system_y.file.FileWatcher;
+import be.uantwerpen.ds.system_y.gui.*;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 /**
@@ -77,6 +79,12 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private List<String> receivedPings;
 	private boolean pingSuccess;
 	private Path filedir;
+	
+	private View view;
+	private Controller controller;
+	private Model model;
+	private boolean isDownloading = false;
+	private boolean isDeleting = false;
 
 	public Client() throws RemoteException {
 		super();
@@ -154,6 +162,22 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 
 	public TreeMap<String, Boolean> getLockRequests() {
 		return lockRequests;
+	}
+	
+	public boolean getIsDownloading(){
+		return isDownloading;
+	}
+	
+	public void setIsDownloading(boolean downloading){
+		this.isDownloading = downloading;
+	}
+	
+	public boolean getIsDeleting(){
+		return isDeleting;
+	}
+	
+	public void setIsDeleting(boolean deleting){
+		this.isDeleting = deleting;
 	}
 
 	/**
@@ -240,6 +264,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				if (newFile) {
 					System.out.println("File found: " + file.getName());
 					newFileFound(file);
+					updateGUI();
 				}
 			}
 		}
@@ -263,7 +288,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	}
 
 	/**
-	 * This method is used to disconnect the node. It will update its neighbour node, inform the nameserver and close all connections
+	 * This method is used to disconnect the node. It will updateGUI its neighbour node, inform the nameserver and close all connections
 	 * 
 	 * @throws IOException
 	 */
@@ -272,7 +297,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			timer.cancel();
 			// Make the previous node the new owner of the files owned by the current node
 			moveFilesToNode(previousNodeHash);
-			// Warn the owner of the replicated files of the current node to update its file records
+			// Warn the owner of the replicated files of the current node to updateGUI its file records
 			notifyLocationUnavailable();
 
 			// Make previous node and next node neighbours
@@ -378,6 +403,31 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 					e1.printStackTrace();
 				}
 			}
+			break;
+		case DELETE_LOCAL_REQUEST:
+			deleteFileLocation(message[1], Integer.parseInt(message[2]));
+			break;
+		case DELETE_NETWORK_REQUEST:
+			deleteFile(message[1]);
+			break;
+		case FILE_LOCATIONS_REQUEST:
+			String answer = getDownloadLocations(message[2]);
+			try {
+				InetAddress returnAddr = nameServer.lookupNodeByName(message[1]);
+				udp.sendMessage(returnAddr, UDP_CLIENT_PORT, Protocol.FILE_LOCATIONS_ACK, answer);
+			} catch (IOException e) {
+				System.err.println("Error while sending message");
+				e.printStackTrace();
+			}
+			break;
+		case FILE_LOCATIONS_ACK:
+			TreeSet<Integer> set = null;
+			for(int i=0; i<message.length;i++){
+				if(i>1){
+					set.add(Integer.parseInt(message[i]));
+				}
+			}
+			deleteNetworkFile(message[1], set);
 			break;
 		case DISCOVER:
 			// ignore
@@ -489,7 +539,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * 
 	 * @param file The new file that has been found
 	 */
-	private void newFileFound(File file) {
+	public void newFileFound(File file) {
 		try {
 			String fileName = file.getName();
 			InetAddress fileOwner = nameServer.getFilelocation(fileName);
@@ -757,7 +807,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private void notifyLocationUnavailable() {
 		try {
 			for (String fileName : localFiles) {
-				// First let owner of file update file record
+				// First let owner of file updateGUI file record
 				InetAddress fileOwner = nameServer.getFilelocation(fileName);
 				udp.sendMessage(fileOwner, Client.UDP_CLIENT_PORT, Protocol.FILE_LOCATION_UNAVAILABLE, Integer.toString(this.hash));
 			}
@@ -833,7 +883,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * @param fileName Name of the file
 	 */
 	public void requestDownload(String fileName) {
+		setIsDownloading(true);
 		lockRequests.put(fileName, true);
+		
 	}
 
 	/**
@@ -849,6 +901,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			System.err.println("Error while requesting file download");
 			e.printStackTrace();
 		}
+	}
+	
+	public void requestDeletionNetworkFile(String fileName){
+		setIsDeleting(true);
+		lockRequests.put(fileName, true);
 	}
 
 	@Override
@@ -910,7 +967,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 						thisClient.receiveAgent(new FileAgent()); 
 					}
 				 }
-				 
 
 			}
 		};
@@ -947,17 +1003,12 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	}
 
 	//TODO debugging
-	public boolean checkOwnedFiles(String fileName) {
-		for (FileRecord record : ownedFiles) {
-			if (fileName == record.getFileName()) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	//TODO debugging
-	public boolean checkLocalFiles(String fileName) {
+	/**
+	 * Necessary for GUI to know
+	 * @param fileName		file to check
+	 * @return				true if file is available locally
+	 */
+	public boolean hasLocalFile(String fileName) {
 		for (String file : localFiles) {
 			if (fileName == file) {
 				return true;
@@ -967,8 +1018,19 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	}
 
 	//TODO debugging
+	/**
+	 * Open a local file
+	 * @param fileName	file to open
+	 * @return			error message for gui
+	 */
 	public String openFile(String fileName) {
-		File file = new File(LOCAL_FILE_PATH + fileName);
+		File file = null;
+		if(hasLocalFile(fileName)){
+			file = new File(LOCAL_FILE_PATH + fileName);
+		}
+		else if(hasOwnedFile(fileName)){
+			file = new File(OWNED_FILE_PATH + fileName);
+		}
 		try {
 			Desktop.getDesktop().open(file);
 			return null;
@@ -976,5 +1038,147 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			return "Failed to open file. " + e.getMessage();
 		}
 	}
-
+	
+	public void setGUI(View view, Model model, Controller controller){
+		this.view = view;
+		this.model = model;
+		this.controller = controller;
+		updateGUI();
+	}
+	
+	public void updateGUI(){
+		controller.updateView();
+	}
+	
+	/**
+	 * Send a request to the owner to delete download location in file record node list
+	 * 
+	 * @param fileName
+	 * @param location
+	 */
+	public void requestFileLocationDelete(String fileName, int location){
+		location = getHash();
+		try {
+			InetAddress fileOwner = nameServer.getFilelocation(fileName);
+			udp.sendMessage(fileOwner, UDP_CLIENT_PORT, Protocol.DELETE_LOCAL_REQUEST, fileName + " " + location);
+			for (String localfile : localFiles){
+				if(fileName == localfile){
+					File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
+					file.delete();
+					localFiles.remove(localfile);//moet dit nog gedaan worden? is dit juist?
+				}
+			}
+		} catch (RemoteException e) {
+			System.out.println("Error while getting file location from server.");
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Error while requesting deletion of file location.");
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Delete a given location from the filerecord node list
+	 * 
+	 * @param fileName
+	 * @param location
+	 */
+	public void deleteFileLocation(String fileName, int location){
+		for (FileRecord record : ownedFiles) {
+			if (fileName.equals(record.getFileName())) {
+				if(record.getNodeHashes().size()>1){
+					record.removeNode(location);
+				}
+			}
+		}
+	}
+	
+	/**
+	 * When receiving a request to delete a file, the node searches first if it's in its local files,
+	 * then in its owned and finally deletes it
+	 * 
+	 * @param fileName
+	 */
+	public void deleteFile(String fileName){
+		for (String localfile : localFiles){
+			if(fileName == localfile){
+				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
+				file.delete();
+				localFiles.remove(localfile);//moet dit nog gedaan worden? is dit juist?
+			}
+		}
+		for (FileRecord record : ownedFiles) {
+			if (fileName.equals(record.getFileName())) {
+				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
+				file.delete();
+				ownedFiles.remove(record);//moet dit nog gedaan worden? is dit juist?
+			}
+		}
+	}
+	
+	/**
+	 * After receiving a request for the download locations of a file, the node returns them in a string
+	 * 
+	 * @param fileName
+	 * @return
+	 */
+	public String getDownloadLocations(String fileName){
+		String str = null;
+		for (FileRecord record : ownedFiles) {
+			if (fileName.equals(record.getFileName())) {
+				TreeSet<Integer> hashes = record.getNodeHashes();
+				for(Integer i : hashes){
+					str += i + " ";
+				}
+			}
+		}
+		return str;
+	}
+	
+	/**
+	 * After receiving the download locations, the client asks all the locations to delete the file, then the owner
+	 * 
+	 * @param fileName
+	 * @param locations
+	 */
+	public void deleteNetworkFile(String fileName, TreeSet<Integer> locations){
+		TreeSet<Integer> locs = locations;
+		for(Integer hash : locs){
+			try {
+				InetAddress nodeAddress = nameServer.lookupNode(hash);
+				udp.sendMessage(nodeAddress, UDP_CLIENT_PORT, Protocol.DELETE_NETWORK_REQUEST, fileName);
+			} catch (RemoteException e) {
+				System.err.println("Error while contacting server." + e.getMessage());
+				e.printStackTrace();
+			} catch (IOException e) {
+				System.err.println("Delete network file request failed: " + e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		try {
+			InetAddress ownerAddress = nameServer.getFilelocation(fileName);
+			udp.sendMessage(ownerAddress, UDP_CLIENT_PORT, Protocol.DELETE_NETWORK_REQUEST, fileName);
+		} catch (RemoteException e) {
+			System.err.println("Error while contacting server." + e.getMessage());
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.err.println("'Delete network file request' failed: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Ask the owner for the download locations of a file
+	 * 
+	 * @param fileName
+	 */
+	public void requestFileLocations(String fileName){
+		try {
+			InetAddress ownerAddress = nameServer.getFilelocation(fileName);
+			udp.sendMessage(ownerAddress, UDP_CLIENT_PORT, Protocol.FILE_LOCATIONS_REQUEST, getAddress() + " " + fileName);
+		} catch (IOException e) {
+			System.err.println("'File download locations request' failed: " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
 }
