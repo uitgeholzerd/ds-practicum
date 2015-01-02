@@ -97,7 +97,6 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		createDirectory(OWNED_FILE_PATH);
 		rmiBind();
 		connect();
-		new Thread(new FileWatcher(this, OWNED_FILE_PATH));
 		System.out.println("Client started on " + getAddress().getHostName());
 	}
 
