@@ -31,7 +31,6 @@ public class Model{
 	 */
 	private void getFilesFromDB(){
 		HashSet<String> map = client.getAvailableFiles();
-		System.out.println(client.getAvailableFiles());
 		for (String entry : map) {
 			list.addElement(entry);
 		}

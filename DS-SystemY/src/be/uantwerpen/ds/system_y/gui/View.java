@@ -16,7 +16,7 @@ import javax.swing.ListSelectionModel;
 
 public class View {
 	private JFrame frame;
-    private JButton logOutBtn, openBtn, deleteBtn, deleteLocalBtn;
+    private JButton logOutBtn, openBtn, deleteBtn, deleteLocalBtn, btn;
     private JToolBar topTB, bottomTB;
     private JList<String> list;
     private DefaultListModel<String> listmodel;
@@ -34,6 +34,7 @@ public class View {
         openBtn = new JButton("Open file");
         deleteBtn = new JButton("Delete network file");
         deleteLocalBtn = new JButton("Delete local file");
+        btn = new JButton("UPDATE");
         
         //list
         listmodel = new DefaultListModel<String>();
@@ -61,10 +62,15 @@ public class View {
         bottomTB.add(deleteBtn);
         bottomTB.add(deleteLocalBtn);
         bottomTB.add(label);
+        topTB.add(btn);
     }
         
     public JButton getLogOutButton(){
         return this.logOutBtn;
+    }
+    
+    public JButton getbtn(){
+        return this.btn;
     }
     
     public JButton getOpenButton(){

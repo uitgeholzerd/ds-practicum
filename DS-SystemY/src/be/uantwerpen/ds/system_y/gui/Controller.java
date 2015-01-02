@@ -14,7 +14,7 @@ import javax.swing.event.ListSelectionListener;
 public class Controller {
 	private Model model;
     private View view;
-    private ActionListener logOutAL, openFileAL, deleteFileAL, deleteLocalFileAL;
+    private ActionListener logOutAL, openFileAL, deleteFileAL, deleteLocalFileAL, btnal;
     private WindowListener windowCL;
     private ListSelectionListener listSL;
     private String selectedFile;
@@ -34,12 +34,25 @@ public class Controller {
         view.getDeleteLocalButton().addActionListener(deleteLocalFileAL);
         view.getList().addListSelectionListener(listSL);
         view.getFrame().addWindowListener(windowCL);
+        view.getbtn().addActionListener(btnal);
     }
     
     private void initiateListeners(){
     	logOutAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
-            	closeWindow();
+            	if (JOptionPane.showConfirmDialog(view.getFrame(), 
+        	            "Are you sure to close this window?", "Leaving System Y", 
+        	            JOptionPane.YES_NO_OPTION,
+        	            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+        	        
+            		model.logOut();
+            		System.exit(0);
+        	    }
+            }
+    	};
+    	btnal = new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+            	updateView();
             }
     	};
     	openFileAL = new ActionListener() {
@@ -89,23 +102,10 @@ public class Controller {
     	windowCL = new WindowAdapter() {
     	    @Override
     	    public void windowClosing(WindowEvent windowEvent) {
-    	        closeWindow();
+	    		model.logOut();
+	    		System.exit(0);
     	    }
     	};
-    }
-
-    /**
-     * Extra window when closing the window (Y/N-question)
-     */
-    private void closeWindow(){
-    	if (JOptionPane.showConfirmDialog(view.getFrame(), 
-	            "Are you sure to close this window?", "Leaving System Y", 
-	            JOptionPane.YES_NO_OPTION,
-	            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
-	        
-    		model.logOut();
-    		System.exit(0);
-	    }
     }
     
     public void updateView(){
