@@ -821,8 +821,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private void addFileCopy(int nodeHash, String fileName) {
 		for (FileRecord record : ownedFiles) {
 			// Search for file in owned files list
-			if (record.getFileName() == fileName) {
-
+			if (record.getFileName().equals(fileName)) {
 				record.addNode(nodeHash);
 			}
 		}

@@ -58,7 +58,6 @@ public class FailureAgent implements IAgent {
 
 	/**
 	 * Run from the agent, here he will do the next steps:
-	 * 		Get neighbours from failurenode
 	 * 		Remove file location from failurenode
 	 * 		Check for ownerfiles from failurenode
 	 * 		Lookup from nameserver
