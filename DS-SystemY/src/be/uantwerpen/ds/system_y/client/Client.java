@@ -42,7 +42,6 @@ import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
-import be.uantwerpen.ds.system_y.file.FileWatcher;
 import be.uantwerpen.ds.system_y.gui.*;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
@@ -79,10 +78,10 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private List<String> receivedPings;
 	private boolean pingSuccess;
 	private Path filedir;
-	
+
 	private View view;
-	private Controller controller;
 	private Model model;
+	private Controller controller;
 	private boolean isDownloading = false;
 	private boolean isDeleting = false;
 
@@ -904,6 +903,11 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		}
 	}
 	
+	/**
+	 * Request a deletion by placing a lock on a file and waiting for the FileAgent to initiate the deletion
+	 * 
+	 * @param fileName	The file to delete
+	 */
 	public void requestDeletionNetworkFile(String fileName){
 		setIsDeleting(true);
 		lockRequests.put(fileName, true);
@@ -1040,6 +1044,13 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		}
 	}
 	
+	/**
+	 * Link the GUI with the data logic
+	 * 
+	 * @param view		The view class
+	 * @param model		The model class
+	 * @param controller	The controller class
+	 */
 	public void setGUI(View view, Model model, Controller controller){
 		this.view = view;
 		this.model = model;
@@ -1047,6 +1058,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 		updateGUI();
 	}
 	
+	/**
+	 * Update the file list
+	 */
 	public void updateGUI(){
 		controller.updateView();
 	}
@@ -1054,8 +1068,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	/**
 	 * Send a request to the owner to delete download location in file record node list
 	 * 
-	 * @param fileName
-	 * @param location
+	 * @param fileName		The file to remove locally
+	 * @param location		The location to remove from the file record
 	 */
 	public void requestFileLocationDelete(String fileName, int location){
 		location = getHash();
@@ -1066,7 +1080,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 				if(fileName == localfile){
 					File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
 					file.delete();
-					localFiles.remove(localfile);//moet dit nog gedaan worden? is dit juist?
+					localFiles.remove(localfile);
 				}
 			}
 		} catch (RemoteException e) {
@@ -1081,8 +1095,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	/**
 	 * Delete a given location from the filerecord node list
 	 * 
-	 * @param fileName
-	 * @param location
+	 * @param fileName		The file delete the location from
+	 * @param location		The location to delete
 	 */
 	public void deleteFileLocation(String fileName, int location){
 		for (FileRecord record : ownedFiles) {
@@ -1098,21 +1112,21 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	 * When receiving a request to delete a file, the node searches first if it's in its local files,
 	 * then in its owned and finally deletes it
 	 * 
-	 * @param fileName
+	 * @param fileName		File to delete
 	 */
 	public void deleteFile(String fileName){
 		for (String localfile : localFiles){
 			if(fileName == localfile){
 				File file = Paths.get(LOCAL_FILE_PATH + fileName).toFile();
 				file.delete();
-				localFiles.remove(localfile);//moet dit nog gedaan worden? is dit juist?
+				localFiles.remove(localfile);
 			}
 		}
 		for (FileRecord record : ownedFiles) {
 			if (fileName.equals(record.getFileName())) {
 				File file = Paths.get(OWNED_FILE_PATH + fileName).toFile();
 				file.delete();
-				ownedFiles.remove(record);//moet dit nog gedaan worden? is dit juist?
+				ownedFiles.remove(record);
 			}
 		}
 	}
@@ -1120,8 +1134,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	/**
 	 * After receiving a request for the download locations of a file, the node returns them in a string
 	 * 
-	 * @param fileName
-	 * @return
+	 * @param fileName	File to get download locations from
+	 * @return			Download locations in string form
 	 */
 	public String getDownloadLocations(String fileName){
 		String str = null;
@@ -1139,8 +1153,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	/**
 	 * After receiving the download locations, the client asks all the locations to delete the file, then the owner
 	 * 
-	 * @param fileName
-	 * @param locations
+	 * @param fileName		File to delete
+	 * @param locations		Locations to send request to
 	 */
 	public void deleteNetworkFile(String fileName, TreeSet<Integer> locations){
 		TreeSet<Integer> locs = locations;
@@ -1171,7 +1185,7 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	/**
 	 * Ask the owner for the download locations of a file
 	 * 
-	 * @param fileName
+	 * @param fileName	File of which you want to know the nodes
 	 */
 	public void requestFileLocations(String fileName){
 		try {

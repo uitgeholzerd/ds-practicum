@@ -41,7 +41,6 @@ public class FileAgent implements IAgent {
 	public void run() {
 		// Add new files to the file agents list
 		List<FileRecord> ownedFiles = client.getOwnedFiles();
-		System.out.println("File agent: Owned:"+ownedFiles);
 		for (FileRecord fileRecord : ownedFiles) {
 			if (!availableFiles.containsKey(fileRecord.getFileName())) {
 				System.out.println("FileAgent found new file  " + fileRecord.getFileName());

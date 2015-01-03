@@ -7,21 +7,24 @@ import javax.swing.DefaultListModel;
 
 import be.uantwerpen.ds.system_y.client.*;
 
+/**
+ * Class that calls the methods from the client based on the input given from the controller
+ *
+ */
 public class Model{
 	Client client;
 	HashSet<String> map;
 	DefaultListModel<String> list;
-	TreeSet<String> localfiles;
-	TreeSet<String> ownedfiles;
 	
 	public Model(Client client){
 		map = new HashSet<String>();
 		list = new DefaultListModel<String>();
-		localfiles = new TreeSet<String>();
-		ownedfiles = new TreeSet<String>();
 		this.client = client;
 	}
 	
+	/**
+	 * Call the disconnect function when clicking the log out button or the X button
+	 */
 	public void logOut(){
 		client.disconnect();
 	}
@@ -39,7 +42,7 @@ public class Model{
 	/**
 	 * Getter for the files list
 	 * 
-	 * @return
+	 * @return		The list to return
 	 */
 	public DefaultListModel<String> getList(){
 		list.clear();
@@ -51,14 +54,20 @@ public class Model{
 	/**
 	 * Start the process at the client to lock the file and download it, eventually open the file
 	 * 
-	 * @param fileName
-	 * @return
+	 * @param fileName		The file to open
+	 * @return				Error message for the client if it can't be opened
 	 */
 	public String openFile(String fileName){
 		client.requestDownload(fileName);
-		return client.openFile(fileName); // geef indien nodig error message mee voor gui
+		return client.openFile(fileName);
 	}
 	
+	/**
+	 * Actions for deleting a local file
+	 * 
+	 * @param fileName		File to delete locally
+	 * @return				Error/confirmation message
+	 */
 	public String deleteLocalFile(String fileName){
 		if(client.hasOwnedFile(fileName)){// if owned file
 			return "Your own file cannot be removed.";
@@ -75,8 +84,8 @@ public class Model{
 	/**
 	 * Start the process at the client to lock the file and delete it all over the network
 	 * 
-	 * @param fileName
-	 * @return
+	 * @param fileName		File to delete
+	 * @return				Error/confirmation message
 	 */
 	public String deleteNetworkFile(String fileName){
 		if(client.hasOwnedFile(fileName)){// if owned file
@@ -91,8 +100,8 @@ public class Model{
 	/**
 	 * Change the clickability of the button to delete a local file
 	 * 
-	 * @param fileName
-	 * @return
+	 * @param fileName		File to check
+	 * @return				Set the button active/inactive
 	 */
 	public boolean changeDeleteLocalBtn(String fileName){
 		if (client.hasLocalFile(fileName) && !client.hasOwnedFile(fileName)){

@@ -14,9 +14,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 
+/**
+ * Class that handles the GUI's presentation
+ *
+ */
 public class View {
 	private JFrame frame;
-    private JButton logOutBtn, openBtn, deleteBtn, deleteLocalBtn, btn;
+    private JButton logOutBtn, openBtn, deleteBtn, deleteLocalBtn;
     private JToolBar topTB, bottomTB;
     private JList<String> list;
     private DefaultListModel<String> listmodel;
@@ -34,7 +38,6 @@ public class View {
         openBtn = new JButton("Open file");
         deleteBtn = new JButton("Delete network file");
         deleteLocalBtn = new JButton("Delete local file");
-        btn = new JButton("UPDATE");
         
         //list
         listmodel = new DefaultListModel<String>();
@@ -62,15 +65,11 @@ public class View {
         bottomTB.add(deleteBtn);
         bottomTB.add(deleteLocalBtn);
         bottomTB.add(label);
-        topTB.add(btn);
-    }
-        
-    public JButton getLogOutButton(){
-        return this.logOutBtn;
     }
     
-    public JButton getbtn(){
-        return this.btn;
+    //Getters
+    public JButton getLogOutButton(){
+        return this.logOutBtn;
     }
     
     public JButton getOpenButton(){
@@ -85,6 +84,15 @@ public class View {
         return this.deleteLocalBtn;
     }
     
+    public JFrame getFrame(){
+    	return this.frame;
+    }
+    
+    public JList<String> getList(){
+    	return this.list;
+    }
+    
+    //Setters
     public void setDeleteLocalButton(boolean enabled){
     	this.deleteLocalBtn.setEnabled(enabled);
     }
@@ -94,18 +102,15 @@ public class View {
     	list.setModel(listmodel);
     }
     
-    public JFrame getFrame(){
-    	return this.frame;
-    }
-    
-    public JList<String> getList(){
-    	return this.list;
-    }
-    
     public void setLabel(String filename){
     	label.setText(filename);
     }
-    
+
+    /**
+     * A pop up dialog that shows an error or a confirmation message
+     * 
+     * @param message
+     */
     public void popUp(String message){
     	JPanel popupPanel = new JPanel(new GridLayout(0,1));
     	popupPanel.add(new JLabel("Message:"));
