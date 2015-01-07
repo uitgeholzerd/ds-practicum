@@ -42,8 +42,9 @@ import be.uantwerpen.ds.system_y.connection.PacketListener;
 import be.uantwerpen.ds.system_y.connection.Protocol;
 import be.uantwerpen.ds.system_y.connection.TCPHandler;
 import be.uantwerpen.ds.system_y.file.FileRecord;
-import be.uantwerpen.ds.system_y.file.FileWatcher;
-import be.uantwerpen.ds.system_y.gui.*;
+import be.uantwerpen.ds.system_y.gui.Controller;
+import be.uantwerpen.ds.system_y.gui.Model;
+import be.uantwerpen.ds.system_y.gui.View;
 import be.uantwerpen.ds.system_y.server.INameServer;
 
 /**
@@ -79,10 +80,10 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	private List<String> receivedPings;
 	private boolean pingSuccess;
 	private Path filedir;
-	
-	private View view;
+
+	//private Model model;
+	//private View view;
 	private Controller controller;
-	private Model model;
 	private boolean isDownloading = false;
 	private boolean isDeleting = false;
 
@@ -421,11 +422,9 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 			}
 			break;
 		case FILE_LOCATIONS_ACK:
-			TreeSet<Integer> set = null;
-			for(int i=0; i<message.length;i++){
-				if(i>1){
+			TreeSet<Integer> set = new TreeSet<Integer>();
+			for(int i = 1; i < message.length;i++){
 					set.add(Integer.parseInt(message[i]));
-				}
 			}
 			deleteNetworkFile(message[1], set);
 			break;
@@ -1040,8 +1039,8 @@ public class Client extends UnicastRemoteObject implements PacketListener, FileR
 	}
 	
 	public void setGUI(View view, Model model, Controller controller){
-		this.view = view;
-		this.model = model;
+		//this.view = view;
+		//this.model = model;
 		this.controller = controller;
 		updateGUI();
 	}
