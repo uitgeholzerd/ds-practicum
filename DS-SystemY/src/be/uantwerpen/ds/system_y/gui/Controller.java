@@ -11,10 +11,14 @@ import javax.swing.JOptionPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+/**
+ * The class that connects the view with the model
+ *
+ */
 public class Controller {
 	private Model model;
     private View view;
-    private ActionListener logOutAL, openFileAL, deleteFileAL, deleteLocalFileAL, btnal;
+    private ActionListener logOutAL, openFileAL, deleteFileAL, deleteLocalFileAL;
     private WindowListener windowCL;
     private ListSelectionListener listSL;
     private String selectedFile;
@@ -25,6 +29,9 @@ public class Controller {
         this.view.setListModel(model.getList());
     }
     
+    /**
+     * Link the correct listeners to the right view components
+     */
     public void control(){
     	initiateListeners();
         
@@ -34,9 +41,11 @@ public class Controller {
         view.getDeleteLocalButton().addActionListener(deleteLocalFileAL);
         view.getList().addListSelectionListener(listSL);
         view.getFrame().addWindowListener(windowCL);
-        view.getbtn().addActionListener(btnal);
     }
     
+    /**
+     * Initiation of the button, window, list selection listeners, what to do when it's activated
+     */
     private void initiateListeners(){
     	logOutAL = new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -48,11 +57,6 @@ public class Controller {
             		model.logOut();
             		System.exit(0);
         	    }
-            }
-    	};
-    	btnal = new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
-            	updateView();
             }
     	};
     	openFileAL = new ActionListener() {
@@ -82,7 +86,8 @@ public class Controller {
     	listSL = new ListSelectionListener() {
     		@Override
 			public void valueChanged(ListSelectionEvent e) {
-    			JList<String> list = (JList<String>)e.getSource();
+				@SuppressWarnings("unchecked")
+				JList<String> list = (JList<String>)e.getSource();
     		    String sel = list.getSelectedValue();
     			if (e.getValueIsAdjusting() == false) {
     	            if (view.getList().getSelectedIndex() == -1) {
@@ -108,6 +113,9 @@ public class Controller {
     	};
     }
     
+    /**
+     * To update the list
+     */
     public void updateView(){
     	view.setListModel(model.getList());
     }
