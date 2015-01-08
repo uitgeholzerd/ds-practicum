@@ -50,7 +50,6 @@ public class FileAgent implements IAgent {
 
 		// UpdateGUI the clients file list
 		for (Entry<String, Boolean> entry : availableFiles.entrySet()) {
-			System.out.println("File agent: available files: "+availableFiles);
 			if (!client.getAvailableFiles().contains(entry.getKey())) {
 				client.getAvailableFiles().add(entry.getKey());
 				client.updateGUI();
